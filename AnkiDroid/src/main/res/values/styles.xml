@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App themes
+        These compat themes are just copies of the parent themes here, but some attributes are
+        overridden as necessary in the API specific versions, for example in values-v21/styles.xml.
+        -->
+    <style name="Theme_Light_Compat" parent="Theme_Light"/>
+    <style name="Theme_Dark_Compat" parent="Theme_Dark"/>
+    <style name="Theme_Plain_Compat" parent="Theme_Light.Plain"/>
+    <style name="Theme_Black_Compat" parent="Theme_Dark.Black"/>
+    <style name="TranslucentTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    </style>
+
+    <style name="Theme_Dark_Compat.Launcher">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+    </style>
+    <!-- Theme for crash report dialog -->
+    <style name="Theme.CrashReportDialog" parent="@android:style/Theme.DeviceDefault.Dialog" />
+
+    <style name="Animation.Translucent" parent="@android:style/Animation.Translucent">
+        <item name="android:windowEnterAnimation">@null</item>
+        <item name="android:windowExitAnimation">@anim/translucent_exit</item>
+    </style>
+
+    <!-- Nav drawer style to set width specified by Material Design specification -->
+    <style name="NavDrawer">
+        <item name="android:layout_width">280dp</item>
+        <item name="android:layout_marginRight">@dimen/nav_drawer_margin_offset</item>
+        <item name="android:maxWidth">280dp</item>
+    </style>
+
+    <style name="TextStyleMedium">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="customFontStyle" parent="@android:style/TextAppearance.Small">
+        <item name="android:fontFamily">@font/font_oswald</item>
+    </style>
+
+    <!--  Material Design-style persistent footer button -->
+    <style name="FooterButtonBase">
+        <item name="android:layout_height">54dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:singleLine">true</item>
+    </style>
+    <style name="FooterButton" parent="FooterButtonBase"/>
+
+    <style name="FooterButtonNextTime">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:ellipsize">marquee</item>
+        <item name="android:gravity">bottom|center_horizontal</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="FooterButtonEaseTextBase" parent="FooterButtonNextTime">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:typeface">sans</item>
+    </style>
+    <style name="FooterButtonEaseText" parent="FooterButtonEaseTextBase" />
+
+    <!-- Styles for each of the 4 answer buttons -->
+    <!-- Ease text -->
+    <style name="AgainButtonEaseStyle" parent="FooterButtonEaseText">
+        <item name="android:textColor">?attr/againButtonTextColor</item>
+    </style>
+    <style name="HardButtonEaseStyle" parent="FooterButtonEaseText">
+        <item name="android:textColor">?attr/hardButtonTextColor</item>
+    </style>
+    <style name="GoodButtonEaseStyle" parent="FooterButtonEaseText">
+        <item name="android:textColor">?attr/goodButtonTextColor</item>
+    </style>
+    <style name="EasyButtonEaseStyle" parent="FooterButtonEaseText">
+        <item name="android:textColor">?attr/easyButtonTextColor</item>
+    </style>
+    <!-- Next time text. Use the same color as the ease text. -->
+    <style name="AgainButtonTimeStyle" parent="FooterButtonNextTime">
+        <item name="android:textColor">?attr/againButtonTextColor</item>
+    </style>
+    <style name="HardButtonTimeStyle" parent="FooterButtonNextTime">
+        <item name="android:textColor">?attr/hardButtonTextColor</item>
+    </style>
+    <style name="GoodButtonTimeStyle" parent="FooterButtonNextTime">
+        <item name="android:textColor">?attr/goodButtonTextColor</item>
+    </style>
+    <style name="EasyButtonTimeStyle" parent="FooterButtonNextTime">
+        <item name="android:textColor">?attr/easyButtonTextColor</item>
+    </style>
+
+    <!-- FAB menu items -->
+    <style name="menu_labels_style">
+        <item name="android:background">?attr/fab_item_background</item>
+        <item name="android:textColor">?attr/fab_labelsTextColor</item>
+    </style>
+
+    <!-- Action bar. Currently all action bar text is white in every theme. -->
+    <style name="ActionBarStyleNew" parent="Base.ThemeOverlay.AppCompat.ActionBar">
+        <!-- Colors: hamburger, title text, overflow icon -->
+        <item name="android:textColorPrimary">?attr/toolbarTextColor</item>
+        <!-- Colors: subtitle text -->
+        <item name="android:textColorSecondary">?attr/toolbarTextColor</item>
+        <!-- Overflow menu style -->
+        <item name="popupTheme">@style/ActionBar.Popup</item>
+    </style>
+
+    <style name="ActionBarStyle" parent="Base.ThemeOverlay.AppCompat.ActionBar">
+        <!-- Colors: hamburger, title text, overflow icon -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- Colors: subtitle text -->
+        <item name="android:textColorSecondary">@color/white</item>
+        <!-- Overflow menu style -->
+        <item name="popupTheme">@style/ActionBar.Popup</item>
+    </style>
+    <style name="SwitchCompat.Control" parent="Theme.AppCompat.Light">
+        <!-- active thumb & track color (30% transparency) -->
+        <item name="colorControlActivated">?attr/primaryBaseColor</item>
+        <item name="colorSwitchThumbNormal">?attr/primaryMirrorColor</item>
+    </style>
+    <!-- For all other action bar popups like overflow menu (except spinner dropdown in Lollipop). -->
+    <style name="ActionBar.Popup" parent="Base.ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:drawSelectorOnTop">true</item>
+        <item name="android:background">?attr/actionBarPopupBackgroundColor</item>
+        <item name="android:textColorPrimary">?attr/actionBarPopupTextColor</item>
+        <item name="android:textColorSecondary">?attr/actionBarPopupTextColor</item>
+    </style>
+
+    <style name="LargeButtonStyle">
+        <item name="colorButtonNormal">?attr/largeButtonBackgroundColor</item>
+        <item name="android:textColor">?attr/largeButtonTextColor</item>
+    </style>
+
+    <style name="DialogTheme" parent="@android:style/Theme.Dialog">
+        <!-- 边框 -->
+        <item name="android:windowFrame">@null</item>
+        <!-- 是否浮现在activity之上 -->
+        <item name="android:windowIsFloating">true</item>
+        <!-- 半透明 -->
+        <item name="android:windowIsTranslucent">true</item>
+        <!-- 无标题 -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:background">@android:color/transparent</item>
+        <!-- 背景透明 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- 模糊 -->
+        <item name="android:backgroundDimEnabled">true</item>
+        <!-- 遮罩层 -->
+        <item name="android:backgroundDimAmount">0.0</item>
+    </style>
+
+    <!-- dialog的动画 -->
+    <style name="main_menu_animStyle">
+        <item name="android:windowEnterAnimation">@anim/slide_down_in</item>
+        <item name="android:windowExitAnimation">@anim/slide_down_out</item>
+    </style>
+    <style name="MyEditText" parent="Theme.AppCompat.Light">
+        <item name="colorControlNormal">@color/btn_disable_color</item>
+        <item name="colorControlActivated">@color/primary_color</item>
+        <item name="android:fontFamily">@font/font_oswald</item>
+    </style>
+    <style name="note_editor_toolbar_button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:tint">@color/black</item>
+    </style>
+</resources>

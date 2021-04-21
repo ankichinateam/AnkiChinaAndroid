@@ -1,0 +1,123 @@
+package com.ichi2.libanki.sched;
+
+import com.ichi2.libanki.Collection;
+import com.ichi2.libanki.Decks;
+import com.ichi2.utils.JSONObject;
+
+import java.util.List;
+import java.util.Locale;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+/**
+ * Holds the data for a single node (row) in the deck due tree (the user-visible list
+ * of decks and their counts). A node also contains a list of nodes that refer to the
+ * next level of sub-decks for that particular deck (which can be an empty list).
+ *
+ * The names field is an array of names that build a deck name from a hierarchy (i.e., a nested
+ * deck will have an entry for every level of nesting). While the python version interchanges
+ * between a string and a list of strings throughout processing, we always use an array for
+ * this field and use getNamePart(0) for those cases.
+ */
+public class DeckDueTreeNode extends AbstractDeckTreeNode<DeckDueTreeNode> {
+    private int mRevCount;
+    private int mLrnCount;
+    private int mNewCount;
+
+    public DeckDueTreeNode(Collection col, String mName, long mDid, int mRevCount, int mLrnCount, int mNewCount) {
+        super(col, mName, mDid);
+        this.mRevCount = mRevCount;
+        this.mLrnCount = mLrnCount;
+        this.mNewCount = mNewCount;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "%s, %d, %d, %d, %d, %s",
+                getFullDeckName(), getDid(), mRevCount, mLrnCount, mNewCount, getChildren());
+    }
+
+
+    public int getRevCount() {
+        return mRevCount;
+    }
+
+    private void limitRevCount(int limit) {
+        mRevCount = Math.max(0, Math.min(mRevCount, limit));
+    }
+
+    public int getNewCount() {
+        return mNewCount;
+    }
+
+    private void limitNewCount(int limit) {
+        mNewCount = Math.max(0, Math.min(mNewCount, limit));
+    }
+
+    public int getLrnCount() {
+        return mLrnCount;
+    }
+
+    public void setChildren(@NonNull List<DeckDueTreeNode> children, boolean addRev) {
+        super.setChildren(children, addRev);
+        // tally up children counts
+        for (DeckDueTreeNode ch : children) {
+            mLrnCount += ch.getLrnCount();
+            mNewCount += ch.getNewCount();
+            if (addRev) {
+                mRevCount += ch.getRevCount();
+            }
+        }
+        // limit the counts to the deck's limits
+        JSONObject conf = getCol().getDecks().confForDid(getDid());
+        if (conf.getInt("dyn") == 0) {
+            JSONObject deck = getCol().getDecks().get(getDid());
+            limitNewCount(conf.getJSONObject("new").getInt("perDay") - deck.getJSONArray("newToday").getInt(1));
+            if (addRev) {
+                limitRevCount(conf.getJSONObject("rev").getInt("perDay") - deck.getJSONArray("revToday").getInt(1));
+            }
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int childrenHash = getChildren() == null ? 0 : getChildren().hashCode();
+        return getFullDeckName().hashCode() + mRevCount + mLrnCount + mNewCount + (int) (childrenHash ^ (childrenHash >>> 32));
+    }
+
+
+    /**
+     * Whether both elements have the same structure and numbers.
+     * @param object
+     * @return
+     */
+    @Override
+    public boolean equals(Object object) {
+        if (object == null || !(object instanceof DeckDueTreeNode)) {
+            return false;
+        }
+        DeckDueTreeNode tree = (DeckDueTreeNode) object;
+        return Decks.equalName(getFullDeckName(), tree.getFullDeckName()) &&
+                mRevCount == tree.mRevCount &&
+                mLrnCount == tree.mLrnCount &&
+                mNewCount == tree.mNewCount &&
+                (getChildren() == tree.getChildren() || // Would be the case if both are null, or the same pointer
+                        getChildren().equals(tree.getChildren()))
+                ;
+    }
+
+    /** Line representing this string without its children. Used in timbers only. */
+    protected String toStringLine() {
+        return String.format(Locale.US, "%s, %d, %d, %d, %d\n",
+                getFullDeckName(), getDid(), mRevCount, mLrnCount, mNewCount);
+    }
+
+    public boolean shouldDisplayCounts() {
+        return true;
+    }
+
+    public boolean knownToHaveRep() {
+        return mRevCount > 0 || mNewCount > 0 || mLrnCount > 0;
+    }
+}

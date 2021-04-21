@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="theme_dark_primary">#3d3d3d</color>
+    <color name="theme_dark_primary_dark">@color/black</color>
+    <color name="theme_dark_primary_light">@color/material_grey_800</color>
+    <color name="theme_dark_accent">@color/material_light_blue_700</color>
+    <color name="theme_dark_primary_text">@color/white</color>
+    <color name="theme_dark_secondary_text">#b2ffffff</color>
+    <color name="theme_dark_row_current">#393939</color>
+    <color name="theme_dark_drawer_row_current">#33999999</color>
+    <color name="theme_dark_drawer_item">#DEFFFFFF</color>
+    <color name="review_bar_background_dark">#111111</color>
+    <color name="backgroundColor_dark">#111111</color>
+    <style name="Theme_Dark" parent="@style/Theme.AppCompat">
+        <!-- Android colors -->
+        <item name="colorPrimary">@color/theme_dark_primary</item>
+        <item name="colorPrimaryDark">@color/theme_dark_primary_dark</item>
+        <item name="colorAccent">@color/theme_dark_accent</item>
+        <item name="toolbarBackgroundColor">@color/backgroundColor_dark</item>
+        <item name="backgroundColor">@color/backgroundColor_dark</item>
+        <item name="mainItemBackgroundColor">#171717</item>
+        <item name="search_background">#202020</item>
+        <item name="android:textColor">@color/theme_dark_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_dark_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_dark_secondary_text</item>
+        <item name="primary_text_third_color999999">@color/white</item>
+        <item name="primary_text_third_color666666">@color/white</item>
+        <item name="android:colorBackground">@color/material_theme_grey</item>
+        <item name="android:windowBackground">@color/material_theme_grey</item>
+        <!-- Navigation drawer -->
+        <item name="navDrawerItemColor">@color/drawer_item_text_dark</item>
+        <item name="navDrawerItemBackgroundColor">@drawable/drawer_item_background_dark</item>
+        <!-- App buttons -->
+        <item name="largeButtonBackgroundColor">@color/material_light_blue_700</item>
+        <item name="largeButtonBackgroundColorFocused">@color/material_light_blue_600</item>
+        <item name="largeButtonBackgroundColorPressed">@color/material_light_blue_900</item>
+        <item name="largeButtonTextColor">@color/white</item>
+        <item name="largeButtonSecondaryBackgroundColor">@color/material_grey_800</item>
+        <item name="largeButtonSecondaryBackgroundColorFocused">@color/material_grey_700</item>
+        <item name="largeButtonSecondaryBackgroundColorPressed">@color/material_grey_600</item>
+        <item name="largeButtonSecondaryTextColor">@color/material_grey_500</item>
+        <!-- Action bar styles -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionBarTextColor">@color/white</item>
+        <item name="actionBarTextColorNew">@color/white</item>
+        <item name="actionBarPopupBackgroundColor">@color/review_bar_background_dark</item>
+        <item name="reviewStatusBarColor">@color/review_bar_background_dark</item>
+        <item name="actionBarPopupTextColor">@color/theme_dark_primary_text</item>
+        <item name="actionModeBackground">@color/theme_dark_primary</item>
+        <!-- Deck list colors and divider -->
+        <item name="currentDeckBackground">@drawable/item_background_selected_pre21_dark</item>
+        <item name="currentDeckBackgroundColor">@color/theme_dark_row_current</item>
+        <item name="dynDeckColor">@color/primary_color</item>
+        <item name="deckDivider">@drawable/divider_dark</item>
+        <item name="searchRef">@mipmap/home_search_normal_dark</item>
+        <item name="problemRef">@drawable/selector_problem_icon_dark</item>
+        <item name="menuBuildIcon">@mipmap/nav_bar_reset_normal_dark</item>
+        <item name="expandRef">@mipmap/home_card_group_arrow_noraml_dark</item>
+        <item name="collapseRef">@mipmap/home_card_group_arrow_rotate</item>
+        <item name="fileBagRef">@mipmap/home_card_group_normal_dark</item>
+        <!-- Menu item list -->
+        <item name="syncIconRef">@drawable/home_sync_icon_selector_dark</item>
+        <item name="menuIconRef">@drawable/home_menu_icon_selector_dark</item>
+        <!-- Review Menu item list -->
+        <item name="reviewMenuUndoIconRef">@drawable/review_menu_undo_selector_dark</item>
+        <item name="reviewMenuFlagIconRef">@drawable/review_menu_flag_selector_dark</item>
+        <item name="navBarBackRef">@drawable/nav_bar_back_selector_dark</item>
+        <item name="navBarBackRefDark">@drawable/nav_bar_back_selector</item>
+        <item name="navBarTimeRef">@drawable/nav_bar_time_selector_dark</item>
+        <item name="xieyiArrowRef">@mipmap/set_xieyi_arrow_normal_dark</item>
+        <item name="loginArrowRef">@mipmap/set_login_arrow_normal_dark</item>
+        <item name="tabIconOne">@drawable/tab_icon_one_selected_dark</item>
+        <item name="tabIconTwo">@drawable/tab_icon_two_selected_dark</item>
+        <item name="tabIconThree">@drawable/tab_icon_three_selected_dark</item>
+        <item name="tabIconFour">@drawable/tab_icon_four_selected_dark</item>
+        <item name="tabIconFive">@drawable/tab_icon_five_selected_dark</item>
+        <item name="mainBottomTextColorRef">@drawable/selector_tab_color_dark</item>
+        <item name="deckCountNewTextColorRef">@color/new_primary_color</item>
+        <item name="deckCountRevTextColorRef">@color/white</item>
+        <item name="toolbarTextColor">@color/white</item>
+        <item name="toolbar2TextColor">@color/white</item>
+        <item name="statsTabBackgroundColor">@color/black</item>
+        <item name="settingBackgroundColor">@color/black</item>
+        <item name="settingItemBackground">@drawable/setting_item_background</item>
+        <item name="settingItemBackgroundTop">@drawable/setting_item_background_top</item>
+        <item name="settingItemBackgroundBottom">@drawable/setting_item_background_bottom</item>
+        <item name="settingItemBackgroundRound">@drawable/setting_item_background_round</item>
+        <item name="settingDividerColor">#202020</item>
+        <item name="settingHeaderRef">#FF28BEA0</item>
+        <item name="primaryTextSecondaryColor">@color/white</item>
+        <item name="answerButtonBackgroundColor">#1C1C1C</item>
+
+        <item name="primaryTextColor">@color/white</item>
+        <item name="primaryForthTextColor333333">@color/white</item>
+        <item name="primaryBaseColor">@color/white</item>
+        <item name="primaryMirrorColor">@color/black</item>
+        <item name="reviewTopDividerColor">@color/review_top_divider</item>
+        <!-- Count colors -->
+        <item name="newCountColor">@color/material_indigo_200</item>
+        <item name="learnCountColor">@color/material_red_200</item>
+        <item name="reviewCountColor">@color/material_green_200</item>
+        <item name="zeroCountColor">#202020</item>
+        <!-- Reviewer colors -->
+        <item name="topBarColor">@color/theme_dark_primary_light</item>
+        <item name="maxTimerColor">@color/material_red_300</item>
+        <item name="answerButtonTextColor">@color/white</item>
+        <item name="againButtonTextColor">@color/white</item>
+        <item name="hardButtonTextColor">@color/white</item>
+        <item name="goodButtonTextColor">@color/white</item>
+        <item name="easyButtonTextColor">@color/white</item>
+        <!-- Reviewer button drawables -->
+        <item name="againButtonRef">@drawable/footer_button_again</item>
+        <item name="hardButtonRef">@drawable/footer_button_hard</item>
+        <item name="goodButtonRef">@drawable/footer_button_good</item>
+        <item name="easyButtonRef">@drawable/footer_button_easy</item>
+        <item name="againButtonRippleRef">@drawable/footer_button_again_ripple</item>
+        <item name="hardButtonRippleRef">@drawable/footer_button_hard_ripple</item>
+        <item name="goodButtonRippleRef">@drawable/footer_button_good_ripple</item>
+        <item name="easyButtonRippleRef">@drawable/footer_button_easy_ripple</item>
+
+        <item name="showAnswerButtonColor">#202020</item>
+        <!-- Card Browser Colors -->
+        <item name="cardBrowserDivider">@color/white</item>
+        <!-- Stats colors -->
+        <item name="stats_young">@color/material_light_green_A700</item>
+        <item name="stats_mature">@color/material_green_200</item>
+        <item name="stats_learn">@color/material_indigo_200</item>
+        <item name="stats_relearn">@color/material_red_200</item>
+        <item name="stats_cram">#ff0</item>
+        <item name="stats_interval">#077</item>
+        <item name="stats_hours">#ccc</item>
+        <item name="stats_counts">#E6000000</item>
+        <item name="stats_unseen">#000</item>
+        <item name="stats_suspended_and_buried">#ff0</item>
+        <item name="stats_cumulative">@color/stats_cumulative</item>
+        <!-- Browser colors -->
+        <item name="suspendedColor">@color/material_grey_700</item>
+        <item name="markedColor">@color/material_deep_purple_400</item>
+        <item name="flagRed">@color/flag_red</item>
+        <item name="flagOrange">@color/flag_orange</item>
+        <item name="flagGreen">@color/flag_green</item>
+        <item name="flagBlue">@color/flag_blue</item>
+        <!-- Note editor colors -->
+        <item name="duplicateColor">#855</item>
+        <!-- FAB -->
+        <item name="fab_normal">@color/material_light_blue_700</item>
+        <item name="fab_pressed">@color/material_light_blue_900</item>
+        <item name="fab_labelsTextColor">@color/white</item>
+        <item name="fab_background">@color/material_grey_700</item>
+        <item name="fab_item_background">@drawable/fab_label_background_pre21</item>
+        <!-- Images -->
+        <item name="navDrawerImage">@drawable/nav_drawer_logo_dark_theme</item>
+        <item name="attachFileImage">@drawable/ic_attachment_white_24dp</item>
+        <item name="upDownImage">@drawable/ic_import_export_white_24dp</item>
+        <item name="dialogErrorIcon">@drawable/ic_warning_white_36dp</item>
+        <item name="dialogSyncErrorIcon">@drawable/ic_sync_problem_white_36dp</item>
+        <item name="dialogSendIcon">@drawable/ic_send_white_36dp</item>
+        <!-- Dialog styles -->
+        <item name="android:listPreferredItemHeight">56dip</item>
+        <item name="md_dark_theme">true</item>
+
+
+        <item name="menuAddIcon">@drawable/ic_add_white_24dp</item>
+    </style>
+
+    <!-- Preferences screens -->
+    <!-- Legacy action bar  (used in Preferences with no explicit Toolbar) -->
+    <style name="LegacyActionBarDark" parent="Theme_Dark">
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">false</item>
+        <item name="android:textColor">@color/prefs_item_dark</item>
+        <item name="android:textColorSecondary">@color/prefs_item_dark</item>
+    </style>
+
+</resources>

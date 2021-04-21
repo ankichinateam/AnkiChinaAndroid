@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?> 
+ <!-- 
+ ~ Copyright (c) 2009 Andrew <andrewdubya@gmail> 
+ ~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com> 
+ ~ Copyright (c) 2009 Daniel Svaerd <daniel.svard@gmail.com> 
+ ~ Copyright (c) 2009 Nicolas Raoul <nicolas.raoul@gmail.com> 
+ ~ Copyright (c) 2010 Norbert Nagold <norbert.nagold@gmail.com> 
+ ~ This program is free software; you can redistribute it and/or modify it under 
+ ~ the terms of the GNU General Public License as published by the Free Software 
+ ~ Foundation; either version 3 of the License, or (at your option) any later 
+ ~ version. 
+ ~ 
+ ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ ~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ ~ PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+ ~ 
+ ~ You should have received a copy of the GNU General Public License along with 
+ ~ this program.  If not, see <http://www.gnu.org/licenses/>. 
+ --> 
+ 
+<!--
+~ Copyright (c) 2009 Casey Link <unnamedrambler@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string-array name="error_reporting_choice_labels">
+        <item>总是发送报告</item>
+        <item>从不发送报告</item>
+        <item>询问我</item>
+    </string-array>
+    <string-array name="gestures_labels">
+        <item>不采取行动</item>
+        <item>显示答案</item>
+        <item>回答按钮 1</item>
+        <item>回答按钮 2</item>
+        <item>回答按钮 3</item>
+        <item>回答按钮 4</item>
+        <item>建议的回答（绿色）</item>
+        <item>好于建议的回答</item>
+        <item>撤销</item>
+        <item>编辑笔记</item>
+        <item>标签笔记</item>
+        <item>标记笔记</item>
+        <item>查找表达式</item>
+        <item>隐藏卡牌</item>
+        <item>暂停卡牌</item>
+        <item>删除笔记</item>
+        <item>播放媒体</item>
+        <item>终止学习</item>
+        <item>隐藏笔记</item>
+        <item>暂停笔记</item>
+        <item>切换红色标识</item>
+        <item>切换橙色标识</item>
+        <item>切换绿色标识</item>
+        <item>切换蓝色标识</item>
+        <item>移除标识</item>
+        <item>向上翻页</item>
+        <item>向下翻页</item>
+    </string-array>
+    <string-array name="leech_action_labels">
+        <item>暂停卡片</item>
+        <item>仅标签</item>
+    </string-array>
+    <string-array name="new_order_labels">
+        <item>按随机顺序学习新卡片</item>
+        <item>按添加顺序学习新卡片</item>
+    </string-array>
+    <string-array name="cram_deck_conf_order_labels">
+        <item>优先显示老卡片</item>
+        <item>随机</item>
+        <item>增加时间间隔</item>
+        <item>减少时间间隔</item>
+        <item>忘记最多的</item>
+        <item>添加顺序</item>
+        <item>到期顺序</item>
+        <item>优先显示最晚添加的卡片</item>
+        <item>相对到期</item>
+    </string-array>
+    <string-array name="add_to_cur_labels">
+        <item>使用当前记忆库</item>
+        <item>由笔记类型决定</item>
+    </string-array>
+    <string-array name="new_spread_labels">
+        <item>混合新卡片和复习</item>
+        <item>复习后再学习新卡片</item>
+        <item>学习新卡片后再复习</item>
+    </string-array>
+    <string-array name="override_font_labels">
+        <item>当卡片中没有指定字体时</item>
+        <item>总是</item>
+    </string-array>
+    <string-array name="day_theme_labels">
+        <item>亮色</item>
+        <item>简洁</item>
+    </string-array>
+    <string-array name="night_theme_labels">
+        <item>黑色</item>
+        <item>暗色</item>
+    </string-array>
+    <string-array name="html_size_code_labels">
+        <item>极小</item>
+        <item>很小</item>
+        <item>小</item>
+        <item>中</item>
+        <item>大</item>
+        <item>很大</item>
+        <item>极大</item>
+    </string-array>
+    <string-array name="html_color_code_labels">
+        <item>黑色</item>
+        <item>红色</item>
+        <item>绿色</item>
+        <item>蓝色</item>
+        <item>橙色</item>
+        <item>天蓝</item>
+        <item>紫色</item>
+        <item>灰色</item>
+        <item>白色</item>
+    </string-array>
+</resources>

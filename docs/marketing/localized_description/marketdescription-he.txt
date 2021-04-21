@@ -1,0 +1,37 @@
+ניתן לשנן כל דבר עם AnkiDroid!
+
+AnkiDroid מראה לך כרטיסים בדיוק לפני שתשכח אותם וככה מאפשר לך ללמוד אותם באופן יעיל ביותר. עובד בתיאום (כולל סינכרון) עם התוכנה Anki , אשר זמינה עבור Windows, לינוקס ו- MacOS.
+
+למד כל דבר בכל מקום ובכל זמן שתרצה. נצל זמן מבוזבז בנסיעות אוטובוס, בתור למכולת ובכל מצב המתנה!
+
+צור חפיסות כרטיסי-זכרון משלך או הורד חפיסות מוכנות עבור שלל שפות ונושאים (יותר מ6000 זמינים).
+
+הוסף חומר דרך תוכנת Anki לשולחן העבודה, או ישירות דרך AnkiDroid. האפליקצייה אפילו תומכת בהוספת חומר אוטומטית ממילון!
+
+★ תכונות מפתח:
+תומך בתכני כרטיסי-זכרון: טקסט, תמונות, צלילים ומשוואות LaTeX.
+חזרה לסירוגין (עפ"י אלגוריתם 2 supermemo)
+תמיכה בטקסט לדיבור
+• למעלה מ־6000 חפיסות מוכנות
+• וידג׳ט התקדמות
+• סטטיסטיקה מפורטת
+• סנכרון מול AnkiWeb
+• קוד פתוח
+
+★ תכונות נוספות:
+• כתיבת תשובות (רשות)
+• whiteboard
+• מוסיף/עורך קלפים
+• דפדפן קלפים
+• פריסת מחשב לוח
+• import existing collection files (via Anki Desktop)
+• dictionary integration (ColorDict, GoldenDict, Leo.org, Aedict, diverse web dictionaries)
+• add cards by intent from other applications like dictionaries
+• תמיכה בגופנים בהתאמה אישית
+• מערכת לגיבוי מלא
+• navigation by swipe, tap
+• customisable
+• dynamic deck handling
+• night mode
+• 27 localisations
+• All previous AnkiDroid versions can be downloaded from the website

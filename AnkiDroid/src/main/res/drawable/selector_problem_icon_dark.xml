@@ -1,0 +1,5 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true" android:drawable="@mipmap/nav_bar_icon_problem_normal_pressed_dark"/>
+    <item  android:drawable="@mipmap/nav_bar_icon_problem_normal_dark"/>
+</selector>

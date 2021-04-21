@@ -1,0 +1,590 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/studyoptions_scrollcontainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/studyoptions_deckinformation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/settingItemBackgroundRound"
+        android:padding="16dp"
+        android:orientation="vertical"
+        >
+        <TextView
+            android:id="@+id/studyoptions_deck_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="?attr/primaryForthTextColor333333"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            />
+        <LinearLayout
+            android:id="@+id/counts_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="学习中"
+                />
+            <TextView
+                android:id="@+id/count_learning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="32"
+                />
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="11dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_gravity="center_vertical"
+                android:src="@color/review_top_divider"/>
+            <TextView
+                android:id="@+id/deckpicker_lrn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/transparent"
+                android:gravity="center"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:visibility="gone"
+                android:text="42" />
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:layout_gravity="end"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="已掌握"
+                />
+            <TextView
+                android:id="@+id/count_handled"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:layout_marginStart="2dp"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="32"
+                />
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="11dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_gravity="center_vertical"
+                android:src="@color/review_top_divider"/>
+            <TextView
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:layout_gravity="end"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="未学习"
+                />
+            <TextView
+                android:id="@+id/count_new_card"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:layout_marginStart="2dp"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="32"
+                />
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="11dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_gravity="center_vertical"
+                android:src="@color/review_top_divider"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:layout_gravity="end"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="疑难"
+                />
+            <TextView
+                android:id="@+id/count_hard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:layout_marginStart="2dp"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:text="32"
+                />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/study_progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_marginTop="11dp"
+            android:layout_height="6dp"
+            android:max="10000"
+            android:minHeight="6dp"
+            android:progress="50"
+            android:progressDrawable="@drawable/deckpicker_progress_bar" />
+
+        <RelativeLayout
+            android:layout_marginTop="6dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/handled_percent"
+                android:text="已掌握：50%"
+                android:textSize="11sp"
+                style="@style/customFontStyle"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/handled_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                style="@style/customFontStyle"
+                android:text="678/2441"
+                android:textColor="?attr/primary_text_third_color999999"
+                android:textSize="11sp"
+                />
+
+        </RelativeLayout>
+<!--        <ImageView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="10dp"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:src="@drawable/gap"/>-->
+        <LinearLayout
+            android:weightSum="3"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:background="@drawable/deck_picker_statistic_background"
+            android:layout_marginTop="9dp"
+            android:paddingVertical="11dp"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/studyoptions_new"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="28sp"
+                    style="@style/customFontStyle"
+                    android:textColor="?attr/primaryForthTextColor333333"
+                    android:text="125"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:layout_marginTop="4dp"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:text="今日新卡"/>
+            </LinearLayout>
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="21dp"
+                android:layout_gravity="center_vertical"
+                android:src="@color/review_top_divider"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/studyoptions_rev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="28sp"
+                    style="@style/customFontStyle"
+                    android:textColor="?attr/primaryForthTextColor333333"
+                    android:text="456"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:layout_marginTop="4dp"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:text="今日复习"/>
+            </LinearLayout>
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="21dp"
+                android:layout_gravity="center_vertical"
+                android:src="@color/review_top_divider"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/studyoptions_eta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="28sp"
+                    style="@style/customFontStyle"
+                    android:textColor="?attr/primaryForthTextColor333333"
+                    android:text="30"/>
+                <TextView
+                    android:id="@+id/cost_time_unit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:layout_marginTop="4dp"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:text="预计耗时(分)"/>
+            </LinearLayout>
+
+        </LinearLayout>
+        <Button
+            android:id="@+id/studyoptions_start"
+            android:layout_width="match_parent"
+            android:layout_height="47dp"
+            android:text="@string/studyoptions_start"
+            android:layout_marginTop="9dp"
+            android:background="@drawable/selector_start_study_button"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            />
+        <TextView
+            android:id="@+id/study_setting"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:layout_gravity="center_horizontal"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:textSize="13sp"
+            android:visibility="gone"
+            android:text="学习设置"
+            app:drawableStartCompat="@mipmap/set_pianhao_set_normal" />
+        <TextView
+            android:id="@+id/studyoptions_deck_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:textSize="11sp"
+            android:layout_marginTop="15dp"
+            android:gravity="center"/>
+    </LinearLayout>
+    <RelativeLayout
+        android:id="@+id/ad_layout"
+        android:layout_marginTop="9dp"
+        android:layout_width="match_parent"
+        android:background="@drawable/deck_picker_ad_background"
+        android:paddingHorizontal="12dp"
+        android:layout_height="47dp">
+        <ImageView
+            android:id="@+id/ad_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+<!--       -->
+<!--        <ImageView-->
+<!--            android:id="@+id/remove_ad"-->
+<!--            android:layout_centerVertical="true"-->
+<!--            android:layout_alignParentEnd="true"-->
+<!--            android:layout_marginEnd="11dp"-->
+<!--            android:src="@mipmap/banner_closed_normal"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"/>-->
+    </RelativeLayout>
+    <LinearLayout
+        android:id="@+id/self_study_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/settingItemBackgroundRound"
+        android:layout_marginTop="9dp"
+        android:visibility="gone"
+        android:paddingBottom="4dp"
+        android:paddingTop="14dp"
+        android:paddingHorizontal="16dp"
+        android:orientation="vertical"
+        >
+        <RelativeLayout
+            android:layout_marginTop="9dp"
+            android:layout_width="match_parent"
+            android:background="?attr/settingItemBackgroundTop"
+            android:layout_height="wrap_content">
+            <TextView
+                android:text="主动学习"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <ImageView
+                android:id="@+id/self_study_ask_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:src="?attr/problemRef"
+                />
+
+        </RelativeLayout>
+        <TextView
+            android:text="根据一定条件实现针对性练习"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <LinearLayout
+            android:weightSum="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <androidx.cardview.widget.CardView
+                android:id="@+id/self_study_handle"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="9dp"
+                android:layout_marginVertical="13dp"
+                android:background="?attr/mainItemBackgroundColor"
+                app:cardElevation="3dp"
+                android:layout_height="53dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textSize="13sp"
+                    android:layout_gravity="center"
+                    android:text="掌握程度"/>
+            </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:id="@+id/self_study_answer"
+                android:layout_marginVertical="13dp"
+                android:background="?attr/mainItemBackgroundColor"
+                app:cardCornerRadius="9dp"
+                android:layout_marginStart="6dp"
+                app:cardElevation="3dp"
+                android:layout_height="53dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textSize="13sp"
+                    android:text="回答情况"/>
+            </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:id="@+id/self_study_mark"
+                android:layout_marginVertical="13dp"
+                android:background="?attr/mainItemBackgroundColor"
+                app:cardCornerRadius="9dp"
+                android:layout_marginStart="6dp"
+                app:cardElevation="3dp"
+                android:layout_height="53dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textSize="13sp"
+                    android:layout_gravity="center"
+                    android:text="标记颜色"/>
+            </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:id="@+id/self_study_custom"
+                android:layout_marginVertical="13dp"
+                android:layout_marginStart="6dp"
+                android:background="?attr/mainItemBackgroundColor"
+                app:cardCornerRadius="9dp"
+                app:cardElevation="3dp"
+                android:layout_height="53dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textSize="13sp"
+                    android:text="自定义"/>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </LinearLayout>
+    <RelativeLayout
+        android:layout_marginTop="9dp"
+        android:layout_width="match_parent"
+        android:padding="16dp"
+        android:background="?attr/settingItemBackgroundTop"
+        android:layout_height="wrap_content">
+        <TextView
+            android:text="卡牌目录"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="?attr/primaryForthTextColor333333"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/studyoptions_total"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true"
+            android:text="共0张卡牌"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:textSize="13sp"
+            />
+
+    </RelativeLayout>
+
+    <!--                        <TextView-->
+    <!--                            android:id="@+id/studyoptions_deck_name"-->
+    <!--                            android:layout_width="match_parent"-->
+    <!--                            android:layout_height="wrap_content"-->
+    <!--                            android:ellipsize="end"-->
+    <!--                            android:gravity="center"-->
+    <!--                            android:maxLines="3"-->
+    <!--                            android:textSize="28sp"-->
+    <!--                            android:textStyle="bold" />-->
+
+    <!--                        <LinearLayout-->
+    <!--                            android:id="@+id/studyoptions_deckinformation"-->
+    <!--                            android:layout_width="wrap_content"-->
+    <!--                            android:layout_height="wrap_content"-->
+    <!--                            android:layout_marginTop="16dp"-->
+    <!--                            android:gravity="center"-->
+    <!--                            android:orientation="vertical"-->
+    <!--                            android:layout_gravity="center_horizontal">-->
+
+    <!--                            <TableLayout-->
+    <!--                                android:layout_width="match_parent"-->
+    <!--                                android:layout_height="wrap_content"-->
+    <!--                                android:gravity="center"-->
+    <!--                                android:layout_gravity="center_horizontal"-->
+    <!--                                android:layout_marginBottom="5dip"-->
+    <!--                                android:layout_marginEnd="3dip"-->
+    <!--                                android:layout_marginLeft="5dip"-->
+    <!--                                android:layout_marginRight="3dip"-->
+    <!--                                android:layout_marginStart="5dip"-->
+    <!--                                android:orientation="vertical">-->
+
+    <!--                                <TableRow>-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:paddingLeft="0dip"-->
+    <!--                                        android:paddingRight="5dip"-->
+    <!--                                        android:text="@string/studyoptions_due_today"/>-->
+
+    <!--                                    <LinearLayout-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content">-->
+
+    <!--                                        <TextView-->
+    <!--                                            android:id="@+id/studyoptions_new"-->
+    <!--                                            android:layout_width="wrap_content"-->
+    <!--                                            android:layout_height="wrap_content"-->
+    <!--                                            android:textColor="?attr/newCountColor" />-->
+
+    <!--                                        <TextView-->
+    <!--                                            android:id="@+id/studyoptions_lrn"-->
+    <!--                                            android:layout_width="wrap_content"-->
+    <!--                                            android:layout_height="wrap_content"-->
+    <!--                                            android:layout_marginLeft="5dip"-->
+    <!--                                            android:layout_marginStart="5dip"-->
+    <!--                                            android:textColor="?attr/learnCountColor" />-->
+
+    <!--                                        <TextView-->
+    <!--                                            android:id="@+id/studyoptions_rev"-->
+    <!--                                            android:layout_width="wrap_content"-->
+    <!--                                            android:layout_height="wrap_content"-->
+    <!--                                            android:layout_marginLeft="5dip"-->
+    <!--                                            android:layout_marginStart="5dip"-->
+    <!--                                            android:textColor="?attr/reviewCountColor" />-->
+    <!--                                    </LinearLayout>-->
+    <!--                                </TableRow>-->
+
+    <!--                                <TableRow>-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:paddingLeft="0dip"-->
+    <!--                                        android:paddingRight="5dip"-->
+    <!--                                        android:text="@string/studyoptions_new_total" />-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:id="@+id/studyoptions_total_new"-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:gravity="end" />-->
+    <!--                                </TableRow>-->
+
+    <!--                                <TableRow>-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:paddingLeft="0dip"-->
+    <!--                                        android:paddingRight="5dip"-->
+    <!--                                        android:text="@string/studyoptions_total_cards" />-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:id="@+id/studyoptions_total"-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:gravity="end" />-->
+    <!--                                </TableRow>-->
+
+    <!--                                <TableRow>-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:paddingLeft="0dip"-->
+    <!--                                        android:paddingRight="5dip"-->
+    <!--                                        android:text="@string/studyoptions_eta" />-->
+
+    <!--                                    <TextView-->
+    <!--                                        android:id="@+id/studyoptions_eta"-->
+    <!--                                        android:layout_width="wrap_content"-->
+    <!--                                        android:layout_height="wrap_content"-->
+    <!--                                        android:gravity="end" />-->
+    <!--                                </TableRow>-->
+    <!--                            </TableLayout>-->
+    <!--                        </LinearLayout>-->
+
+
+</LinearLayout>

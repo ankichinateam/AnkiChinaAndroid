@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/answer_buttons_highlight_color">
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle" >
+            <solid android:color="@color/again_button_color" />
+            <corners android:radius="7dp"/>
+        </shape>
+    </item>
+    <item
+        android:id="@android:id/background"
+
+        >
+        <shape>
+            <corners android:radius="7dp"/>
+            <solid android:color="@color/again_button_color" />
+        </shape>
+    </item>
+</ripple>

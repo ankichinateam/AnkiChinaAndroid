@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+~ Copyright (c) 2009 Daniel Svärd <daniel.svard@gmail.com>
+~ Copyright (c) 2011 Norbert Nagold <norbert.nagold@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<com.ichi2.widget.SwipeItemLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_marginTop="9dp"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/DeckPickerHoriz"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/settingItemBackgroundRound"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:orientation="vertical"
+        >
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/deckpicker_indent"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_alignParentLeft="true"-->
+<!--            android:background="@android:color/transparent"-->
+<!--            android:minWidth="0dp" />-->
+
+<!--        <ImageView-->
+<!--            android:id="@+id/end_icon"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_alignParentEnd="true"-->
+<!--            android:layout_centerVertical="true"-->
+<!--            android:src="@mipmap/icon_left_arrow_normal" />-->
+        <TextView
+            android:id="@+id/deckpicker_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textColor="?attr/primaryForthTextColor333333"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            tools:text="Deck name" />
+        <RelativeLayout
+            android:layout_marginTop="6dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/counts_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:textSize="11sp"
+                    style="@style/customFontStyle"
+                    android:text="复习"
+                    />
+                <TextView
+                    android:id="@+id/deckpicker_new"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    style="@style/customFontStyle"
+                    android:textColor="?attr/primaryForthTextColor333333"
+                    android:textSize="11sp"
+                    android:text="32"
+                    />
+                <ImageView
+                    android:layout_width="1dp"
+                    android:layout_height="11dp"
+                    android:layout_marginHorizontal="6dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@color/review_top_divider"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:layout_gravity="end"
+                    style="@style/customFontStyle"
+                    android:textSize="11sp"
+                    android:text="忘记"
+                    />
+                <TextView
+                    android:id="@+id/deckpicker_rev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/customFontStyle"
+                    android:textColor="?attr/primaryForthTextColor333333"
+                    android:layout_marginStart="2dp"
+                    android:textSize="11sp"
+                    android:text="32"
+                    />
+            </LinearLayout>
+
+
+            <ImageView
+                android:id="@+id/flag_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="5dp"
+                android:src="@mipmap/mark_red_flag_normal"
+                />
+            <ImageView
+                android:id="@+id/star_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:src="@mipmap/mark_star_normal"
+                android:layout_marginEnd="16dp"
+                android:layout_toStartOf="@id/flag_icon"
+                />
+        </RelativeLayout>
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/stick"
+            android:text="删除"
+            android:background="@color/new_primary_text_color"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:layout_width="100dp"
+            android:layout_height="match_parent" />
+
+
+
+    </LinearLayout>
+</com.ichi2.widget.SwipeItemLayout>
+

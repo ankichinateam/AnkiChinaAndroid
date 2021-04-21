@@ -1,0 +1,10 @@
+*.bat text
+*.csv text
+*.css text
+*.html text
+*.java text
+*.txt text
+*.xml text
+
+AnkiDroid/lint-baseline.xml linguist-generated=true
+api/lint-baseline.xml linguist-generated=true

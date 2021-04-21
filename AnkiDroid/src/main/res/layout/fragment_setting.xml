@@ -1,0 +1,481 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+    >
+
+    <LinearLayout
+        android:id="@+id/ll_private"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="43dp"
+        android:gravity="top|center_horizontal">
+
+        <TextView
+            android:id="@+id/user_protocol"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawableEnd="?attr/xieyiArrowRef"
+            android:text="用户协议"
+            android:textColor="@color/new_primary_text_third_color" />
+
+        <TextView
+            android:id="@+id/user_private"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="13dp"
+            android:drawableEnd="?attr/xieyiArrowRef"
+            android:text="隐私政策"
+            android:textColor="@color/new_primary_text_third_color" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/ll_private"
+        android:layout_alignParentTop="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+            <RelativeLayout
+                android:id="@+id/ll_login"
+                android:layout_width="match_parent"
+                android:layout_height="192dp"
+                android:background="?attr/settingHeaderRef"
+                android:paddingHorizontal="16dp">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@mipmap/profile_banner_bg_normal" />
+                <RelativeLayout
+                    android:id="@+id/rl_login"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginTop="78dp">
+
+                    <ImageView
+                        android:id="@+id/logo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@mipmap/profile_anki_logo_normal" />
+
+                    <ImageView
+                        android:id="@+id/iv_entrance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+
+                        android:src="?attr/loginArrowRef" />
+
+                    <RelativeLayout
+                        android:orientation="vertical"
+                        android:layout_centerVertical="true"
+                        android:layout_alignBottom="@id/logo"
+                        android:layout_toEndOf="@id/logo"
+                        android:paddingStart="14dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:id="@+id/tv_user_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="登录Anki志愿版"
+                            android:textColor="?attr/toolbar2TextColor"
+                            android:textSize="23sp" />
+                        <LinearLayout
+                            android:id="@+id/ll_switch_server"
+                            android:layout_alignParentBottom="true"
+                            android:layout_width="117dp"
+                            android:layout_height="20dp"
+                            android:layout_marginTop="6dp"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:background="@drawable/switch_login_server_button">
+
+                            <TextView
+                                android:id="@+id/server_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="海外服务器"
+                                android:layout_gravity="center_vertical"
+                                android:gravity="center_vertical"
+                                android:textColor="?attr/toolbar2TextColor"
+                                android:textSize="13sp" />
+                            <ImageView
+                                android:layout_width="1dp"
+                                android:layout_marginStart="4dp"
+                                android:layout_height="9dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@color/white" />
+                            <TextView
+                                android:id="@+id/tv_switch_server"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:gravity="center_vertical"
+                                android:layout_marginStart="4dp"
+                                android:text="切换"
+                                android:textColor="?attr/toolbar2TextColor"
+                                android:textSize="11sp" />
+
+                        </LinearLayout>
+
+
+                    </RelativeLayout>
+
+                    <TextView
+                        android:id="@+id/tv_quit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@id/quit_icon"
+                        android:text="退出"
+                        android:textColor="?attr/toolbar2TextColor"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
+                    <ImageView
+                        android:id="@+id/quit_icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_login_arrow_normal" />
+
+                </RelativeLayout>
+
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_default_link"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/more_setting_text"
+                android:layout_marginTop="11dp"
+                android:layout_marginBottom="50dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="11dp">
+
+                <RelativeLayout
+                    android:id="@+id/rl_anki_course"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="?attr/settingItemBackgroundTop"
+                    android:paddingEnd="18dp"
+                    android:paddingStart="13dp">
+
+                    <ImageView
+                        android:id="@+id/icon5"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_course_normal" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/icon_left_arrow_normal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="14dp"
+                        android:layout_toEndOf="@id/icon5"
+                        android:text="ANKI教程"
+                        android:textSize="16sp" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/rl_team"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="?attr/settingItemBackground"
+                    android:paddingEnd="18dp"
+                    android:paddingStart="13dp">
+
+                    <ImageView
+                        android:id="@+id/icon6"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_team_normal" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/icon_left_arrow_normal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="14dp"
+                        android:layout_toEndOf="@id/icon6"
+                        android:text="加入志愿者团队"
+                        android:textSize="16sp" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/rl_version"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="?attr/settingItemBackground"
+                    android:paddingEnd="18dp"
+                    android:paddingStart="13dp">
+
+                    <ImageView
+                        android:id="@+id/icon7"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_vision_normal" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/icon_left_arrow_normal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="14dp"
+                        android:layout_toEndOf="@id/icon7"
+                        android:text="ANKI志愿者版本"
+                        android:textSize="16sp" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/rl_feedback"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="?attr/settingItemBackgroundBottom"
+                    android:paddingEnd="18dp"
+                    android:paddingStart="13dp">
+
+                    <ImageView
+                        android:id="@+id/icon8"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_fankui_normal" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/icon_left_arrow_normal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="14dp"
+                        android:layout_toEndOf="@id/icon8"
+                        android:text="意见反馈"
+                        android:textSize="16sp" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_cloud_space"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_below="@id/ll_login"
+                android:layout_marginHorizontal="11dp"
+                android:layout_marginTop="11dp"
+                android:background="@drawable/setting_item_background_round"
+                android:paddingEnd="18dp"
+                android:paddingStart="14dp">
+
+                <ImageView
+                    android:id="@+id/cloud_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/set_sync_normal" />
+
+                <ImageView
+                    android:id="@+id/end_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/profile_arrow_normal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="4dp"
+                    android:layout_toStartOf="@id/end_icon"
+                    android:text="升级云空间"
+                    android:textColor="?attr/primaryBaseColor"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_cloud_space"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/cloud_icon"
+                    android:text="云存储："
+                    android:textColor="?attr/primaryBaseColor"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_sync_set"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_below="@id/common_setting_text"
+                android:layout_marginHorizontal="11dp"
+                android:layout_marginTop="11dp"
+                android:background="?attr/settingItemBackgroundTop"
+                android:paddingEnd="18dp"
+                android:paddingStart="13dp">
+
+                <ImageView
+                    android:id="@+id/icon1"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/set_sync_set_normal" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/icon_left_arrow_normal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon1"
+                    android:text="同步设置"
+                    android:textSize="16sp" />
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/rl_dark_mode"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_below="@id/rl_sync_set"
+                android:layout_marginHorizontal="11dp"
+                android:background="?attr/settingItemBackground"
+                android:paddingEnd="18dp"
+                android:paddingStart="13dp"
+
+                >
+
+                <ImageView
+                    android:id="@+id/icon3"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/set_day_set_normal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon3"
+                    android:text="夜间模式"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_dark_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:theme="@style/SwitchCompat.Control" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_personal_setting"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_below="@id/rl_dark_mode"
+                android:layout_marginHorizontal="11dp"
+                android:background="?attr/settingItemBackgroundBottom"
+                android:paddingEnd="18dp"
+                android:paddingStart="13dp">
+
+                <ImageView
+                    android:id="@+id/icon4"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/set_pianhao_set_normal" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/icon_left_arrow_normal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon4"
+                    android:text="偏好设置"
+                    android:textSize="16sp" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/common_setting_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/rl_cloud_space"
+                android:layout_marginStart="23dp"
+                android:layout_marginTop="34dp"
+                android:text="常用设置"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/more_setting_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/rl_personal_setting"
+                android:layout_marginStart="23dp"
+                android:layout_marginTop="34dp"
+                android:text="更多"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>
+

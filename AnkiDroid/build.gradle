@@ -1,0 +1,295 @@
+import com.android.ddmlib.DdmPreferences
+import com.android.build.OutputFile
+
+plugins {
+ // Gradle plugin portal 
+ id 'com.github.triplet.play' version '2.8.0'
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'app.brant.amazonappstorepublisher'
+
+repositories {
+    google()
+    jcenter()
+    maven { url 'https://dl.bintray.com/umsdk/release' }
+
+}
+def homePath = System.properties['user.home']
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.app.ankichinas"
+
+        // The version number is of the form:
+        // <major>.<minor>.<maintenance>[dev|alpha<build>|beta<build>|]
+        // The <build> is only present for alpha and beta releases (e.g., 2.0.4alpha2 or 2.0.4beta4), developer builds do
+        // not have a build number (e.g., 2.0.4dev) and official releases only have three components (e.g., 2.0.4).
+        //
+        // The version code is derived from the version name as follows:
+        // AbbCCtDD
+        // A: 1-digit decimal number representing the major version
+        // bb: 2-digit decimal number representing the minor version
+        // CC: 2-digit decimal number representing the maintenance version
+        // t: 1-digit decimal number representing the type of the build
+        // 0: developer build
+        // 1: alpha release
+        // 2: beta release
+        // 3: public release
+        // DD: 2-digit decimal number representing the build
+        // 00 for internal builds and public releases
+        // alpha/beta build number for alpha/beta releases
+        //
+        // This ensures the correct ordering between the various types of releases (dev < alpha < beta < release) which is
+        // needed for upgrades to be offered correctly.
+        versionCode=30000000
+        versionName="3.00.0"
+        minSdkVersion 16
+        //noinspection OldTargetApi - also performed in api/build.fradle
+        targetSdkVersion 28
+        multiDexEnabled true
+        testApplicationId "com.app.ankichinas"
+        vectorDrawables.useSupportLibrary = true
+        // This is a custom class, in androidx to override package-level functions
+        testInstrumentationRunner 'androidx.test.runner.MultiDexJUnitRunner'
+
+        // This enables long timeouts required on slow ARM emulators, e.g. Travis
+        adbOptions {
+            //logLevel verbose // let's try to see what is happening
+            timeOutInMs 20 * 60 * 1000  // 20 minutes
+            DdmPreferences.setTimeOut(120000) // apparently if not multidex you do this
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file('anki_china.jks')
+            storePassword 'ankichina'
+            keyAlias = 'anki_china'
+            keyPassword 'ankichina'
+        }
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            splits.abi.universalApk = true // Build universal APK for debug always
+            // Check Crash Reports page on developer wiki for info on ACRA testing
+            buildConfigField "String", "ACRA_URL", '"https://918f7f55-f238-436c-b34f-c8b5f1331fe5-bluemix.cloudant.com/acra-ankidroid/_design/acra-storage/_update/report"'
+
+            // #6009 Allow optional disabling of JaCoCo for general build (assembleDebug).
+            // jacocoDebug task was slow, hung, and wasn't required unless I wanted coverage
+            if (project.rootProject.file('local.properties').exists()) {
+                Properties localProperties = new Properties()
+                localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+                testCoverageEnabled localProperties['enable_coverage'] != "false"
+            } else {
+                testCoverageEnabled true
+            }
+            signingConfig signingConfigs.release
+
+        }
+        release {
+            minifyEnabled true
+            splits.abi.universalApk = universalApkEnabled // Build universal APK for release with `-Duniversal-apk=true`
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            buildConfigField "String", "ACRA_URL", '"https://ankidroid.org/acra/report"'
+        }
+    }
+
+    /**
+     * Set this to true to create five separate APKs instead of one:
+     *   - 2 APKs that only work on ARM/ARM64 devices
+     *   - 2 APKs that only works on x86/x86_64 devices
+     *   - a universal APK that works on all devices
+     * The advantage is the size of most APKs is reduced by about 2.5MB.
+     * Upload all the APKs to the Play Store and people will download
+     * the correct one based on the CPU architecture of their device.
+     */
+    def enableSeparateBuildPerCPUArchitecture = true
+
+//    splits {
+//        abi {
+//            reset()
+//            enable enableSeparateBuildPerCPUArchitecture
+//            //universalApk enableUniversalApk  // set in debug + release config blocks above
+//            include "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
+//        }
+//    }
+//    // applicationVariants are e.g. debug, release
+//    applicationVariants.all { variant ->
+//        // purge debug sounds from react-native-background-geolocation-android
+//        if (variant.buildType.name == 'release') {
+//            // We want the same version stream for all ABIs in debug but for release we can split them
+//            variant.outputs.each { output ->
+//                // For each separate APK per architecture, set a unique version code as described here:
+//                // https://developer.android.com/studio/build/configure-apk-splits.html
+//                def versionCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]
+//                def abi = output.getFilter(OutputFile.ABI)
+//                if (abi != null) {  // null for the universal-debug, universal-release variants
+//                    //  From: https://developer.android.com/studio/publish/versioning#appversioning
+//                    //  "Warning: The greatest value Google Play allows for versionCode is 2100000000"
+//                    //  AnkiDroid versionCodes have a budget 8 digits (through AnkiDroid 9)
+//                    //  This style does ABI version code ranges with the 9th digit as 0-4.
+//                    //  This consumes ~20% of the version range space, w/50 years of versioning at our major-version pace
+//                    output.versionCodeOverride =
+//                            // ex:  321200106 = 3 * 100000000 + 21200106
+//                            versionCodes.get(abi) * 100000000 + defaultConfig.versionCode
+//                }
+//            }
+//        }
+//    }
+
+    testOptions {
+        animationsDisabled true
+
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
+    dexOptions {
+        // Skip pre-dexing when running on Travis CI or when disabled via -Dpre-dex=false.
+        preDexLibraries = preDexEnabled && !travisBuild
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'classes.dex'
+//        exclude '**.**'
+    }
+    testOptions.unitTests.all {
+        testLogging {
+            events "failed", "skipped"
+            showStackTraces = true
+            exceptionFormat = "full"
+        }
+
+        maxParallelForks = gradleTestMaxParallelForks
+        forkEvery = 40
+        maxHeapSize = "2048m"
+        minHeapSize = "1024m"
+        systemProperties['junit.jupiter.execution.parallel.enabled'] = true
+        systemProperties['junit.jupiter.execution.parallel.mode.default'] = "concurrent"
+    }
+    sourceSets {
+        debug {
+            manifest.srcFile 'src/test/AndroidManifest.xml'
+        }
+    }
+    ndkVersion "21.3.6528147"
+}
+
+play {
+    serviceAccountCredentials = file("${homePath}/src/AnkiDroid-GCP-Publish-Credentials.json")
+    track = 'beta'
+}
+amazon {
+    securityProfile = file("${homePath}/src/AnkiDroid-Amazon-Publish-Security-Profile.json")
+    applicationId = "amzn1.devportal.mobileapp.524a424d314931494c55383833305539"
+    pathToApks = [ file("./build/outputs/apk/release/AnkiDroid-universal-release.apk") ]
+    replaceEdit = true
+}
+
+// Deprecation is an error. Use @SuppressWarnings("deprecation") and justify in the PR if you must
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xmaxwarns" << "1000" << "-Werror"
+
+    // https://guides.gradle.org/performance/#compiling_java
+    // 1- fork improves things over time with repeated builds, doesn't harm CI single builds
+    options.fork = true
+    // 2- incremental will be the default in the future and can help now
+    options.incremental = true
+}
+
+apply from: "./robolectricDownloader.gradle"
+apply from: "./jacoco.gradle"
+apply from: "../lint.gradle"
+
+dependencies {
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+
+    // Can possibly remove if upstream PR merges https://github.com/JakeWharton/timber/pull/398
+    configurations.all {
+        resolutionStrategy {
+            force 'org.jetbrains:annotations:20.0.0'
+        }
+    }
+
+    compileOnly 'org.jetbrains:annotations:20.0.0'
+    compileOnly "com.google.auto.service:auto-service-annotations:1.0-rc7"
+    annotationProcessor "com.google.auto.service:auto-service:1.0-rc7"
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // Note: the design support library can be quite buggy, so test everything thoroughly before updating it
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.browser:browser:1.2.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.1'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
+    implementation "androidx.multidex:multidex:2.0.1"
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.sqlite:sqlite-framework:2.1.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.viewpager2:viewpager2:1.0.0'
+    implementation 'io.requery:sqlite-android:3.32.2'
+    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+    implementation 'com.getbase:floatingactionbutton:1.10.1'
+    // io.github.java-diff-utils:java-diff-utils is the natural successor here, but requires API24, #7091
+    implementation 'org.bitbucket.cowwoc:diff-match-patch:1.2'
+    // #6419  - API 27 (& maybe others) could not perform new ZipFile() on a 2GB+ apkg
+    // noinspection GradleDependency - pinned at 1.12 until API21 minSdkVersion (File.toPath usage)
+    implementation 'org.apache.commons:commons-compress:1.12'
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+
+    // May need a resolution strategy for support libs to our versions
+    implementation'ch.acra:acra-http:5.5.1'
+    implementation'ch.acra:acra-dialog:5.5.1'
+    implementation'ch.acra:acra-toast:5.5.1'
+    implementation'ch.acra:acra-limiter:5.5.1'
+
+    implementation 'net.mikehardy:google-analytics-java7:2.0.13'
+    //noinspection GradleDependency NewerVersionAvailable
+    implementation 'com.squareup.okhttp3:okhttp:3.12.12'
+    implementation 'com.arcao:slf4j-timber:3.1'
+
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'com.tencent.bugly:nativecrashreport:3.7.471'
+    implementation 'com.tencent.bugly:crashreport_upgrade:1.4.5'
+    api project(":api")
+
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.6.2'
+    testImplementation 'org.mockito:mockito-inline:3.5.7'
+    testImplementation 'org.hamcrest:hamcrest-all:1.3'
+    testImplementation 'net.lachlanmckee:timber-junit-rule:1.0.1'
+    testImplementation "org.robolectric:robolectric:4.3.1"
+    testImplementation 'androidx.test:core:1.3.0'
+    testImplementation 'androidx.test.ext:junit:1.1.2'
+    // debugImplementation required vs testImplementation: https://issuetracker.google.com/issues/128612536
+    debugImplementation("androidx.fragment:fragment-testing:1.2.5") {
+        // monitor dep constrained to 1.2 by fragment-testing, 1.3+ is needed: https://github.com/android/android-test/issues/481
+        exclude group:'androidx.test', module:'monitor'
+    }
+
+    // May need a resolution strategy for support libs to our versions
+    androidTestImplementation 'com.azimolabs.conditionwatcher:conditionwatcher:0.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test:rules:1.3.0'
+    androidTestImplementation 'org.smali:dexlib2:2.4.0'
+    implementation 'com.oguzdev:CircularFloatingActionMenu:1.0.2'
+    //For AnkiDroid JS API Versioning
+    implementation "com.github.zafarkhaja:java-semver:0.9.0"
+    implementation  'com.umeng.umsdk:common:9.1.6' // (必选)版本号
+    implementation  'com.umeng.umsdk:asms:1.1.3' // asms包依赖(必选)
+    implementation 'com.umeng.umsdk:crash:0.0.5' // native crash包依赖(必选)
+    implementation  'com.umeng.umsdk:oaid_lenovo:1.0.0' // (可选)
+
+ }

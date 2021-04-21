@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+    <include layout="@layout/toolbar2" />
+    <LinearLayout
+        android:id="@+id/MyAccountLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_below="@id/toolbar"
+        android:paddingHorizontal="15dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="5dp">
+        <!-- TODO JS choose a standardized padding to use here -->
+
+
+        <!--<TextView-->
+        <!--android:id="@+id/sign_in"-->
+        <!--android:layout_width="fill_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Sign in"-->
+        <!--android:gravity="center"-->
+        <!--android:textSize="@dimen/md_title_textsize"-->
+        <!--android:textColor="?android:textColorPrimary"-->
+        <!--android:layout_gravity="center"-->
+        <!--android:layout_margin="@dimen/content_vertical_padding"/>-->
+        <!--&lt;!&ndash; TODO JS - move into strings.xml &ndash;&gt;-->
+
+
+
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/username">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/content_vertical_padding"
+                android:inputType="textNoSuggestions|textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <!-- TODO better text size ^^ -->
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/password_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/password"
+            app:passwordToggleEnabled="true">
+
+            <com.ichi2.ui.TextInputEditField
+                android:id="@+id/password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/content_vertical_padding"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <Button
+            android:id="@+id/login_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/content_vertical_padding"
+            android:padding="10dp"
+            android:paddingTop="30dp"
+            android:singleLine="true"
+            android:text="@string/log_in"
+            android:textSize="@dimen/md_title_textsize"
+            android:theme="@style/LargeButtonStyle" />
+        <Button
+            android:id="@+id/reset_password_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/content_vertical_padding"
+            android:background="@null"
+            android:padding="8dp"
+            android:singleLine="true"
+            android:text="@string/reset_password"
+            android:textColor="?attr/colorAccent"
+            android:textSize="@dimen/abc_text_size_button_material" />
+
+    </LinearLayout>
+    <ScrollView
+        android:layout_below="@id/MyAccountLayout"
+        android:layout_alignParentBottom="true"
+        android:paddingHorizontal="22dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/ll_hint"
+
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+           >
+            <!-- TODO move padding to dimen, when finalized -->
+            <TextView
+                android:id="@+id/anki_web_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/new_primary_color"
+                android:text="1.Anki Web账号即是官方Anki账号，当你电脑版也用Anki Web账号时，你可以登录此账号实现数据互通。\n2.使用手机号登录（志愿版账号）电脑也需要使用Anki志愿者版。\n3.两个账号的区别是，Anki Web是海外服务器会非常慢，Anki志愿版账号改用了国内服务器同步会快很多，使用Anki Web没有容量限制。Anki志愿版账号有200MB免费容量（95%的人足够使用），更大容量则需要付费扩容"
+                android:textSize="@dimen/abc_text_size_button_material"
+                android:visibility="gone"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/no_account_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:text="@string/sign_up_description"
+                android:textSize="@dimen/abc_text_size_button_material"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/no_account_not_affiliated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/sign_up_not_affiliated"
+                android:textSize="@dimen/abc_text_size_button_material"
+                android:textStyle="italic" />
+            <Button
+                android:id="@+id/sign_up_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@null"
+                android:padding="3dp"
+                android:singleLine="true"
+                android:text="@string/sign_up"
+                android:textColor="?attr/colorAccent"
+                android:textSize="@dimen/abc_text_size_button_material" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+</RelativeLayout>

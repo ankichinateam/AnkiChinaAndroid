@@ -1,0 +1,26 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/tab_one"
+        android:icon="?attr/tabIconOne"
+        android:title="首页"/>
+
+    <item
+        android:id="@+id/tab_two"
+        android:icon="?attr/tabIconTwo"
+        android:title="卡牌资源"/>
+
+    <item
+        android:id="@+id/tab_three"
+        android:icon="?attr/tabIconThree"
+        android:title=""/>
+
+    <item
+        android:id="@+id/tab_four"
+        android:icon="?attr/tabIconFour"
+        android:title="统计"/>
+    <item
+        android:id="@+id/tab_five"
+        android:icon="?attr/tabIconFive"
+        android:title="设置"/>
+</menu>

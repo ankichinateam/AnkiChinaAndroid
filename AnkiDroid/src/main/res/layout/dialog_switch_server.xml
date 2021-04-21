@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="286dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardCornerRadius="11dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        android:orientation="vertical"
+        android:paddingHorizontal="21dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="选择服务器"
+            android:textColor="@color/new_primary_text_forth_color"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="11dp"
+            android:orientation="horizontal"
+            android:paddingVertical="9dp">
+
+            <RelativeLayout
+                android:id="@+id/rl_over_sea_server"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true">
+
+                <TextView
+                    android:id="@+id/over_sea_server_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="海外服务器"
+                    android:textColor="@color/new_primary_text_forth_color"
+                    android:textSize="16sp"
+                    android:textStyle="normal" />
+
+                <TextView
+                    android:id="@+id/using_over_sea_server"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@id/over_sea_server_name"
+                    android:layout_marginStart="2dp"
+                    android:layout_toEndOf="@id/over_sea_server_name"
+                    android:text="（当前使用）"
+                    android:textColor="#28BEA0"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/over_sea_server_account"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/over_sea_server_name"
+                    android:layout_marginTop="2dp"
+                    android:text="AnkiChinas@163.com"
+                    android:textColor="@color/new_primary_text_third_color"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/quit_over_sea_server"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="退出"
+                android:textColor="@drawable/switch_server_login_color_selector"
+                android:textSize="15sp" />
+        </RelativeLayout>
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:src="#F3F3F4" />
+        <RelativeLayout
+            android:id="@+id/rl_china_server"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="9dp">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true">
+
+                <TextView
+                    android:id="@+id/china_server_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="国内服务器"
+                    android:textColor="@color/new_primary_text_forth_color"
+                    android:textSize="16sp"
+                    android:textStyle="normal" />
+
+                <TextView
+                    android:id="@+id/using_china_server"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@id/china_server_name"
+                    android:layout_marginStart="2dp"
+                    android:layout_toEndOf="@id/china_server_name"
+                    android:text="（当前使用）"
+                    android:textColor="#28BEA0"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/china_server_account"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/china_server_name"
+                    android:layout_marginTop="2dp"
+                    android:text="未登录同步账号"
+                    android:textColor="@color/new_primary_text_third_color"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/quit_china_server"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="退出"
+                android:textColor="@drawable/switch_server_login_color_selector"
+                android:textSize="15sp" />
+        </RelativeLayout>
+
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
+
+

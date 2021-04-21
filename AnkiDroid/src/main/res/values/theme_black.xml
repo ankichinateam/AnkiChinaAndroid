@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="theme_black_primary">#070707</color>
+    <color name="theme_black_primary_dark">#000000</color>
+    <color name="theme_black_primary_light">#151515</color>
+    <color name="theme_black_accent">#1565C0</color>
+    <color name="theme_black_primary_text">#fff</color> <!-- Alternative: #808080 -->
+    <color name="theme_black_secondary_text">#a0a0a0</color>
+    <color name="theme_black_row_current">#1a1a1a</color>
+
+    <style name="Theme_Dark.Black">
+        <!-- Android colors -->
+        <item name="colorPrimary">@color/theme_black_primary_dark</item>
+        <item name="colorPrimaryDark">@color/black</item>
+        <item name="colorAccent">@color/theme_black_accent</item>
+        <item name="android:textColor">@color/theme_black_primary_text</item>
+        <item name="android:textColorPrimary">@color/theme_black_primary_text</item>
+        <item name="android:textColorSecondary">@color/theme_black_secondary_text</item>
+        <item name="android:colorBackground">@color/theme_black_primary</item>
+        <item name="android:windowBackground">@color/theme_black_primary</item>
+        <!-- App buttons -->
+        <item name="largeButtonBackgroundColor">#303030</item>
+        <item name="largeButtonBackgroundColorFocused">#444444</item>
+        <item name="largeButtonBackgroundColorPressed">#606060</item>
+        <item name="largeButtonTextColor">@color/theme_black_primary_text</item>
+        <item name="largeButtonSecondaryBackgroundColor">#202020</item>
+        <item name="largeButtonSecondaryBackgroundColorFocused">#303030</item>
+        <item name="largeButtonSecondaryBackgroundColorPressed">#3F3F3F</item>
+        <item name="largeButtonSecondaryTextColor">@color/material_grey_700</item>
+        <!-- Action bar styles -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionBarTextColor">@color/white</item>
+        <item name="actionBarTextColorNew">@color/white</item>
+        <item name="actionBarPopupBackgroundColor">@color/theme_black_primary_light</item>
+        <item name="actionBarPopupTextColor">@color/theme_black_primary_text</item>
+        <item name="actionModeBackground">@color/theme_black_primary_dark</item>
+        <!-- Deck list colors and divider -->
+        <item name="currentDeckBackground">@drawable/item_background_selected_pre21_black</item>
+        <item name="currentDeckBackgroundColor">@color/theme_black_row_current</item>
+        <item name="dynDeckColor">#305683</item>
+        <item name="deckDivider">@drawable/divider_black</item>
+        <item name="expandRef">@drawable/ic_chevron_right_white_24dp</item>
+        <item name="collapseRef">@drawable/ic_expand_more_white_24dp</item>
+        <item name="statsTabBackgroundColor">@color/black</item>
+        <!-- Count colors -->
+        <item name="newCountColor">@color/material_blue_700</item>
+        <item name="learnCountColor">@color/material_red_400</item>
+        <item name="reviewCountColor">@color/material_green_400</item>
+        <item name="zeroCountColor">#202020</item>
+        <!-- Reviewer colors -->
+        <item name="topBarColor">@color/theme_black_primary</item>
+        <item name="maxTimerColor">@color/material_red_300</item>
+        <item name="answerButtonTextColor">@color/theme_black_primary_text</item>
+        <item name="againButtonTextColor">@color/white</item>
+        <item name="hardButtonTextColor">@color/white</item>
+        <item name="goodButtonTextColor">@color/white</item>
+        <item name="easyButtonTextColor">@color/white</item>
+        <!-- Reviewer button drawables -->
+        <item name="againButtonRef">@drawable/footer_button_again_dark</item>
+        <item name="hardButtonRef">@drawable/footer_button_hard_dark</item>
+        <item name="goodButtonRef">@drawable/footer_button_good_dark</item>
+        <item name="easyButtonRef">@drawable/footer_button_easy_dark</item>
+        <item name="againButtonRippleRef">@drawable/footer_button_again_dark_ripple</item>
+        <item name="hardButtonRippleRef">@drawable/footer_button_hard_dark_ripple</item>
+        <item name="goodButtonRippleRef">@drawable/footer_button_good_dark_ripple</item>
+        <item name="easyButtonRippleRef">@drawable/footer_button_easy_dark_ripple</item>
+        <!-- Card Browser Colors -->
+        <item name="cardBrowserDivider">@color/white</item>
+        <!-- Stats colors -->
+        <item name="stats_young">#7c7</item>
+        <item name="stats_mature">#070</item>
+        <item name="stats_learn">#00F</item>
+        <item name="stats_relearn">#c00</item>
+        <item name="stats_cram">#ff0</item>
+        <item name="stats_interval">#077</item>
+        <item name="stats_hours">@color/material_grey_500</item>
+        <item name="stats_counts">@color/material_grey_800</item>
+        <item name="stats_unseen">@color/material_grey_800</item>
+        <item name="stats_suspended_and_buried">#ff0</item>
+        <item name="stats_cumulative">@color/material_grey_800</item>
+        <!-- Browser colors -->
+        <item name="suspendedColor">#A8A634</item>
+        <item name="selectedColor">#a86634</item>
+        <item name="markedColor">#391080</item>
+        <item name="flagRed">@color/flag_red</item>
+        <item name="flagOrange">@color/flag_orange</item>
+        <item name="flagGreen">@color/flag_green</item>
+        <item name="flagBlue">@color/flag_blue</item>
+        <!-- Note editor colors -->
+        <item name="duplicateColor">#855</item>
+        <!-- FAB -->
+        <item name="fab_normal">#ff303030</item>
+        <item name="fab_pressed">#c8303030</item> <!-- 55 less opacity than fab_normal -->
+        <item name="fab_labelsTextColor">@color/theme_black_primary_text</item>
+        <item name="fab_background">@color/theme_black_primary_light</item>
+        <item name="fab_item_background">@drawable/fab_label_background_black_pre21</item>
+        <!-- Images -->
+        <item name="navDrawerImage">@drawable/nav_drawer_logo_black_theme</item>
+        <!-- Dialog styles -->
+        <item name="android:listPreferredItemHeight">56dip</item>
+        <item name="md_dark_theme">true</item>
+        <item name="md_background_color">@color/theme_black_primary_light</item>
+    </style>
+
+    <!-- Preferences screens -->
+    <style name="LegacyActionBarBlack" parent="Theme_Dark.Black">
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">false</item>
+        <item name="android:textColor">@color/prefs_item_dark</item>
+        <item name="android:textColorSecondary">@color/prefs_item_dark</item>
+    </style>
+</resources>

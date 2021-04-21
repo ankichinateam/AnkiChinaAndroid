@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Copyright (c) 2020 David Allison <davidallisongithub@gmail.com>
+
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free Software
+  Foundation; either version 3 of the License, or (at your option) any later
+  version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+  PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with
+  this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@null"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:id="@+id/content_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingVertical="16dp"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:background="?attr/settingItemBackgroundRound"
+        android:paddingHorizontal="21dp">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="增加今日学习量"
+            android:textFontWeight="500"
+            android:textColor="?attr/primaryTextColor"
+            android:textSize="17sp" />
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="新卡有7788张，待复习787张"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:textSize="11sp" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="43dp"
+            android:layout_marginTop="11dp"
+            >
+            <EditText
+                android:id="@+id/add_new_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="15sp"
+                android:text="10"
+                android:theme="@style/MyEditText"
+                android:textColor="?attr/primaryTextColor"
+                android:textColorHint="?attr/primaryTextSecondaryColor"
+                android:textCursorDrawable="@drawable/bg_edittext"
+                android:inputType="number"
+                android:maxLength="11" />
+            <TextView
+                android:text="新卡"
+                android:textSize="13sp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:textColor="?attr/primaryTextColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="43dp"
+            android:layout_marginTop="5dp"
+            >
+            <EditText
+                android:id="@+id/add_rev_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="15sp"
+                android:text="10"
+                android:theme="@style/MyEditText"
+                android:textColor="?attr/primaryTextColor"
+                android:textColorHint="?attr/primaryTextSecondaryColor"
+                android:textCursorDrawable="@drawable/bg_edittext"
+                android:inputType="number"
+                android:maxLength="11" />
+            <TextView
+                android:text="复习卡"
+                android:textSize="13sp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:textColor="?attr/primaryTextColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </RelativeLayout>
+        <Button
+            android:id="@+id/start"
+            android:layout_width="match_parent"
+            android:layout_height="47dp"
+            android:text="@string/studyoptions_start"
+            android:layout_marginTop="17dp"
+            android:background="@drawable/selector_start_study_button"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            />
+    </LinearLayout>
+
+</RelativeLayout>

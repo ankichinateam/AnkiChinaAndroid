@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+~ Copyright (c) 2012 Norbert Nagold <norbert.nagold@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://arbitrary.app.namespace/com.ichi2.anki" >
+
+    <PreferenceCategory android:title="@string/deck_conf_cram_filter" >
+        <EditTextPreference
+            android:key="search"
+            android:title="@string/deck_conf_cram_search" />
+
+        <com.ichi2.preferences.NumberRangePreference
+            android:key="limit"
+            android:numeric="integer"
+            android:title="@string/deck_conf_cram_limit"
+            app:max="99999"
+            app:min="1" />
+
+        <ListPreference
+            android:key="order"
+            android:title="@string/deck_conf_cram_order" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/deck_conf_cram_options" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="resched"
+            android:summary="@string/deck_conf_cram_reschedule_summ"
+            android:title="@string/deck_conf_cram_reschedule" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:disableDependentsState="false"
+            android:key="stepsOn"
+            android:title="@string/deck_conf_cram_steps_summ" />
+
+        <com.ichi2.preferences.StepsPreference
+            android:dependency="stepsOn"
+            android:key="steps"
+            android:title="@string/deck_conf_cram_steps"
+            app:allowEmpty="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

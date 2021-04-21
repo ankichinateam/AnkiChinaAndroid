@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+~ Copyright (c) 2011 Norbert Nagold <norbert.nagold@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<resources>
+
+    <!-- Android provides a straightforward way to control action bar styles; an additional color attribute
+     specifically for action bar text color isn't necessary, but it simplifies the color setting
+     while making it accessible everywhere and eases the use of themes -->
+    <attr name="actionBarTextColor" format="color"/> <!-- For title and subtitle, and any other text that may appear in action bar-->
+    <attr name="actionBarTextColorNew" format="color"/> <!-- For title and subtitle, and any other text that may appear in action bar-->
+    <attr name="actionBarPopupBackgroundColor" format="reference"/>
+    <attr name="actionBarPopupTextColor" format="color"/>
+
+    <!-- Custom preferences -->
+    <attr name="min" format="integer" />
+    <attr name="max" format="integer" />
+    <attr name="allowEmpty" format="boolean" />
+
+    <declare-styleable name="SeekBarPreference">
+        <attr name="interval" format="integer" />
+    </declare-styleable>
+    <!-- App buttons -->
+    <attr name="largeButtonBackgroundColor" format="color"/>
+    <attr name="largeButtonBackgroundColorFocused" format="color"/>
+    <attr name="largeButtonBackgroundColorPressed" format="color"/>
+    <attr name="largeButtonTextColor" format="color"/>
+    <attr name="largeButtonSecondaryBackgroundColor" format="color"/>
+    <attr name="largeButtonSecondaryBackgroundColorFocused" format="color"/>
+    <attr name="largeButtonSecondaryBackgroundColorPressed" format="color"/>
+    <attr name="largeButtonSecondaryTextColor" format="color"/>
+    <!-- Deck list colors, divider, and expander -->
+    <attr name="currentDeckBackground" format="reference"/>
+    <attr name="currentDeckBackgroundColor" format="color"/>
+    <attr name="dynDeckColor" format="color"/>
+    <attr name="deckDivider" format="reference"/>
+    <attr name="searchRef" format="reference"/>
+    <attr name="problemRef" format="reference"/>
+    <attr name="expandRef" format="reference"/>
+    <attr name="collapseRef" format="reference"/>
+    <attr name="fileBagRef" format="reference"/>
+    <!-- Menu item list -->
+    <attr name="syncIconRef" format="reference"/>
+    <attr name="menuIconRef" format="reference"/>
+    <!-- Review Menu item list -->
+    <attr name="reviewMenuUndoIconRef" format="reference"/>
+    <attr name="reviewMenuFlagIconRef" format="reference"/>
+    <attr name="navBarBackRef" format="reference"/>
+    <attr name="navBarBackRefDark" format="reference"/>
+    <attr name="navBarTimeRef" format="reference"/>
+    <attr name="xieyiArrowRef" format="reference"/>
+    <attr name="loginArrowRef" format="reference"/>
+    <attr name="tabIconOne" format="reference"/>
+    <attr name="tabIconTwo" format="reference"/>
+    <attr name="tabIconThree" format="reference"/>
+    <attr name="tabIconFour" format="reference"/>
+    <attr name="tabIconFive" format="reference"/>
+    <attr name="mainBottomTextColorRef" format="color"/>
+    <attr name="mainItemBackgroundColor" format="color"/>
+    <attr name="search_background" format="color"/>
+    <attr name="deckCountNewTextColorRef" format="color"/>
+    <attr name="deckCountRevTextColorRef" format="color"/>
+    <attr name="toolbarTextColor" format="color"/>
+    <attr name="toolbar2TextColor" format="color"/>
+    <attr name="statsTabBackgroundColor" format="color"/>
+    <attr name="settingBackgroundColor" format="color"/>
+    <attr name="settingItemBackground" format="reference"/>
+    <attr name="settingItemBackgroundTop" format="reference"/>
+    <attr name="settingItemBackgroundBottom" format="reference"/>
+    <attr name="settingItemBackgroundRound" format="reference"/>
+    <attr name="settingDividerColor" format="color"/>
+    <attr name="settingHeaderRef" format="color"/>
+    <attr name="primaryTextColor" format="color"/>
+    <attr name="primary_text_third_color999999" format="color"/>
+    <attr name="primary_text_third_color666666" format="color"/>
+    <attr name="primaryForthTextColor333333" format="color"/>
+    <attr name="primaryTextSecondaryColor" format="color"/>
+    <attr name="showAnswerButtonColor" format="color"/>
+    <attr name="answerButtonBackgroundColor" format="color"/>
+    <attr name="primaryBaseColor" format="color"/>
+    <attr name="primaryMirrorColor" format="color"/>
+    <attr name="reviewStatusBarColor" format="color"/>
+    <attr name="reviewTopDividerColor" format="color"/>
+    <attr name="toolbarBackgroundColor" format="color"/>
+
+    <!-- Navigation drawer -->
+    <attr name="navDrawerItemColor" format="reference"/>
+    <attr name="menuAddIcon" format="reference"/>
+    <attr name="menuBuildIcon" format="reference"/>
+    <attr name="navDrawerItemBackgroundColor" format="reference"/>
+    <!-- Card count colors -->
+    <attr name="newCountColor" format="color"/>
+    <attr name="learnCountColor" format="color"/>
+    <attr name="reviewCountColor" format="color"/>
+    <attr name="zeroCountColor" format="color"/>
+    <!-- Reviewer button backgrounds -->
+    <attr name="againButtonRef" format="reference"/>
+    <attr name="hardButtonRef" format="reference"/>
+    <attr name="goodButtonRef" format="reference"/>
+    <attr name="easyButtonRef" format="reference"/>
+    <!-- Same thing but with ripples -->
+    <attr name="againButtonRippleRef" format="reference"/>
+    <attr name="hardButtonRippleRef" format="reference"/>
+    <attr name="goodButtonRippleRef" format="reference"/>
+    <attr name="easyButtonRippleRef" format="reference"/>
+    <!-- Reviewer button text colors-->
+    <attr name="answerButtonTextColor" format="color"/>
+    <attr name="againButtonTextColor" format="color"/>
+    <attr name="hardButtonTextColor" format="color"/>
+    <attr name="goodButtonTextColor" format="color"/>
+    <attr name="easyButtonTextColor" format="color"/>
+    <!-- Card Browser Colors -->
+    <attr name="cardBrowserDivider" format="color"/>
+    <!-- Stats colors -->
+    <attr name="stats_young" format="color"/>
+    <attr name="stats_mature" format="color"/>
+    <attr name="stats_learn" format="color"/>
+    <attr name="stats_relearn" format="color"/>
+    <attr name="stats_cram" format="color"/>
+    <attr name="stats_interval" format="color"/>
+    <attr name="stats_hours" format="color"/>
+    <attr name="stats_counts" format="color"/>
+    <attr name="stats_unseen" format="color"/>
+    <attr name="stats_suspended_and_buried" format="color"/>
+    <attr name="stats_cumulative" format="color"/>
+    <!-- Reviewer other colors -->
+    <attr name="topBarColor" format="color"/>
+    <attr name="maxTimerColor" format="color"/>
+    <!-- Browser colors -->
+    <attr name="suspendedColor" format="color"/>
+    <attr name="selectedColor" format="color"/>
+    <attr name="markedColor" format="color"/>
+    <attr name="flagRed" format="color"/>
+    <attr name="flagOrange" format="color"/>
+    <attr name="flagGreen" format="color"/>
+    <attr name="flagBlue" format="color"/>
+    <!-- Note editor colors -->
+    <attr name="duplicateColor" format="color"/>
+    <!-- Images -->
+    <attr name="navDrawerImage" format="integer"/>
+    <attr name="attachFileImage" format="integer"/>
+    <attr name="upDownImage" format="integer"/>
+    <attr name="dialogErrorIcon" format="integer"/>
+    <attr name="dialogSyncErrorIcon" format="integer"/>
+    <attr name="dialogSendIcon" format="integer"/>
+    <!-- FAB -->
+    <attr name="fab_normal" format="color"/> <!-- Also color of the Study button in StudyOptions -->
+    <attr name="fab_pressed" format="color"/>
+    <attr name="fab_labelsTextColor" format="color"/>
+    <attr name="fab_background" format="color"/>
+    <attr name="fab_item_background" format="reference"/>
+</resources>

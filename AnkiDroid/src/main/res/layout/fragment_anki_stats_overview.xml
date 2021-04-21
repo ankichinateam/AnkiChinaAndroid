@@ -1,0 +1,23 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         
+        android:paddingTop="11dp">
+        <ProgressBar
+            android:id="@+id/progress_bar_stats_overview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentRight="false"
+            android:layout_centerInParent="true"
+            android:visibility="gone"
+            android:indeterminate="true" />
+        <com.ichi2.ui.OverView
+            android:id="@+id/over_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
+</ScrollView>

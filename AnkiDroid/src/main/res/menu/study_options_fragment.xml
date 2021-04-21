@@ -1,0 +1,50 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ankidroid="http://schemas.android.com/apk/res-auto" >
+    <item
+        android:id="@+id/action_undo"
+        android:enabled="true"
+        android:icon="@drawable/ic_undo_white_24dp"
+        android:title="@string/undo"
+        ankidroid:showAsAction="always"/>
+    <item
+        android:id="@+id/action_rebuild"
+        android:title="@string/rebuild_cram_label"
+        android:visibility = "gone"
+        android:icon="@mipmap/nav_bar_refresh_normal"
+        ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_empty"
+        android:title="@string/empty_cram_label"
+        android:visibility = "gone"
+        android:icon="@mipmap/nav_bar_clear_normal"
+        ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_add_card"
+        android:title="@string/add"
+        android:icon="?attr/menuAddIcon"
+        ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_custom_study"
+        android:title="@string/custom_study"
+        android:icon="?attr/menuBuildIcon"
+        ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_rename"
+        android:title="@string/rename_deck"
+        android:visibility = "gone"/>
+    <item
+        android:id="@+id/action_deck_options"
+        android:title="@string/study_options"/>
+    <item
+        android:id="@+id/action_delete"
+        android:title="@string/contextmenu_deckpicker_delete_deck"
+        android:visibility = "gone"/>
+    <item
+        android:id="@+id/action_export"
+        android:title="@string/export_deck"
+        android:visibility = "gone"/>
+    <item
+        android:id="@+id/action_unbury"
+        android:title="@string/unbury"
+        android:visibility = "gone"/>
+</menu>

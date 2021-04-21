@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Copyright (c) 2020 David Allison <davidallisongithub@gmail.com>
+
+  This program is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free Software
+  Foundation; either version 3 of the License, or (at your option) any later
+  version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+  PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with
+  this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clipToPadding="false"
+    android:background="@null"
+    android:paddingVertical="28dp">
+
+
+
+    <RelativeLayout
+        android:id="@+id/content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="485dp"
+        android:layout_centerInParent="true"
+        android:background="@drawable/show_on_start_dialog"
+        android:paddingHorizontal="44dp"
+        >
+
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="61dp"
+                android:gravity="start"
+                android:text="欢迎来到ANKI志愿版！"
+                android:textColor="@color/new_primary_color"
+                android:textSize="24sp" />
+            <ScrollView
+                android:layout_below="@id/title"
+                android:layout_marginTop="16dp"
+                android:layout_above="@id/confirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ANKI志愿版 需要存储权限，我们只用来存储你的ANKI志愿版 集合、记忆卡片媒体和备份。我们的代码是开源的，由志愿者撰写，并且受到数百万人的信任。\n\n如果有任何疑问，请访问我们的应用内手册或访问我们的支持论坛。\n\n感谢你尝试ANKI志愿版\n— ANKI志愿者开发团队"
+                    android:textColor="@color/new_primary_text_color"
+                    android:textSize="16sp" />
+            </ScrollView>
+
+
+
+        <TextView
+            android:id="@+id/confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="15dp"
+            android:text="确定"
+            android:textColor="@color/new_primary_color"
+            android:textSize="17sp" />
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="-28dp"
+        android:src="@mipmap/popup_anki_icon_normal" />
+</RelativeLayout>

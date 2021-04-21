@@ -1,0 +1,886 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="11dp">
+
+
+    <RelativeLayout
+        android:id="@+id/rl_today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/statistic_card">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/content"
+            android:layout_alignParentRight="true"
+            android:baselineAlignBottom="true"
+            android:src="@mipmap/statistics_bg_noraml" />
+
+        <RelativeLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_width="239dp"
+                android:layout_height="1px"
+                android:layout_below="@id/tv_today_minute"
+                android:layout_marginTop="10dp"
+                android:background="#428AFF" />
+
+            <ImageView
+                android:layout_width="239dp"
+                android:layout_height="1px"
+                android:layout_below="@id/tv_today_repeat"
+                android:layout_marginTop="10dp"
+                android:background="#428AFF" />
+
+            <TextView
+                android:id="@+id/tv_today"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="16dp"
+                android:text="今天"
+                android:textColor="@color/white"
+                android:textSize="31sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_today_repeat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_today_minute"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="21dp"
+                android:text="重来数量 0"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tv_today_minute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_today"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="21dp"
+                android:text="0分钟内  学习了0张卡片"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:id="@+id/tv_today_correct_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_today_repeat"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="21dp"
+                android:text="正确率"
+                android:visibility="gone"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:id="@+id/tv_today_study"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_today_correct_rate"
+                android:layout_marginBottom="14dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="21dp"
+                android:text="0分钟内  学习了0张卡片"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+            <TextView
+                android:id="@+id/tv_today_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_today_study"
+                android:layout_marginBottom="14dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="21dp"
+                android:text="0分钟内  学习了0张卡片"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_predict"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/description"
+        android:layout_marginTop="7dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_predict_all"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_predict_avg"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <TextView
+            android:id="@+id/tv_predict"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginTop="16dp"
+            android:text="预测"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_predict_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_predict"
+
+            android:layout_marginTop="14dp"
+            android:text="全部  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_predict_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_predict_all"
+            android:layout_toEndOf="@id/tv_predict_all"
+            android:text="0张卡片待复习"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_predict_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_predict_all"
+
+            android:layout_marginTop="20dp"
+            android:text="平均  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_predict_avg_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_predict_avg"
+            android:layout_toEndOf="@id/tv_predict_avg"
+            android:text="0.0张卡片待复习/天"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_predict_deadline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_predict_avg"
+
+            android:layout_marginTop="20dp"
+            android:text="明天到期  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_predict_deadline_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_predict_deadline"
+            android:layout_toEndOf="@id/tv_predict_deadline"
+            android:text="0张卡片"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_review_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_predict"
+        android:layout_marginTop="7dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="239dp"
+            android:layout_height="1px"
+            android:layout_below="@id/tv_review_day"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_review_avg"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_review_all"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <TextView
+            android:id="@+id/tv_review"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="复习数量"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_review_day"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review"
+
+            android:layout_marginTop="14dp"
+            android:text="打卡天数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_day_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_day"
+            android:layout_toEndOf="@id/tv_review_day"
+            android:text="0/30"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_day_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_day_content"
+            android:layout_toEndOf="@id/tv_review_day_content"
+            android:text="（0%）"
+            android:textColor="@color/new_primary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_day"
+
+            android:layout_marginTop="20dp"
+            android:text="总共  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_all"
+            android:layout_toEndOf="@id/tv_review_all"
+            android:text="0张卡片已复习"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_all"
+
+            android:layout_marginTop="20dp"
+            android:text="平均  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_avg_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_avg"
+            android:layout_toEndOf="@id/tv_review_avg"
+            android:text="0.0张每天"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_avg"
+android:visibility="gone"
+            android:layout_marginTop="20dp"
+            android:text="如果你每天都学习，那么每天只需要复习0.0张卡片"
+            android:textColor="@color/new_primary_color"
+            android:textSize="13sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_review_day"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_review_count"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="7dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_review_time_count"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_review_time_all"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_review_time_avg"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <TextView
+            android:id="@+id/tv_review_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginTop="16dp"
+            android:text="复习时间  "
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_review_time_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_time"
+
+            android:layout_marginTop="14dp"
+            android:text="打卡天数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_count_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_time_count"
+            android:layout_toEndOf="@id/tv_review_time_count"
+            android:text="0/30"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_count_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_time_count_content"
+            android:layout_toEndOf="@id/tv_review_time_count_content"
+            android:text="（0%）"
+            android:textColor="@color/new_primary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_time_count"
+
+            android:layout_marginTop="20dp"
+            android:text="全部  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_time_all"
+            android:layout_toEndOf="@id/tv_review_time_all"
+            android:text="0张卡片已复习"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_time_all"
+
+            android:layout_marginTop="20dp"
+            android:text="平均  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_avg_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_review_time_avg"
+            android:layout_toEndOf="@id/tv_review_time_avg"
+            android:text="0.0张每天"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_review_time_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_review_time_avg"
+
+            android:layout_marginTop="20dp"
+            android:text="如果你每天都学习，那么每天只需要复习0.0张卡片"
+            android:textColor="@color/new_primary_color"
+            android:textSize="13sp" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rl_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_review_day"
+        android:layout_marginTop="7dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_add_all"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+
+
+        <TextView
+            android:id="@+id/tv_add"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginTop="16dp"
+            android:text="已添加"
+            android:textStyle="bold"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp" />
+        <TextView
+            android:id="@+id/tv_add_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="全部  "
+
+            android:layout_below="@id/tv_add"
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_add_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_add_all"
+            android:layout_toEndOf="@id/tv_add_all"
+            android:text="0张卡片"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_add_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_add_all"
+
+            android:layout_marginTop="20dp"
+            android:text="平均  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_add_avg_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_add_avg"
+            android:layout_toEndOf="@id/tv_add_avg"
+            android:text="0张卡片每天"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rl_distance"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_add"
+        android:layout_marginTop="7dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_distance_avg"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+
+
+        <TextView
+            android:id="@+id/tv_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="间隔  "
+            android:textStyle="bold"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp" />
+
+
+        <TextView
+            android:id="@+id/tv_distance_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_distance"
+
+            android:layout_marginTop="14dp"
+            android:text="平均间隔  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_distance_avg_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_distance_avg"
+            android:layout_toEndOf="@id/tv_distance_avg"
+            android:text="0.0小时"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_distance_max"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginTop="20dp"
+            android:text="最长间隔"
+
+            android:layout_below="@id/tv_distance_avg"
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_distance_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_distance_max"
+            android:layout_toEndOf="@id/tv_distance_max"
+            android:text="0.0小时"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rl_answer_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_distance"
+        android:layout_marginTop="7dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_answer_study"
+            android:layout_marginTop="7dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_answer_not_familiar"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+
+        <TextView
+            android:id="@+id/tv_answer_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginTop="16dp"
+            android:text="回答按钮"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_answer_study"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_answer_button"
+
+            android:layout_marginTop="14dp"
+            android:text="学习  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_study_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_study"
+            android:layout_toEndOf="@id/tv_answer_study"
+            android:text="0.00%正确"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_study_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_study_content"
+            android:layout_toEndOf="@id/tv_answer_study_content"
+            android:text="（0/0）"
+            android:textColor="@color/new_primary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_not_familiar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_answer_study"
+
+            android:layout_marginTop="20dp"
+            android:text="有待熟悉  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_not_familiar_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_not_familiar"
+            android:layout_toEndOf="@id/tv_answer_not_familiar"
+            android:text="0.00%正确"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_answer_not_familiar_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_not_familiar_content"
+            android:layout_toEndOf="@id/tv_answer_not_familiar_content"
+            android:text="（0/0）"
+            android:textColor="@color/new_primary_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_answer_familiar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_answer_not_familiar"
+
+            android:layout_marginTop="20dp"
+            android:text="熟悉  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_familiar_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_familiar"
+            android:layout_toEndOf="@id/tv_answer_familiar"
+            android:text="0.00%正确"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_answer_familiar_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_answer_familiar_content"
+            android:layout_toEndOf="@id/tv_answer_familiar_content"
+            android:text="（0/0）"
+            android:textColor="@color/new_primary_color"
+            android:textSize="15sp" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rl_note_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_answer_status"
+        android:layout_marginTop="7dp"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="20dp"
+        android:background="@drawable/statistic_card_light">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_note_type_all_card"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_note_type_all"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_note_low_level"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/tv_note_avg_level"
+            android:layout_marginTop="10dp"
+            android:background="#E6EFFA" />
+        <TextView
+            android:id="@+id/tv_note_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="笔记类型"
+            android:textStyle="bold"
+            android:textColor="@color/new_primary_text_color"
+            android:textSize="20sp" />
+        <TextView
+            android:id="@+id/tv_note_type_all_card"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="总卡牌数  "
+            android:layout_below="@id/tv_note_type"
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_note_type_all_card_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_note_type_all_card"
+            android:layout_toEndOf="@id/tv_note_type_all_card"
+            android:text="48"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_note_type_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_note_type_all_card"
+            android:layout_marginTop="20dp"
+            android:text="总笔记数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_note_type_all_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_note_type_all"
+            android:layout_toEndOf="@id/tv_note_type_all"
+            android:text="48"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_note_low_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_note_type_all"
+            android:layout_marginTop="20dp"
+            android:text="最低难度系数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_note_low_level_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_note_low_level"
+            android:layout_toEndOf="@id/tv_note_low_level"
+            android:text="0%"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_note_avg_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_note_low_level"
+
+            android:layout_marginTop="20dp"
+            android:text="平均难度系数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_note_avg_level_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_note_avg_level"
+            android:layout_toEndOf="@id/tv_note_avg_level"
+            android:text="0%"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/tv_note_high_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_note_avg_level"
+
+            android:layout_marginTop="20dp"
+            android:text="最高难度系数  "
+            android:textColor="@color/new_primary_text_secondary_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tv_note_high_level_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/tv_note_high_level"
+            android:layout_toEndOf="@id/tv_note_high_level"
+            android:text="0%"
+            android:textColor="@color/new_primary_text_third_color"
+            android:textSize="15sp" />
+    </RelativeLayout>
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_today"
+        android:layout_marginTop="33dp"
+        android:layout_marginLeft="16dp"
+        android:text="1个月"
+        android:textColor="@color/new_primary_text_color"
+        android:textSize="31sp"
+        android:textStyle="bold" />
+
+</RelativeLayout>

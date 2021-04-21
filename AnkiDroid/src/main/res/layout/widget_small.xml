@@ -1,0 +1,66 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ankidroid_widget_small_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:clickable="true"
+    android:focusable="false"
+    android:background="#00FFFFFF">
+
+    <ImageButton
+        android:id="@+id/ankidroid_widget_small_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#00FFFFFF"
+        android:clickable="false"
+        android:contentDescription="@string/widget_small_button"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:src="@drawable/widget_bg_small"/>
+
+    <RelativeLayout
+        android:id="@+id/ankidroid_widget_text_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:orientation="horizontal"
+        android:padding="4dip" >
+
+        <TextView
+            android:id="@+id/widget_due"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_bg_number"
+            android:gravity="center"
+            android:singleLine="true"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            android:visibility="invisible" />
+
+        <TextView
+            android:id="@+id/widget_eta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/widget_bg_time"
+            android:gravity="center"
+            android:singleLine="true"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:visibility="invisible" />
+    </RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/ankidroid_widget_small_finish_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#00FFFFFF"
+        android:clickable="false"
+        android:focusable="false"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:src="@drawable/widget_bg_small_finish"/>
+</FrameLayout>

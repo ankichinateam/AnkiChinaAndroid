@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/studyoptions_main"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:gravity="center">
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <include layout="@layout/toolbar_study_option"  />
+        <LinearLayout
+            android:layout_below="@id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <View
+                android:id="@+id/studyoptions_gradient"
+                android:layout_width="15dp"
+                android:layout_height="fill_parent"
+                android:background="@drawable/shadow_left"
+                android:visibility="gone"/>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/studyoptions_mainframe"
+                 >
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/files"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:clipToPadding="false"
+                    android:drawSelectorOnTop="true"
+                    android:fastScrollEnabled="true"
+                    android:focusable="true"
+
+                    android:layout_marginTop="10dp"
+                    android:scrollbars="none" />
+                <TextView
+                    android:id="@+id/text_no_child"
+                    android:layout_below="@+id/files"
+                    android:background="?attr/settingItemBackground"
+                    android:text="暂无子记忆库"
+                    android:gravity="center"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    android:layout_width="match_parent"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_height="match_parent"/>
+                <LinearLayout
+                    android:id="@+id/bottom_area_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_alignParentBottom="true"
+                    android:layout_centerHorizontal="true"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/studyoptions_congrats_message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minLines="2"
+                        android:layout_gravity="center_horizontal"
+                        android:gravity="center"
+                        android:paddingLeft="2dp"
+                        android:paddingRight="2dp"
+                        android:paddingBottom="8dp"/>
+
+                </LinearLayout>
+            </RelativeLayout>
+        </LinearLayout>
+    </RelativeLayout>
+    <include layout="@layout/anki_progress"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

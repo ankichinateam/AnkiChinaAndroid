@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
+    android:background="?attr/backgroundColor"
+    android:fitsSystemWindows="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:id="@+id/deckpicker_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+        <include layout="@layout/deckpicker_toolbar" />
+<!--        <RelativeLayout-->
+<!--            android:id="@+id/main_ad_layout"-->
+<!--            android:layout_marginHorizontal="16dp"-->
+<!--            android:layout_marginTop="9dp"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:background="@drawable/deck_picker_ad_background"-->
+<!--            android:paddingHorizontal="12dp"-->
+<!--            android:layout_height="47dp">-->
+<!--            <ImageView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:src="@mipmap/home_bg_one"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--            <ImageView-->
+<!--                android:layout_alignParentEnd="true"-->
+<!--                android:layout_alignParentBottom="true"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:src="@mipmap/home_bg_two"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--            <ImageView-->
+<!--                android:id="@+id/emoji"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:src="@mipmap/home_banner_icon_emoji"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--            <TextView-->
+<!--                android:id="@+id/main_ad_text"-->
+<!--                android:text="Anki制卡带学计划上线了，欢迎来参与 "-->
+<!--                android:textSize="15sp"-->
+<!--                android:layout_toEndOf="@id/emoji"-->
+<!--                android:layout_marginStart="6dp"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--            <ImageView-->
+<!--                android:id="@+id/remove_ad"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:layout_alignParentEnd="true"-->
+<!--                android:layout_marginEnd="11dp"-->
+<!--                android:src="@mipmap/banner_closed_normal"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--        </RelativeLayout>-->
+<!--        <TextView-->
+<!--            android:text="今日待学"-->
+<!--            android:textSize="17sp"-->
+<!--            android:layout_marginTop="25dp"-->
+<!--            android:textStyle="bold"-->
+<!--            android:layout_marginHorizontal="16dp"-->
+<!--            android:textColor="?attr/primaryForthTextColor333333"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"/>-->
+<!--        <LinearLayout-->
+<!--            android:weightSum="3"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:background="@drawable/deck_picker_statistic_background"-->
+<!--            android:layout_marginTop="9dp"-->
+<!--            android:layout_marginHorizontal="21dp"-->
+<!--            android:layout_height="84dp">-->
+<!--            <LinearLayout-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:orientation="vertical"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/new_card_num"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textSize="28sp"-->
+<!--                    android:textColor="?attr/primaryForthTextColor333333"-->
+<!--                    android:text="125"/>-->
+<!--                <TextView-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textSize="11sp"-->
+<!--                    android:layout_marginTop="4dp"-->
+<!--                    android:textColor="?attr/primary_text_third_color999999"-->
+<!--                    android:text="新卡"/>-->
+<!--            </LinearLayout>-->
+<!--            <ImageView-->
+<!--                android:layout_width="1dp"-->
+<!--                android:layout_height="21dp"-->
+<!--                android:layout_gravity="center_vertical"-->
+<!--                android:src="@color/review_top_divider"/>-->
+<!--            <LinearLayout-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:orientation="vertical"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/review_card_num"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textSize="28sp"-->
+<!--                    android:textColor="?attr/primaryForthTextColor333333"-->
+<!--                    android:text="456"/>-->
+<!--                <TextView-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textSize="11sp"-->
+<!--                    android:layout_marginTop="4dp"-->
+<!--                    android:textColor="?attr/primary_text_third_color999999"-->
+<!--                    android:text="复习"/>-->
+<!--            </LinearLayout>-->
+<!--            <ImageView-->
+<!--                android:layout_width="1dp"-->
+<!--                android:layout_height="21dp"-->
+<!--                android:layout_gravity="center_vertical"-->
+<!--                android:src="@color/review_top_divider"/>-->
+<!--            <LinearLayout-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:orientation="vertical"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_height="match_parent">-->
+<!--                <TextView-->
+<!--                    android:id="@+id/cost_time"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textSize="28sp"-->
+<!--                    android:textColor="?attr/primaryForthTextColor333333"-->
+<!--                    android:text="30"/>-->
+<!--                <TextView-->
+<!--                    android:id="@+id/cost_time_unit"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:textSize="11sp"-->
+<!--                    android:layout_marginTop="4dp"-->
+<!--                    android:textColor="?attr/primary_text_third_color999999"-->
+<!--                    android:text="预计耗时"/>-->
+<!--            </LinearLayout>-->
+
+<!--        </LinearLayout>-->
+<!--        <RelativeLayout-->
+<!--            android:layout_marginTop="25dp"-->
+<!--            android:layout_marginHorizontal="16dp"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+<!--            <TextView-->
+<!--                android:text="学习内容"-->
+<!--                android:textSize="17sp"-->
+<!--                android:textStyle="bold"-->
+<!--                android:layout_marginStart="11dp"-->
+<!--                android:textColor="?attr/primaryForthTextColor333333"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"/>-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tv_resource"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:layout_toStartOf="@id/quit_icon"-->
+<!--                android:layout_marginEnd="1dp"-->
+<!--                android:text="卡牌资源"-->
+<!--                android:textColor="?attr/primary_text_third_color999999"-->
+<!--                android:textSize="13sp"-->
+<!--                />-->
+<!--            <ImageView-->
+<!--                android:id="@+id/quit_icon"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_alignParentEnd="true"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:src="@mipmap/set_xieyi_arrow_normal" />-->
+<!--        </RelativeLayout>-->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/pull_to_sync_wrapper"
+            android:layout_marginTop="3dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <RelativeLayout
+                    android:id="@+id/deck_picker_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    >
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/files"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:drawSelectorOnTop="true"
+                        android:fastScrollEnabled="true"
+                        android:focusable="true"
+                        android:paddingBottom="72dp"
+                        android:layout_above="@id/today_stats_text_view"
+                        android:scrollbars="none"/>
+
+                    <TextView
+                        android:id="@+id/today_stats_text_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:textColor="@color/new_primary_text_third_color"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        android:layout_alignParentBottom="true"
+                        android:gravity="center"/>
+
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:id="@+id/no_decks_placeholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="19dp"
+                        android:layout_gravity="center_horizontal"
+                        app:srcCompat="@mipmap/empty_icon_normal" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textColor="@color/new_primary_text_third_color"
+                        android:textSize="13sp"
+                        android:text="@string/no_cards_placeholder_title"
+                        />
+
+                    <!--                    <TextView-->
+                    <!--                        android:layout_width="match_parent"-->
+                    <!--                        android:layout_height="wrap_content"-->
+                    <!--                        android:gravity="center"-->
+                    <!--                        android:textAlignment="center"-->
+                    <!--                        android:text="@string/no_cards_placeholder_description"-->
+                    <!--                        style="@style/TextAppearance.AppCompat.Body1" />-->
+                </LinearLayout>
+
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
+    <include layout="@layout/anki_progress"/>
+    <include layout="@layout/floating_add_button"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

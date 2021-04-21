@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/no_decks_placeholder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="80dp"
+    android:gravity="center_vertical"
+    android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            app:srcCompat="@mipmap/empty_icon_normal" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="11dp"
+            android:textColor="?attr/primary_text_third_color999999"
+            android:textSize="13sp"
+            android:text="还没有卡牌，去获取学习内容吧！"
+            />
+    <Button
+        android:id="@+id/btn_get_card"
+        android:layout_width="213dp"
+        android:layout_height="47dp"
+        android:text="获取卡牌资源"
+        android:background="@drawable/primary_color_button_bg"
+        android:layout_gravity="center_horizontal"
+        android:textSize="17sp"
+        android:layout_marginTop="30dp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        />
+    </LinearLayout>
+

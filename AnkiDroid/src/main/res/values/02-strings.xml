@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?> 
+ <!-- 
+ ~ Copyright (c) 2009 Andrew <andrewdubya@gmail> 
+ ~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com> 
+ ~ Copyright (c) 2009 Daniel Svaerd <daniel.svard@gmail.com> 
+ ~ Copyright (c) 2009 Nicolas Raoul <nicolas.raoul@gmail.com> 
+ ~ Copyright (c) 2010 Norbert Nagold <norbert.nagold@gmail.com> 
+ ~ This program is free software; you can redistribute it and/or modify it under 
+ ~ the terms of the GNU General Public License as published by the Free Software 
+ ~ Foundation; either version 3 of the License, or (at your option) any later 
+ ~ version. 
+ ~ 
+ ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+ ~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ ~ PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+ ~ 
+ ~ You should have received a copy of the GNU General Public License along with 
+ ~ this program.  If not, see <http://www.gnu.org/licenses/>. 
+ --> 
+ 
+<!--
+~ Copyright (c) 2009 Andrew <andrewdubya@gmail>
+~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com>
+~ Copyright (c) 2009 Daniel Svärd <daniel.svard@gmail.com>
+~ Copyright (c) 2009 Nicolas Raoul <nicolas.raoul@gmail.com>
+~ Copyright (c) 2010 Norbert Nagold <norbert.nagold@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<resources>
+    <!-- How to format a percentage shown in the summary field of a preference -->
+    <string name="preference_summary_percentage">XXX%</string>
+    <!-- Navigation drawer strings -->
+    <string name="drawer_open">打开侧栏</string>
+    <string name="drawer_close">关闭侧栏</string>
+    <string name="CardEditorLaterMessage">随后保存相关信息</string>
+    <string name="CardEditorCardDeck">记忆库：</string>
+    <string name="CardEditorNoteDeck">记忆库：</string>
+    <string name="CardEditorModel">笔记类型：</string>
+    <string name="CardEditorTags">标签：%1$s</string>
+    <string name="CardEditorCards">卡片：%1$s</string>
+    <string name="tag_name">标签</string>
+    <string name="add_new_filter_tags">添加/过滤标签</string>
+    <string name="add_tag">添加标签</string>
+    <string name="check_all_tags">选中/取消所有标签</string>
+    <string name="filter_tags">过滤标签</string>
+    <string name="no_tags">你还没有添加任何标签。</string>
+    <string name="sdcard_missing_message">SD卡暂时不可用，因为当前其正作为USB存储设备。拔掉USB之后即可访问你的记忆库。</string>
+    <string name="updated_version">更新到%s版本</string>
+    <!-- Reviewer.java -->
+    <string name="save_whiteboard">保存白板</string>
+    <string name="enable_whiteboard">启用白板</string>
+    <string name="disable_whiteboard">禁用白板</string>
+    <string name="show_whiteboard">显示白板</string>
+    <string name="hide_whiteboard">隐藏白板</string>
+    <string name="clear_whiteboard">清空白板</string>
+    <string name="replay_audio">重新播放</string>
+    <string name="toggle_mic_tool_bar">检查读音</string>
+    <string name="leech_suspend_notification">卡片被标记为记忆难点并暂停复习</string>
+    <string name="leech_notification">卡片被标记为记忆难点</string>
+    <string name="corrupt_font">字体文件 %s 已损坏</string>
+    <string name="webview_crash_unknown">未知错误</string>
+    <string name="webview_crash_unknwon_detailed">这是由 WebView 内部错误导致的</string>
+    <string name="webview_crash_oom">内存不足</string>
+    <string name="webview_crash_oom_details">WebView 被系统终止。这通常发生在应用程序内存不足时，通常是由于大字体或媒体。</string>
+    <string name="webview_crash_nonfatal">WebView 渲染器崩溃。原因：%s</string>
+    <string name="webview_crash_fatal">严重错误：WebView 渲染器崩溃。原因：%s</string>
+    <string name="webview_crash_loop_dialog_title">系统 WebView 渲染失败</string>
+    <string name="webview_crash_loop_dialog_content">系统 WebView 渲染卡片 “%1$s” 失败。\n %2$s</string>
+    <!-- Browser -->
+    <string-array name="browser_column1_headings">
+        <item>问题</item>
+        <item>字段</item>
+    </string-array>
+    <string-array name="browser_column2_headings">
+        <item>答案</item>
+        <item>卡片</item>
+        <item>记忆库</item>
+        <item>笔记</item>
+        <item>问题</item>
+        <item>标签</item>
+        <item>失误</item>
+        <item>复习</item>
+        <item>间隔</item>
+        <item>难度系数</item>
+        <item>到期</item>
+        <item>已修改卡牌</item>
+        <item>已创建</item>
+        <item>已修改笔记</item>
+    </string-array>
+    <!-- Custom study options -->
+    <string name="custom_study_increase_new_limit">修改今天的新卡片数量限制</string>
+    <string name="custom_study_increase_review_limit">修改今天的复习卡片数量限制</string>
+    <string name="custom_study_review_forgotten">复习忘记的卡片</string>
+    <string name="custom_study_review_ahead">提前复习</string>
+    <string name="custom_study_random_selection">学习随机选择的卡片</string>
+    <string name="custom_study_preview_new">预览新卡片</string>
+    <string name="custom_study_limit_tags">仅限于特定标签</string>
+    <!-- Card editor -->
+    <string name="cardeditor_title_add_note">添加笔记</string>
+    <string name="cardeditor_title_edit_card">编辑笔记</string>
+    <string name="discard_unsaved_changes">确定直接关闭吗？您将丢失所有已输入的内容。</string>
+    <string name="note_editor_no_cards_created">没有已创建的卡片。请填写更多字段</string>
+    <string name="note_editor_no_first_field">第一字段为空</string>
+    <string name="note_editor_no_cloze_delations">此笔记类型必须包含创建填空</string>
+    <string name="note_editor_set_field_language">设置字段语言</string>
+    <string name="note_editor_no_cards_created_all_fields">当前笔记类型没有生成任何卡片。\n请选择另一个笔记类型，或点击 “卡片” 并添加一个字段替换</string>
+    <string name="note_editor_insert_cloze_no_cloze_note_type">创建填空只能在完形填空笔记类型上使用</string>
+    <string name="saving_facts">保存笔记</string>
+    <string name="saving_model">保存卡牌记录类型</string>
+    <string name="add">添加</string>
+    <string name="save">保存</string>
+    <string name="close">关闭</string>
+    <string name="select">选择</string>
+    <string name="saving_changes">正在保存设置&#8230;</string>
+    <string name="reordering_cards">重新排列卡片中...</string>
+    <string name="field_remapping">%1$s （从“%2$s”）</string>
+    <string name="confirm_map_cards_to_nothing">在笔记类型中没有相应模板的卡片将被删除。如果该笔记没有生成其他的卡片，则该笔记将会丢失。你确定要继续吗？</string>
+    <plurals name="timebox_reached">
+        <item quantity="other">在%2$s内学习了%1$d张卡片</item>
+    </plurals>
+    <!-- minutes used in \'[studied in] x minutes\' context, causing inflexion in some languages -->
+    <plurals name="in_minutes">
+        <item quantity="other">%1$d 分钟</item>
+    </plurals>
+    <string name="studyoptions_welcome_title">欢迎进入 Anki志愿版</string>
+    <string name="fact_adder_intent_title">Anki卡片</string>
+    <string name="note_editor_add_note">添加笔记</string>
+    <string name="note_editor_copy_note">复制笔记</string>
+    <string name="card_editor_copy_card">复制卡片</string>
+    <string name="card_editor_reposition_card">更改位置</string>
+    <string name="card_editor_reset_card">重设学习进度</string>
+    <string name="card_editor_reschedule_card">重新安排</string>
+    <string name="card_editor_preview_card">预览</string>
+    <string name="error_insufficient_memory">由于设备内存不足导致操作无法完成。</string>
+    <string name="rename">重命名</string>
+    <string name="default_conf_delete_error">不能删除默认记忆库</string>
+    <plurals name="factadder_cards_added">
+        <item quantity="other">已添加%d张卡片</item>
+    </plurals>
+    <string name="help_title">帮助</string>
+    <string name="check_db">检查数据</string>
+    <string name="check_media">检查媒体</string>
+    <string name="empty_cards">空白卡片</string>
+    <string name="check_db_message">正在检查数据库\n请等待...</string>
+    <string name="empty_card_warning">这张卡片是空的。请使用记忆库列表界面右上角菜单中的“空白卡片”选项来查找空白卡片。</string>
+    <string name="unknown_type_field_warning">输入答案：未知字段 %s</string>
+    <string name="delete_deck">删除记忆库\n请稍等&#8230;&#8230;</string>
+    <string name="show_hint">显示%s</string>
+    <string name="info_rate">给Anki评分</string>
+    <string name="col_load_failed">集合加载失败\n按返回键关闭Anki。</string>
+    <string name="import_title">正在导入……</string>
+    <string name="import_select_title">选择要导入的文件</string>
+    <string name="import_message_add">添加</string>
+    <string name="import_message_replace_confirm">这将删除你当前的所有记忆库，并用文件%s中的内容加以替换。你确定吗？</string>
+    <string name="import_message_add_confirm">要添加 \"%s\" 到记忆库吗？</string>
+    <string name="import_log_no_apkg">这不是一个有效的 Anki 包文件</string>
+    <string name="import_log_failed_unzip">无法解压 apkg：%s</string>
+    <string name="import_log_failed_copy_to">无法将 apkg 复制到 %s</string>
+    <string name="import_log_failed_validate">apkg 验证失败</string>
+    <string name="import_log_insufficient_space">没有足够的空间来解压缩包。需要 %1$d，可用 %2$d</string>
+    <string name="import_log_file_cache_cleared">导入文件错误，可能处理期间的缓存清理造成的。\n请再次尝试</string>
+    <string name="import_succeeded_but_check_database">数据导入成功，但导入后的清理失败。稍后运行检查数据库。根原因：%s</string>
+    <string name="import_error_unhandled_request">无法处理导入请求</string>
+    <string name="import_error_corrupt_zip">apkg 文件已损坏。请删除并重新下载。\n\n根原因：%s</string>
+    <string name="import_error_exception">无法导入软件包\n\n%s</string>
+    <string name="import_error_not_apkg_extension">\"%s\" 并不是具有 .apkg 或 .colpkg 扩展名的文件</string>
+    <string name="import_error_load_imported_database">尚不支持替换 Anki 数据库（.anki2）。请参阅手册以获取替换说明。</string>
+    <string name="import_error_content_provider">Anki志愿版 不能导入所选择的文件。请参阅用户手册以查看如何导入Anki记忆库：\n%s</string>
+    <string name="import_error_copy_file_to_cache">copyFileToCache() 失败（可能存储空间不足）</string>
+    <string name="import_error_unhandled_scheme">未处理的导入来自：“%s”</string>
+    <string name="import_replacing">正在导入记忆库集合&#8230;</string>
+    <string name="import_interrupted">导入中断</string>
+    <string name="export_include_schedule">包括学习进度</string>
+    <string name="export_include_media">包括媒体文件</string>
+    <string name="confirm_apkg_export">要将记忆库集合导出为 Anki 包吗？</string>
+    <string name="confirm_apkg_export_deck">将“%s”导出为akpg文件？</string>
+    <string name="export_in_progress">正在导出 Anki 软件包文件&#8230;</string>
+    <string name="export_successful_title">发送 Anki 包？</string>
+    <string name="export_send_button">发送</string>
+    <string name="export_save_button">保存到文件</string>
+    <string name="export_send_no_handlers">没有可用处理 apkg 的应用程序。正在保存...</string>
+    <string name="export_save_apkg_successful">已成功保存 Anki 包</string>
+    <string name="export_save_apkg_unsuccessful">保存 Anki 包失败</string>
+    <string name="export_successful">文件 “%s” 导出完毕，您想用其他 app 发送它吗？</string>
+    <string name="export_email_subject">Anki志愿版 导出卡片： %s</string>
+    <string name="export_email_text"><![CDATA[        嗨！
+        <br/><br/>
+        这是从 <a href="https://Anki志愿版.org/docs/manual.html">Anki志愿版</a> 分享的 Anki 记忆记忆库。
+        使用任一 <a href="http://ankisrs.net/#download">Anki 客户端</a>打开它，享受轻松高效的学习吧！
+        ]]></string>
+    <string name="export_unsuccessful">导出apkg文件时出错</string>
+    <string name="import_hint">请把apkg文件放在%s目录中，然后按确定。</string>
+    <string name="upgrade_import_no_file_found">没有找到可导入的 %1$s 文件</string>
+    <string name="study_options">选项</string>
+    <string name="select_tts">设置 TTS 语言</string>
+    <string name="custom_study">自定义学习</string>
+    <string name="add_today_study_amount">增加今日学习量</string>
+    <string name="custom_study_dialog_content">新卡有%d张，待复习%d张</string>
+    <string name="more_options">更多</string>
+    <string name="dyn_deck_desc">Tips：这是一个临时记忆库，学习后会将卡牌归还源记忆库，删除该记忆库也会将卡牌归还</string>
+    <string name="steps_error">步长必须是大于 0 的数字</string>
+    <string name="steps_min_error">至少需要一个步骤</string>
+    <string name="sched_end">(结束)</string>
+    <string name="sched_unbury_action">在菜单中点击“取消隐藏”来查看这些卡片</string>
+    <string name="sched_has_buried">一些相关的或被隐藏的卡片被推迟到明天。</string>
+    <string name="tag_editor_add_feedback">点击“%2$s”以确认添加“%1$s”</string>
+    <string name="tag_editor_add_feedback_existing">已选中%1$s</string>
+    <string name="lookup_hint">复制文字后，点击卡片任意处以显示搜索图标</string>
+    <!-- Time spans -->
+    <plurals name="time_span_seconds">
+        <item quantity="other">%s秒</item>
+    </plurals>
+    <plurals name="time_span_minutes">
+        <item quantity="other">%s分钟</item>
+    </plurals>
+    <plurals name="time_span_hours">
+        <item quantity="other">%s小时</item>
+    </plurals>
+    <plurals name="time_span_days">
+        <item quantity="other">%s天</item>
+    </plurals>
+    <plurals name="time_span_months">
+        <item quantity="other">%s个月</item>
+    </plurals>
+    <plurals name="time_span_years">
+        <item quantity="other">%s年</item>
+    </plurals>
+    <!-- The reason for making a simple “< x” translatable are RTL
+         languages which apparently use the other symbol to mean less
+         than. -->
+    <string name="less_than_time">&lt; %s</string>
+    <string name="decks_rename_exists">该记忆库已存在</string>
+    <string name="decks_rename_filtered_nosubdecks">筛选记忆库不能有子记忆库</string>
+    <string name="filtered_deck_name">筛选记忆库</string>
+    <string name="reminder_title">不要忘记今天去学习 ！</string>
+    <plurals name="reminder_text">
+        <item quantity="other">%2$d 张卡牌在 %1$s 中待复习</item>
+    </plurals>
+    <!-- Currently only used if exporting APKG fails -->
+    <string name="apk_share_error">共享 apkg 文件时出错</string>
+    <!-- Import and export v2 feedback -->
+    <string name="import_needs_v2">必须启用 V2 调度器以导入此文件。</string>
+    <string name="import_cannot_with_v2">V2 调度器无法导入包含进度的 V1 记忆库。</string>
+    <string name="export_v2_dummy_note">此文件需要更新版本的 Anki。</string>
+    <!-- Placed in a snackbar with a long URL. Limit the length and move the URL to the start of the string -->
+    <string name="activity_start_failed_load_url">加载 “%s” 失败。</string>
+    <string name="activity_start_failed">系统中没有安装可以执行此操作的应用程序。</string>
+    <string name="multimedia_editor_image_compression_failed"><![CDATA[相机图像可能偏大。您可能希望在媒体目录中压缩并调整图像大小]]></string>
+    <string name="no_browser_notification">未找到浏览器，请通过 PC 或移动设备访问网页： </string>
+    <string name="no_outgoing_link_in_cardbrowser">不支持卡片中的外部页面链接。</string>
+    <!-- The name of the deck which corrupt cards will be moved to -->
+    <string name="check_integrity_recovered_deck_name">已恢复的卡片</string>
+    <!-- Deckpicker Background -->
+    <string name="background_image_title">背景</string>
+    <string name="choose_an_image">选择图片</string>
+    <!-- Card Template Browser Appearance -->
+    <string name="restore_default">恢复初始设置</string>
+    <string name="reviewer_tts_cloze_spoken_replacement">空白</string>
+    <!-- in options menu & Navigation Drawer -->
+    <string name="ankidroid_turn_on_fullscreen_nav_drawer">请开启全屏以使用 JavaScript 显示导航抽屉。</string>
+    <string name="ankidroid_turn_on_fullscreen_options_menu">请开启全屏以使用 JavaScript 显示选项菜单。</string>
+    <!-- Whiteboard save image message in Reviewer -->
+    <string name="white_board_image_save_failed">保存白板图像失败。 %s</string>
+    <string name="white_board_image_saved">白板图像已保存到 %s</string>
+    <string name="title_whiteboard_pen_color">白板笔颜色</string>
+    <!-- CSV/Note Import -->
+    <string name="note_importer_empty_cards_found"><![CDATA[找到空的卡片。请运行 工具 > 空卡片。]]></string>
+    <string name="note_importer_error_empty_first_field">第一个字段为空：%s</string>
+    <string name="note_importer_error_first_field_matched">第一个字段匹配：%s</string>
+    <string name="note_importer_error_added_duplicate_first_field">已添加重复的第一个字段：%s</string>
+    <string name="note_importer_error_appeared_twice">在文件中出现两次：%s</string>
+    <string name="note_importer_error_empty_notes">一个或多个笔记未被导入，因为它们没有生成任何卡片。 当您有空字段或您未将文本文件中的内容映射到正确字段时，可能发生此情况</string>
+    <string name="csv_importer_error_invalid_field_count">“%1$s”有 %2$d 个字段，而期望 %3$d 个字段</string>
+    <string name="csv_importer_error_exception">已中止：%s</string>
+    <string name="user_is_a_robot">检测到自动测试。如果您是真人，请联系 Anki志愿版 支持</string>
+    <plurals name="note_importer_notes_added">
+        <item quantity="other">%d 条笔记已添加</item>
+    </plurals>
+    <plurals name="note_importer_notes_updated">
+        <item quantity="other">%d 条笔记已更新</item>
+    </plurals>
+    <plurals name="note_importer_notes_unchanged">
+        <item quantity="other">%d 条笔记未变更</item>
+    </plurals>
+    <!-- JS api -->
+    <string name="api_version_developer_contact">此卡片使用不受支持的 Anki志愿版 功能。请联系开发者 %1$s，或查看维基。%2$s</string>
+    <string name="invalid_json_data">卡片提供了无效数据。%s</string>
+    <string name="valid_js_api_version">无效的 Anki志愿版 JS API 版本。请联系开发者 %s，或查看维基</string>
+    <string name="update_js_api_version">Anki志愿版 JS API 更新可用。请联系开发者 %s，或查看维基</string>
+    <string name="reviewer_invalid_api_version_visit_documentation">查看</string>
+    <string name="anki_js_error_code">（错误代码：%d）</string>
+    <!-- About Anki志愿版 screen -->
+    <string name="about_ankidroid_successfully_copied_debug">已复制调试信息到剪贴板</string>
+    <string name="about_ankidroid_error_copy_debug_info">复制调试信息到剪贴板时出错</string>
+    <!-- Card Viewer -->
+    <string name="card_viewer_could_not_find_image">加载“%s”失败</string>
+    <string name="card_viewer_could_not_find_image_get_help">帮助</string>
+    <!-- Deck Picker -->
+    <string name="deck_picker_failed_deck_load">加载记忆库“%s”失败</string>
+    <string name="search_decks">搜索记忆库</string>
+    <string name="menu_font_size">字体大小</string>
+    <string name="menu_font_color">字体颜色</string>
+    <string name="menu_show_toolbar" comment="Checkable item stating whether the note editor toolbar should be shown">显示工具栏</string>
+    <string name="format_insert_bold">粗体格式</string>
+    <string name="format_insert_italic">斜体格式</string>
+    <string name="format_insert_underline">下划线格式</string>
+    <string name="insert_horizontal_line">插入水平线</string>
+    <string name="insert_heading">插入标题</string>
+    <string name="format_font_size">更改字体大小</string>
+    <string name="format_font_color">更改字体颜色</string>
+    <string name="insert_mathjax">插入 MathJax 方程</string>
+    <string name="insert_list">插入列表</string>
+    <string name="insert_no_index_list">插入无序列表</string>
+    <string name="align_left">左对齐</string>
+    <string name="align_center">居中</string>
+    <string name="align_right">右对齐</string>
+    <string name="left_intent">左缩进</string>
+    <string name="right_intent">右缩进</string>
+    <string name="insert_cloze">插入完形填空</string>
+    <string name="before_text">选择前的 HTML</string>
+    <string name="after_text">选择后的 HTML</string>
+    <string name="add_toolbar_item">创建工具栏项</string>
+    <string name="toolbar_item_explain_remove">请输入要在选定文本之前和之后插入的 HTML\n\n长按工具栏项目以删除它</string>
+    <string name="remove_toolbar_item">删除工具栏项目？</string>
+    <string name="note_editor_paste_too_large">图片太大，无法粘贴，请手动插入图像</string>
+    <string name="ankidroid_cannot_open_after_backup_try_again" comment="After an Android backup is restored, AnkiDroid opens and shows this message.         Opening AnkiDroid again will work correctly">        正在进行 Android 备份。请重试</string>
+
+    <string name="note_editor_capitalize" comment="This is for a switch with a checkbox - on: enabled">大写句子</string>
+</resources>

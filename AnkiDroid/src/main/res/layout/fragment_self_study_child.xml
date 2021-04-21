@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/studyoptions_main"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:gravity="center">
+    <TextView
+        android:id="@+id/card_num"
+        android:text="筛选出23张卡片"
+        android:gravity="center"
+        android:textColor="?attr/primaryForthTextColor333333"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="17dp"
+        android:textSize="17sp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_height="wrap_content"/>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/files"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="16dp"
+        android:clipToPadding="false"
+        android:drawSelectorOnTop="true"
+        android:fastScrollEnabled="true"
+        android:focusable="true"
+        android:layout_marginTop="10dp"
+        android:scrollbars="none" />
+    <TextView
+        android:id="@+id/text_no_child"
+        android:text="暂无子记忆库"
+        android:visibility="gone"
+        android:gravity="center"
+        android:textColor="?attr/primary_text_third_color999999"
+        android:layout_width="match_parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_height="match_parent"/>
+    <include layout="@layout/anki_progress"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

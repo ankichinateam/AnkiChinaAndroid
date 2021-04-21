@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center_horizontal"
+	android:clickable="false"
+	android:background="@color/transparent"
+	android:orientation="horizontal">
+	<LinearLayout
+		android:id="@+id/ll_add_card"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="center_horizontal"
+		android:clickable="true"
+		android:orientation="vertical">
+		<ImageView
+			android:layout_width="46dp"
+			android:layout_height="46dp"
+			android:src="@mipmap/home_add_card_normal"/>
+		<TextView
+			android:layout_marginTop="8dp"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:text="知识卡"
+			android:textColor="?attr/primaryTextColor"
+			android:textSize="11sp" />
+	</LinearLayout>
+	<LinearLayout
+		android:layout_marginStart="47dp"
+		android:id="@+id/ll_add_deck"
+		android:clickable="true"
+		android:gravity="center_horizontal"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:orientation="vertical">
+		<ImageView
+			android:layout_width="46dp"
+			android:layout_height="46dp"
+			android:src="@mipmap/home_add_card_group_normal"/>
+		<TextView
+			android:layout_marginTop="8dp"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:text="记忆库"
+			android:textColor="?attr/primaryTextColor"
+			android:textSize="11sp" />
+	</LinearLayout>
+
+
+</LinearLayout>

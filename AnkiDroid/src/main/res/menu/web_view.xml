@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ankidroid="http://schemas.android.com/apk/res-auto" >
+    <item
+        android:id="@+id/action_quit"
+        android:title="退出"
+        android:visibility = "gone"
+        android:icon="@mipmap/nav_bar_quit"
+        ankidroid:showAsAction="always"/>
+</menu>

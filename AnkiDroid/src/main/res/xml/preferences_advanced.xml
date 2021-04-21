@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+~ Copyright (c) 2009 Nicolas Raoul <nicolas.raoul@gmail.com>
+~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com>
+~ Copyright (c) 2009 Jordi Chacon <jordi.chacon@gmail.com>
+~ Copyright (c) 2011 Norbert Nagold <norbert.nagold@gmail.com>
+~ Copyright (c) 2012 Kostas Spyropoulos <inigo.aldana@gmail.com>
+~ Copyright (c) 2014 Timothy Rae <perceptualchaos2@gmail.com>
+~
+~ This program is free software; you can redistribute it and/or modify it under
+~ the terms of the GNU General Public License as published by the Free Software
+~ Foundation; either version 3 of the License, or (at your option) any later
+~ version.
+~
+~ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+~ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License along with
+~ this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<!-- Advanced Preferences -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://arbitrary.app.namespace/com.ichi2.anki"
+    android:title="@string/pref_cat_advanced"
+    android:summary="@string/pref_cat_advanced_summ"
+    android:key="pref_screen_advanced">
+        <EditTextPreference
+            android:defaultValue="/sdcard/AnkiDroid"
+            android:key="deckPath"
+            android:summary="@string/preference_summary_literal"
+            android:title="@string/col_path" />
+        <com.ichi2.ui.ConfirmationPreference
+            android:key="force_full_sync"
+            android:title="@string/force_full_sync_title"
+            android:summary="@string/force_full_sync_summary" />
+<!--        <Preference-->
+<!--            android:key="custom_sync_server_link"-->
+<!--            android:title="@string/custom_sync_server_title"/>-->
+        <PreferenceCategory android:title="@string/pref_cat_performance" >
+            <com.ichi2.ui.SeekBarPreference
+                android:defaultValue="8"
+                android:key="backupMax"
+                android:max="10"
+                android:summary="@string/preference_summary_literal"
+                android:text=""
+                android:title="@string/pref_backup_max"
+                app:interval="1"
+                app:min="0" />
+        </PreferenceCategory>
+        <PreferenceCategory
+            android:key="category_workarounds"
+            android:title="@string/pref_cat_workarounds" >
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="safeDisplay"
+                android:summary="@string/safe_display_summ"
+                android:title="@string/safe_display" />
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="useInputTag"
+                android:summary="@string/use_input_tag_summ"
+                android:title="@string/use_input_tag" />
+            <!-- Workaround for #5533 -->
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="disableExtendedTextUi"
+                android:summary="@string/disable_extended_text_ui_summ"
+                android:title="@string/disable_extended_text_ui" />
+
+            <!-- HACK before 7124 MIUI Clipboard Cloze -->
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="enableMIUIClipboardHack"
+                android:summary="@string/enable_miui_keyboard_hack_summ"
+                android:title="@string/enable_miui_keyboard_hack" />
+        </PreferenceCategory>
+        <PreferenceCategory
+            android:key="category_plugins"
+            android:title="@string/pref_cat_plugins" >
+            <CheckBoxPreference
+                android:defaultValue="true"
+                android:key="providerEnabled"
+                android:summary="@string/enable_api_summary"
+                android:title="@string/enable_api_title"/>
+            <Preference
+                android:key="thirdpartyapps_link"
+                android:summary="@string/thirdparty_apps_summary"
+                android:title="@string/thirdparty_apps_title">
+            </Preference>
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="tts"
+                android:summary="@string/tts_summ"
+                android:title="@string/tts" />
+            <ListPreference
+                android:defaultValue="0"
+                android:entries="@array/dictionary_labels"
+                android:entryValues="@array/dictionary_values"
+                android:key="dictionary"
+                android:title="@string/dictionary" />
+            <com.ichi2.preferences.CustomDialogPreference
+                android:dialogIcon="@drawable/ic_dialog_alert"
+                android:dialogMessage="@string/reset_languages_question"
+                android:dialogTitle="@string/reset_languages"
+                android:negativeButtonText="@string/dialog_cancel"
+                android:positiveButtonText="@string/dialog_ok"
+                android:summary="@string/reset_languages_summ"
+                android:title="@string/reset_languages" />
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="convertFenText"
+                android:summary="@string/convert_fen_text_summ"
+                android:title="@string/convert_fen_text" />
+            <CheckBoxPreference
+                android:id="@+id/scrolling_buttons_checkbox"
+                android:defaultValue="false"
+                android:key="scrolling_buttons"
+                android:summary="@string/more_scrolling_buttons_summ"
+                android:title="@string/more_scrolling_buttons" />
+            <CheckBoxPreference
+                android:id="@+id/double_scrolling_checkbox"
+                android:defaultValue="false"
+                android:key="double_scrolling"
+                android:summary="@string/double_scrolling_gap_summ"
+                android:title="@string/double_scrolling_gap" />
+            <Preference
+                android:key="advanced_statistics_link"
+                android:title="@string/advanced_statistics_title"/>
+            <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="html_javascript_debugging"
+                android:summary="@string/html_javascript_debugging_summ"
+                android:title="@string/html_javascript_debugging"/>
+            <!-- Title and summary are variable, handled in string:
+            card_browser_enable_external_context_menu -->
+            <CheckBoxPreference
+                android:id="@+id/card_browser_external_context_menu"
+                android:defaultValue="true"
+                android:key="card_browser_enable_external_context_menu"/>
+            <CheckBoxPreference
+                android:id="@+id/anki_card_external_context_menu"
+                android:defaultValue="false"
+                android:key="anki_card_enable_external_context_menu"/>
+        </PreferenceCategory>
+
+
+    <CheckBoxPreference
+        android:key="schedVer"
+        android:title="@string/sched_ver"
+        android:summary="@string/sched_ver_summ" />
+    <Preference
+        android:key="about_dialog_preference"
+        android:title="@string/about_title">
+        <intent
+            android:targetPackage="com.app.ankichinas"
+            android:targetClass="com.ichi2.anki.InfoActivity"/>
+    </Preference>
+</PreferenceScreen>
