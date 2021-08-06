@@ -1,4 +1,1 @@
-Anki探索版是基于ankidroid这一项目，https://github.com/ankichinateam/AnkiChinaAndroid
-我们的工作主要是想把复杂的Anki变得非常简单，让用户都能轻松上手。
-因为参与的人员均是利用业余时间开展工作，精力十分有限，我们无法为你解答你在开发中遇到的问题，需要你自行寻找解决办法。
-
+Anki记忆卡（安卓）是由卡卡里组织，基于开源Ankidroid 2.13.3开发，于2020年10月发布的第一个版本，因此Anki记忆卡（安卓端）可以通过AnkiWeb（海外服务器）与Anki电脑端和AnkiMobile进行同步。
