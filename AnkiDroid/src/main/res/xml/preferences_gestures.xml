@@ -64,21 +64,21 @@
             android:key="gestureSwipeDown"
             android:title="@string/gestures_swipe_down" />
         <ListPreference
-            android:defaultValue="6"
+            android:defaultValue="0"
             android:dependency="gestures"
             android:entries="@array/gestures_labels"
             android:entryValues="@array/gestures_values"
             android:key="gestureSwipeLeft"
             android:title="@string/gestures_swipe_left" />
         <ListPreference
-            android:defaultValue="2"
+            android:defaultValue="0"
             android:dependency="gestures"
             android:entries="@array/gestures_labels"
             android:entryValues="@array/gestures_values"
             android:key="gestureSwipeRight"
             android:title="@string/gestures_swipe_right" />
         <ListPreference
-            android:defaultValue="0"
+            android:defaultValue="33"
             android:dependency="gestures"
             android:entries="@array/gestures_labels"
             android:entryValues="@array/gestures_values"

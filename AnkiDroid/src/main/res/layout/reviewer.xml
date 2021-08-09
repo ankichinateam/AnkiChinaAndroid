@@ -42,6 +42,8 @@
                 android:layout_above="@+id/bottom_area_layout"/>
 
             <include layout="@layout/reviewer_answer_buttons" />
+            <include layout="@layout/anki_progress"/>
+
         </RelativeLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

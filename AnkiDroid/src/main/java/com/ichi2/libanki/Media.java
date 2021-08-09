@@ -27,6 +27,7 @@ import android.util.Pair;
 import com.ichi2.libanki.template.Template;
 import com.ichi2.utils.Assert;
 
+import com.ichi2.utils.FileUtil;
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONObject;
 
@@ -40,8 +41,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +62,7 @@ import java.util.zip.ZipOutputStream;
 import androidx.annotation.NonNull;
 import timber.log.Timber;
 
+import static com.ichi2.anki.CollectionHelper.getDefaultAnkiDroidDirectory;
 import static java.lang.Math.min;
 
 /**
@@ -290,7 +294,7 @@ public class Media {
      */
 
     public List<String> filesInStr(Long mid, String string) {
-        return filesInStr(mid, string, false);
+        return filesInStr(mCol,mid, string, false);
     }
 
 
@@ -301,7 +305,7 @@ public class Media {
      * @param includeRemote If true will also include external http/https/ftp urls.
      * @return A list containing all the sound and image filenames found in the input string.
      */
-    public List<String> filesInStr(Long mid, String string, boolean includeRemote) {
+    public static List<String> filesInStr(Collection mCol,Long mid, String string, boolean includeRemote) {
         List<String> l = new ArrayList<>();
         JSONObject model = mCol.getModels().get(mid);
         List<String> strings = new ArrayList<>();
@@ -336,7 +340,7 @@ public class Media {
     }
 
 
-    private List<String> _expandClozes(String string) {
+    private static List<String> _expandClozes(String string) {
         Set<String> ords = new TreeSet<>();
         Matcher m = Pattern.compile("\\{\\{c(\\d+)::.+?\\}\\}").matcher(string);
         while (m.find()) {
@@ -452,6 +456,27 @@ public class Media {
         // loop through media folder
         List<String> unused = new ArrayList<>();
         List<String> invalid = new ArrayList<>();
+        File audioFileDir=new File(getDefaultAnkiDroidDirectory()+"/"+"AnkiTTS");
+        if(audioFileDir.exists()){
+            File[] audioFiles=audioFileDir.listFiles();
+            boolean needDeleteUnused=audioFiles.length>1000;
+            long now = Calendar.getInstance().getTimeInMillis();
+            for (File file : audioFiles) {
+                if(file.getName().endsWith(".pcm")){
+//                    Timber.i("this file is create before "+(now-file.lastModified())/86400000+" day");
+                    invalid.add(file.getName());
+                    continue;
+                }
+                if(needDeleteUnused){
+                    if((now-file.lastModified())/86400000>20){
+                        Timber.i("this file is create before "+(now-file.lastModified())/86400000+" day,need delete");
+                        unused.add(file.getName());
+                    }
+                }
+
+            }
+        }
+
         File[] files;
         if (local == null) {
             files = mdir.listFiles();
@@ -803,6 +828,12 @@ public class Media {
         File f = new File(dir(), fname);
         if (f.exists()) {
             f.delete();
+        }else {
+            File f2 = new File(getDefaultAnkiDroidDirectory()+"/"+"AnkiTTS", fname);
+            if (f2.exists()){
+                f2.delete();
+            }
+            return;
         }
         mDb.execute("delete from media where fname=?", fname);
     }
@@ -1021,6 +1052,12 @@ public class Media {
         File f = new File(dir(), fname);
         if (f.exists()) {
             f.delete();
+        }else {
+            File f2 = new File(getDefaultAnkiDroidDirectory()+"/"+"AnkiTTS", fname);
+            if (f2.exists()){
+                f2.delete();
+            }
+            return;
         }
         Timber.d("Marking media file removal in media db: %s", fname);
         mDb.execute("insert or replace into media values (?,?,?,?)",

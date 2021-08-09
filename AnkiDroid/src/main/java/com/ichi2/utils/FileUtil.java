@@ -1,11 +1,17 @@
 package com.ichi2.utils;
 
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.os.Environment;
 import android.os.StatFs;
 
 import com.ichi2.compat.CompatHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.AbstractMap;
 import java.util.Map;
@@ -13,7 +19,58 @@ import java.util.Map;
 import androidx.annotation.Nullable;
 import timber.log.Timber;
 
+import static com.ichi2.anki.CollectionHelper.getDefaultAnkiDroidDirectory;
+
 public class FileUtil {
+    // 创建一个临时目录，用于复制临时文件，如assets目录下的离线资源文件
+    public static String createTmpDir(Context context) {
+        String tmpDir = getDefaultAnkiDroidDirectory()+"/"+"AnkiTTS";
+        String sampleDir = Environment.getExternalStorageDirectory().toString() + "/" + "AnkiTTS";
+        if (!FileUtil.makeDir(tmpDir)) {
+            tmpDir = context.getExternalFilesDir(sampleDir).getAbsolutePath();
+            if (tmpDir == null || !FileUtil.makeDir(tmpDir)) {
+                throw new RuntimeException("create model resources dir failed :" + tmpDir);
+            }
+        }
+        return tmpDir;
+    }
+    public static boolean makeDir(String dirPath) {
+        File file = new File(dirPath);
+        if (!file.exists()) {
+            return file.mkdirs();
+        } else {
+            return true;
+        }
+    }
+
+    public static void copyFromAssets(AssetManager assets, String source, String dest, boolean isCover)
+            throws IOException {
+        File file = new File(dest);
+        if (isCover || (!isCover && !file.exists())) {
+            InputStream is = null;
+            FileOutputStream fos = null;
+            try {
+                is = assets.open(source);
+                String path = dest;
+                fos = new FileOutputStream(path);
+                byte[] buffer = new byte[1024];
+                int size = 0;
+                while ((size = is.read(buffer, 0, 1024)) >= 0) {
+                    fos.write(buffer, 0, size);
+                }
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } finally {
+                        if (is != null) {
+                            is.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
     /** Gets the free disk space given a file */
     public static long getFreeDiskSpace(File file, long defaultValue) {
         try {

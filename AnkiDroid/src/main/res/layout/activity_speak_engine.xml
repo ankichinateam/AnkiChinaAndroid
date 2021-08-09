@@ -1,0 +1,111 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
+    android:fitsSystemWindows="true"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+
+    >
+    <include layout="@layout/toolbar"/>
+    <RelativeLayout
+        android:id="@+id/rl_offline_engine"
+        android:background="?attr/settingItemBackgroundRound"
+        android:paddingTop="15dp"
+        android:paddingBottom="14dp"
+        android:paddingEnd="16dp"
+        android:paddingStart="16dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:orientation="vertical"
+          >
+
+            <TextView
+                style="@style/StudySettingContentStyle"
+                android:text="离线引擎"
+                />
+            <TextView
+                style="@style/StudySettingNumStyle"
+                android:layout_marginTop="4dp"
+                android:text="无需联网，合成语音速度快"
+                />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/select_offline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="√"
+            android:textColor="@drawable/switch_server_login_color_selector"
+            android:textSize="15sp" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/rl_online_engine"
+        android:background="?attr/settingItemBackgroundRound"
+        android:paddingTop="15dp"
+        android:paddingBottom="14dp"
+        android:paddingEnd="16dp"
+        android:paddingStart="16dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:orientation="vertical"
+          >
+
+            <TextView
+                style="@style/StudySettingContentStyle"
+                android:text="在线引擎"
+                />
+            <TextView
+                style="@style/StudySettingNumStyle"
+                android:layout_marginTop="4dp"
+                android:text="需联网，品质好，超出次数收费"
+                />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/select_online"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="√"
+            android:textColor="@drawable/switch_server_login_color_selector"
+            android:textSize="15sp" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_marginTop="9dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/online_count"
+            style="@style/StudySettingNumStyle"
+            android:layout_alignParentRight="false"
+            android:text="无需联网，合成语音速度快"
+            />
+        <TextView
+            android:id="@+id/buy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="充值"
+            android:textColor="@color/primary_color"
+            android:textSize="15sp" />
+    </RelativeLayout>
+
+</LinearLayout>
+

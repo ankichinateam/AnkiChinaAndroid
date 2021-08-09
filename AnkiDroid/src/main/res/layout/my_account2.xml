@@ -110,7 +110,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/new_primary_color"
-                android:text="1.Anki Web账号即是官方Anki账号，当你电脑版也用Anki Web账号时，你可以登录此账号实现数据互通。\n2.使用手机号登录（志愿版账号）电脑也需要使用Anki志愿者版。\n3.两个账号的区别是，Anki Web是海外服务器会非常慢，Anki志愿版账号改用了国内服务器同步会快很多，使用Anki Web没有容量限制。Anki志愿版账号有200MB免费容量（95%的人足够使用），更大容量则需要付费扩容"
+                android:text="1.Anki Web账号即是官方Anki账号，当你电脑版也用Anki Web账号时，你可以登录此账号实现数据互通。\n2.使用手机号登录（Anki记忆卡账号）电脑也需要使用Anki记忆卡。\n3.两个账号的区别是，Anki Web是海外服务器会非常慢，Anki记忆卡账号改用了国内服务器同步会快很多，使用Anki Web没有容量限制。Anki记忆卡账号有200MB免费容量（95%的人足够使用），更大容量则需要付费扩容"
                 android:textSize="@dimen/abc_text_size_button_material"
                 android:visibility="gone"
                 android:textStyle="bold" />

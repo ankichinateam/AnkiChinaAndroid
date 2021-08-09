@@ -193,7 +193,15 @@ public class Consts {
 
     public static final String KEY_MAIN_AD_TEXT = "KEY_MAIN_AD_TEXT";
     public static final String KEY_MAIN_AD_LINK = "KEY_MAIN_AD_LINK";
+    public static final String KEY_AUTO_PLAY_TTS = "KEY_AUTO_PLAY_TTS";
+    public static final String KEY_SELECT_ONLINE_SPEAK_ENGINE = "KEY_SELECT_ONLINE_SPEAK_ENGINE";
+    public static final String KEY_SHOW_TTS_ICON = "KEY_SHOW_TTS_ICON";
+    public static final String KEY_IS_VIP = "KEY_IS_VIP";
+    public static final String KEY_REST_ONLINE_SPEAK_COUNT = "KEY_REST_ONLINE_SPEAK_COUNT";
+    public static final String KEY_VIP_EXPIRED = "KEY_VIP_EXPIRED";
+//    public static final String KEY_MAIN_AD_ENABLE = "KEY_MAIN_AD_ENABLE";
     public static final String KEY_ANKI_ACCOUNT_SERVER = "KEY_ANKI_ACCOUNT_SERVER";
+
     public static final String KEY_SAVED_ANKI_CHINA_PHONE = "KEY_SAVED_ANKI_CHINA_PHONE";
     public static final String KEY_SAVED_ANKI_CHINA_HKEY = "KEY_SAVED_ANKI_CHINA_HKEY";
     public static final String KEY_SAVED_ANKI_CHINA_TOKEN = "KEY_SAVED_ANKI_CHINA_TOKEN";
@@ -202,13 +210,19 @@ public class Consts {
     public static final String KEY_SAVED_ANKI_WEB_HKEY = "KEY_SAVED_ANKI_WEB_HKEY";
     public static final String KEY_SAVED_ANKI_WEB_PASSWORD = "KEY_SAVED_ANKI_WEB_PASSWORD";
     public static final String SYNC_BASE = "https://sync%s.ankiweb.net/";
-    public static final String SYNC_BASE_CHINA = "";
-    public static final String ANKI_CHINA_BASE = "";
-    public static final String API_VERSION = "api/v1/";
+    public static final String SYNC_BASE_CHINA = "";//同步地址
+    public static final String ANKI_CHINA_BASE = "";//正式域名
+    public static final String BAIDU_AI_TOKEN_URL = "https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=seccGbksRb8hS4ipbzRxROhO&client_secret=xN1EnbXI91j8PSpOZ9lDU0jb3j0fGU86";//获取token
+    public static final String BAIDU_AI_SPEAK_URL = "https://tsn.baidu.com/text2audio";//获取语音mp3
+    public static final String API_VERSION = "";
+    //    public static final String SYNC_MEDIA_BASE = "https://sync.ankiweb.net/msync/";
+    public static final String SYNC_MEDIA_BASE = "";
     public static final Integer DEFAULT_HOST_NUM = null;
     public static final int SYNC_VER = 9;
     public static final long UPLOAD_LIMIT_BANDWIDTH_BYTE = 20971520;
     public static final long DOWNLOAD_LIMIT_BANDWIDTH_BYTE = 20971520 / 8;
+    //    public static final long UPLOAD_LIMIT_BANDWIDTH_BYTE = 100000;
+//    public static final long DOWNLOAD_LIMIT_BANDWIDTH_BYTE = 100000;
     public static final String HELP_SITE = "http://ankisrs.net/docs/manual.html";
     public static final String URL_UPGRADE_CLOUD_SPACE = "";
     public static final String URL_INSTRUCTION = "https://www.yuque.com/ankichina/lm007v";

@@ -290,7 +290,7 @@
             android:layout_marginTop="15dp"
             android:textColor="?attr/primary_text_third_color999999"
             android:textSize="13sp"
-            android:visibility="gone"
+
             android:text="学习设置"
             app:drawableStartCompat="@mipmap/set_pianhao_set_normal" />
         <TextView
@@ -330,7 +330,6 @@
         android:layout_height="wrap_content"
         android:background="?attr/settingItemBackgroundRound"
         android:layout_marginTop="9dp"
-        android:visibility="gone"
         android:paddingBottom="4dp"
         android:paddingTop="14dp"
         android:paddingHorizontal="16dp"
@@ -342,7 +341,7 @@
             android:background="?attr/settingItemBackgroundTop"
             android:layout_height="wrap_content">
             <TextView
-                android:text="主动学习"
+                android:text="主动练习"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 android:textColor="?attr/primaryForthTextColor333333"
@@ -359,7 +358,7 @@
 
         </RelativeLayout>
         <TextView
-            android:text="根据一定条件实现针对性练习"
+            android:text="自定义学习内容，有效巩固薄弱知识点"
             android:textSize="13sp"
             android:layout_marginTop="4dp"
             android:textColor="?attr/primary_text_third_color999999"
@@ -373,6 +372,7 @@
                 android:id="@+id/self_study_handle"
                 android:layout_width="0dp"
                 android:layout_weight="1"
+                android:layout_marginStart="3dp"
                 app:cardCornerRadius="9dp"
                 android:layout_marginVertical="13dp"
                 android:background="?attr/mainItemBackgroundColor"
@@ -381,7 +381,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textColor="?attr/primary_text_third_color666666"
                     android:textSize="13sp"
                     android:layout_gravity="center"
                     android:text="掌握程度"/>
@@ -400,7 +400,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textColor="?attr/primary_text_third_color666666"
                     android:textSize="13sp"
                     android:text="回答情况"/>
             </androidx.cardview.widget.CardView>
@@ -417,7 +417,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textColor="?attr/primary_text_third_color666666"
                     android:textSize="13sp"
                     android:layout_gravity="center"
                     android:text="标记颜色"/>
@@ -428,6 +428,7 @@
                 android:id="@+id/self_study_custom"
                 android:layout_marginVertical="13dp"
                 android:layout_marginStart="6dp"
+                android:layout_marginEnd="3dp"
                 android:background="?attr/mainItemBackgroundColor"
                 app:cardCornerRadius="9dp"
                 app:cardElevation="3dp"
@@ -436,13 +437,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:textColor="?attr/primaryTextSecondaryColor"
+                    android:textColor="?attr/primary_text_third_color666666"
                     android:textSize="13sp"
                     android:text="自定义"/>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
     </LinearLayout>
     <RelativeLayout
+        android:id="@+id/rl_deck_list_header"
         android:layout_marginTop="9dp"
         android:layout_width="match_parent"
         android:padding="16dp"

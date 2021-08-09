@@ -63,6 +63,7 @@ import com.ichi2.libanki.utils.Time;
 import com.ichi2.libanki.utils.TimeUtils;
 import com.ichi2.utils.BitmapUtil;
 import com.ichi2.utils.ExifUtil;
+import com.ichi2.utils.FileUtil;
 import com.ichi2.utils.Permissions;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -76,6 +77,8 @@ import java.io.InputStream;
 
 import androidx.core.util.Pair;
 import timber.log.Timber;
+
+import static com.ichi2.anki.CollectionHelper.getDefaultAnkiDroidDirectory;
 
 public class BasicImageFieldController extends FieldControllerBase implements IFieldController {
 
@@ -154,7 +157,9 @@ public class BasicImageFieldController extends FieldControllerBase implements IF
             showSomethingWentWrong();
             return;
         }
-        File externalCacheDir = new File(externalCacheDirRoot.getAbsolutePath() + "/temp-photos");
+
+        File externalCacheDir = new File(getDefaultAnkiDroidDirectory() + "/temp-photos");
+//        File externalCacheDir = new File(externalCacheDirRoot.getAbsolutePath() + "/temp-photos");
         if (!externalCacheDir.exists() && !externalCacheDir.mkdir()) {
             Timber.e("createUI() externalCacheDir did not exist and could not be created");
             showSomethingWentWrong();
@@ -264,6 +269,7 @@ public class BasicImageFieldController extends FieldControllerBase implements IF
     private File createNewCacheFile(@NonNull String extension) throws IOException {
         String timeStamp = TimeUtils.getTimestamp(mTime);
         File storageDir = new File(mAnkiCacheDirectory);
+//        File storageDir =new File(getDefaultAnkiDroidDirectory()+"cachedir");
         return File.createTempFile("img_" + timeStamp, "." + extension, storageDir);
     }
 
@@ -603,6 +609,7 @@ public class BasicImageFieldController extends FieldControllerBase implements IF
         // This is basically a "magic" recipe to get the system to crop, gleaned from StackOverflow etc
         // Intent intent = new Intent(Intent.ACTION_EDIT);  // edit (vs crop) would be even better, but it fails differently and needs lots of testing
         Intent intent = new Intent("com.android.camera.action.CROP");
+//        Intent intent = new Intent(Intent.ACTION_EDIT);
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.setDataAndType(mPreviousImageUri, "image/*");
         intent.putExtra("return-data", false);

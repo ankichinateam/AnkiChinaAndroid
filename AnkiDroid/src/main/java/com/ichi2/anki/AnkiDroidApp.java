@@ -52,9 +52,7 @@ import com.ichi2.utils.LanguageUtil;
 import com.ichi2.anki.analytics.UsageAnalytics;
 import com.ichi2.utils.Permissions;
 import com.ichi2.utils.WebViewDebugging;
-import com.tencent.bugly.Bugly;
-import com.umeng.analytics.MobclickAgent;
-import com.umeng.commonsdk.UMConfigure;
+
 
 import org.acra.ACRA;
 import org.acra.ReportField;
@@ -236,10 +234,7 @@ public class AnkiDroidApp extends MultiDexApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        Bugly.init(getApplicationContext(), "8793e55d11", false);
-        UMConfigure.setLogEnabled(BuildConfig.DEBUG);
-        UMConfigure.init(this, "5f71f96680455950e49ab67c", "channel1", UMConfigure.DEVICE_TYPE_PHONE, "ankichina");
-        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
+
         if (sInstance != null) {
             Timber.i("onCreate() called multiple times");
             //5887 - fix crash.
@@ -544,6 +539,7 @@ public class AnkiDroidApp extends MultiDexApplication {
      * @param value value of FEEDBACK_REPORT_KEY preference
      */
     public void setAcraReportingMode(String value) {
+        value=FEEDBACK_REPORT_NEVER;//恒定关闭
         SharedPreferences.Editor editor = getSharedPrefs(this).edit();
         // Set the ACRA disable value
         if (value.equals(FEEDBACK_REPORT_NEVER)) {

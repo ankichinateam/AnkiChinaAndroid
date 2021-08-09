@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/dropdownListPreferredItemHeight"
     android:singleLine="true"
-    tools:background="@android:color/holo_orange_light"
+    android:background="@drawable/warp_item"
+    tools:background="@color/review_top_divider"
     tools:layout_height="wrap_content"
     tools:text="Deck name" />

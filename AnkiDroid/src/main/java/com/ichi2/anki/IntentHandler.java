@@ -71,7 +71,8 @@ public class IntentHandler extends Activity {
     @CheckResult
     static LaunchType getLaunchType(@NonNull Intent intent) {
         String action = intent.getAction();
-        if (Intent.ACTION_VIEW.equals(action) && isValidViewIntent(intent)) {
+
+        if (Intent.ACTION_VIEW.equals(action) && isValidViewIntent(intent)&&intent.getData()!=null&&!intent.getData().toString().endsWith("home")) {
             return LaunchType.FILE_IMPORT;
         } else if ("com.ichi2.anki.DO_SYNC".equals(action)) {
             return LaunchType.SYNC;

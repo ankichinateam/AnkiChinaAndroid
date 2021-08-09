@@ -18,6 +18,7 @@ package com.ichi2.anki;
 
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -102,13 +103,8 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
 
     @Override
     public void onBackPressed() {
-//        if (isDrawerOpen()) {
-//            super.onBackPressed();
-//        } else
-        {
-            Timber.i("Back key pressed");
-            closeStudyOptions();
-        }
+        Timber.i("Back key pressed");
+        closeStudyOptions();
     }
 
 
@@ -129,6 +125,11 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
     }
 
 
+    public void onRequireDeckListUpdateWithCacheSelected() {
+        getCurrentFragment().refreshInterfaceWithCacheSelected();
+    }
+
+
     @Override
     public void onRequireDeckListUpdate() {
         getCurrentFragment().refreshInterface();
@@ -141,7 +142,6 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
     @Override
     public void onCreateCustomStudySession() {
         // Sched already reset by CollectionTask in CustomStudyDialog
-
         getCurrentFragment().askForRefreshInterface();
     }
 
@@ -186,11 +186,6 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
             // In fragmented mode, if the deleted deck was the current deck, we need to reload
             // the study options fragment with a valid deck and re-center the deck list to the
             // new current deck. Otherwise we just update the list normally.
-            if (removingCurrent) {
-                deckPicker.onRequireDeckListUpdate();
-            } else {
-                deckPicker.onRequireDeckListUpdate();
-            }
             if (deckPicker.mProgressDialog != null && deckPicker.mProgressDialog.isShowing()) {
                 try {
                     deckPicker.mProgressDialog.dismiss();
@@ -198,6 +193,13 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
                     Timber.e(e, "onPostExecute - Exception dismissing dialog");
                 }
             }
+            if (removingCurrent) {
+
+                deckPicker.finishWithAnimation(ActivityTransitionAnimation.RIGHT);
+            } else {
+                deckPicker.onRequireDeckListUpdateWithCacheSelected();
+            }
+
         }
     }
 
@@ -249,6 +251,37 @@ public class StudyOptionsActivity extends AnkiActivity implements StudyOptionsLi
 
 
     protected void refreshDeckListUI(boolean onlyRefresh) {
-        getCurrentFragment().updateDeckList();
+        getCurrentFragment().refreshInterface(false, true);
+    }
+
+
+    private static final int MOVE_LIMITATION = 100;// 触发移动的像素距离
+    private float mLastMotionX; // 手指触碰屏幕的最后一次x坐标
+    private float mLastMotionY; // 手指触碰屏幕的最后一次y坐标
+
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+//        Timber.i("dispatchTouchEvent:"+event );
+//        if(viewPager==null||viewPager.getCurrentItem()!=0)
+//            return super.dispatchTouchEvent(event);
+        final float x = event.getX();
+        final float y = event.getY();
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mLastMotionX = event.getX();
+                mLastMotionY = event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                if (Math.abs(mLastMotionY - y) < MOVE_LIMITATION && mLastMotionX - x > MOVE_LIMITATION) {
+                    // snapToDestination(); // 跳到指定页
+                    openCardBrowser();
+//                    return true;
+                }
+                break;
+        }
+        return super.dispatchTouchEvent(event);
     }
 }

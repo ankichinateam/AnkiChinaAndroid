@@ -15,6 +15,7 @@
  ****************************************************************************************/
 package com.ichi2.anki;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -82,38 +83,51 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     private View mRoot;
     private Toolbar mToolbar;
 
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Timber.i("on attach");
+    }
+
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        Timber.i("on detach");
+    }
+
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Timber.d("onCreateView()");
         sIsSubtitle = false;
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-        if(mRoot!=null)return mRoot;
+        if (mRoot != null) {
+            return mRoot;
+        }
         mRoot = inflater.inflate(R.layout.activity_anki_stats, container, false);
-        mToolbar= mRoot.findViewById(R.id.toolbar);
+        mToolbar = mRoot.findViewById(R.id.toolbar);
         if (mToolbar != null) {
-            mToolbar.inflateMenu(R.menu.anki_stats);
+//            mToolbar.inflateMenu(R.menu.anki_stats);
+            setHasOptionsMenu(true);
 //            mToolbar.setTitleTextColor(ContextCompat.getColor(getContext(), R.color.material_blue_A700));
-            getAnkiActivity().setSupportActionBar(mToolbar);
+//            getAnkiActivity().setSupportActionBar(mToolbar);
 //            getAnkiActivity().getSupportActionBar().setTitle(null);
             mToolbar.setNavigationIcon(null);
         }
-        if (CollectionHelper.getInstance().getColSafe(getAnkiActivity()) != null) {
-            getAnkiActivity().startLoadingCollection(DeckPicker.INDEX_STATISTICS);
-        }
+
+//        if (CollectionHelper.getInstance().getColSafe(getAnkiActivity()) != null) {
+//            ((DeckPicker) getAnkiActivity()).startLoadingCollection(DeckPicker.INDEX_STATISTICS);
+//        }
+        initView();
         return mRoot;
     }
 
-    @Override
-    public void onCollectionLoaded(Collection col) {
-        Timber.d("onCollectionLoaded()：%s", getAnkiActivity());
-        if(getAnkiActivity()==null)return;
-        SlidingTabLayout slidingTabLayout;
-        // Add drop-down menu to select deck to action bar.
 
-        mDropDownDecks = getAnkiActivity().getCol().getDecks().allSorted();
+    public void initView() {
+        Timber.d("onCollectionLoaded()：%s", getAnkiActivity());
+
         mActionBarSpinner = (Spinner) mRoot.findViewById(R.id.toolbar_spinner);
-        mActionBarSpinner.setAdapter(new DeckDropDownAdapter(getContext(), mDropDownDecks,R.layout.dropdown_deck_selected_item_static,this));
         mActionBarSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -127,35 +141,46 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             }
         });
         mActionBarSpinner.setVisibility(View.VISIBLE);
+        mViewPager = (ViewPager) mRoot.findViewById(R.id.pager);
+
+
+    }
+
+
+    public void loadData(Collection col) {
+        Timber.d("onCollectionLoaded()：%s", getAnkiActivity());
+        if (getAnkiActivity() == null || col == null) {
+            return;
+        }
+        mDropDownDecks = col.getDecks().allSorted();
+
+        mActionBarSpinner.setAdapter(new DeckDropDownAdapter(getContext(), mDropDownDecks, R.layout.dropdown_deck_selected_item_static, this));
 
         // Setup Task Handler
         mTaskHandler = new AnkiStatsTaskHandler(col);
-
+        // Dirty way to get text size from a TextView with current style, change if possible
+        float size = new TextView(getContext()).getTextSize();
+        mTaskHandler.setmStandardTextSize(size);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) mRoot.findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setOffscreenPageLimit(8);
-        slidingTabLayout = (SlidingTabLayout) mRoot.findViewById(R.id.sliding_tabs);
 
+        SlidingTabLayout slidingTabLayout = (SlidingTabLayout) mRoot.findViewById(R.id.sliding_tabs);
         slidingTabLayout.setViewPager(mViewPager);
-
-        // Dirty way to get text size from a TextView with current style, change if possible
-        float size = new TextView(getContext()).getTextSize();
-        mTaskHandler.setmStandardTextSize(size);
         // Prepare options menu only after loading everything
         getAnkiActivity().supportInvalidateOptionsMenu();
 //        initMenu(mToolbar.getMenu());
         mSectionsPagerAdapter.notifyDataSetChanged();
 
         // Default to libanki's selected deck
-        selectDeckById(getAnkiActivity().getCol().getDecks().selected());
+        selectDeckById(col.getDecks().selected());
     }
 
-    private void initMenu(Menu menu){
+
+    private void initMenu(Menu menu) {
         switch (mTaskHandler.getStatType()) {
             case TYPE_MONTH:
                 MenuItem monthItem = menu.findItem(R.id.item_time_month);
@@ -171,30 +196,44 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 break;
         }
     }
-    @Override
-    public void onPrepareOptionsMenu(Menu menu) {
-        // exit if mTaskHandler not initialized yet
-        if (mTaskHandler == null) {
-            return  ;
-        }
-        initMenu(mToolbar.getMenu());
-        super.onPrepareOptionsMenu(menu);
-    }
-    @Override
-    public void onResume() {
-        Timber.d("onResume()");
-//        selectNavigationItem(R.id.nav_stats);
-        super.onResume();
-    }
 
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Timber.d("onCreateOptionsMenu in statistics");
-        menu.clear();
+//        menu.clear();
         inflater.inflate(R.menu.anki_stats, menu);
         super.onCreateOptionsMenu(menu, inflater);
 
+    }
+
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        // exit if mTaskHandler not initialized yet
+        if (mTaskHandler == null) {
+            return;
+        }
+        Timber.d("on prepare options menu:" + mToolbar.getMenu() + "," + menu);
+        initMenu(menu);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+
+    private boolean mInit;
+
+
+    @Override
+    public void onResume() {
+        Timber.d("onResume()");
+        super.onResume();
+        if (getAnkiActivity() != null && mToolbar != null) {
+            getAnkiActivity().setSupportActionBar(mToolbar);
+        }
+        if (!mInit) {
+            mInit = true;
+            loadData(getAnkiActivity().getCol());
+        }
 
     }
 
@@ -204,7 +243,9 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
 //        if (getDrawerToggle().onOptionsItemSelected(item)) {
 //            return true;
 //        }
-        if(mTaskHandler==null)return false;
+        if (mTaskHandler == null) {
+            return false;
+        }
         int itemId = item.getItemId();
         switch (itemId) {
             case R.id.item_time_month:
@@ -330,7 +371,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
 
         @Override
         public Fragment getItem(int position) {
-            Fragment item = StatisticFragment.newInstance(position );
+            Fragment item = StatisticFragment.newInstance(position);
             ((StatisticFragment) item).checkAndUpdate();
             return item;
         }
@@ -391,7 +432,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static StatisticFragment newInstance(int sectionNumber ) {
+        public static StatisticFragment newInstance(int sectionNumber) {
             Fragment fragment;
             Bundle args;
             switch (sectionNumber) {
@@ -403,7 +444,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 case WEEKLY_BREAKDOWN_TAB_POSITION:
                 case ANSWER_BUTTONS_TAB_POSITION:
                 case CARDS_TYPES_TAB_POSITION:
-                    fragment = new ChartFragment( );
+                    fragment = new ChartFragment();
                     args = new Bundle();
                     args.putInt(ARG_SECTION_NUMBER, sectionNumber);
                     fragment.setArguments(args);
@@ -450,18 +491,19 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         private AsyncTask mCreateChartTask;
         private Statistics statistics;
 
-        public ChartFragment( ) {
+
+        public ChartFragment() {
             super();
-            this.statistics= (Statistics) getParentFragment();
+            this.statistics = (Statistics) getParentFragment();
         }
 
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            setHasOptionsMenu(true);
+//            setHasOptionsMenu(true);
             Bundle bundle = getArguments();
-            this.statistics= (Statistics) getParentFragment();
+            this.statistics = (Statistics) getParentFragment();
             mSectionNumber = bundle.getInt(ARG_SECTION_NUMBER);
             //int sectionNumber = 0;
             //System.err.println("sectionNumber: " + mSectionNumber);
@@ -469,9 +511,10 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             mChart = (ChartView) rootView.findViewById(R.id.image_view_chart);
             if (mChart == null) {
                 Timber.d("mChart null!");
-            } else {
-                Timber.d("mChart is not null!");
             }
+//            else {
+//                Timber.d("mChart is not null!");
+//            }
 
             //mChart.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
@@ -481,10 +524,10 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             //mChart.setVisibility(View.GONE);
 
             // TODO: Implementing loader for Collection in Fragment itself would be a better solution.
-            if (( statistics.getTaskHandler()) == null) {
+            if ((statistics.getTaskHandler()) == null) {
                 // Close statistics if the TaskHandler hasn't been loaded yet
                 Timber.e("Statistics.ChartFragment.onCreateView() TaskHandler not found");
-                getAnkiActivity().finishWithoutAnimation();
+//                getAnkiActivity().finishWithoutAnimation();
                 return rootView;
             }
 
@@ -619,24 +662,26 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         private AsyncTask mCreateStatisticsOverviewTask;
 
         private Statistics statistics;
-        public OverviewStatisticsFragment(  ) {
+
+
+        public OverviewStatisticsFragment() {
             super();
-            this.statistics= (Statistics) getParentFragment();
+            this.statistics = (Statistics) getParentFragment();
         }
 
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            setHasOptionsMenu(true);
+//            setHasOptionsMenu(true);
             View rootView = inflater.inflate(R.layout.fragment_anki_stats_overview, container, false);
-            this.statistics= (Statistics) getParentFragment();
+            this.statistics = (Statistics) getParentFragment();
             AnkiStatsTaskHandler handler = (statistics.getTaskHandler());
             // Workaround for issue 2406 -- crash when resuming after app is purged from RAM
             // TODO: Implementing loader for Collection in Fragment itself would be a better solution.
             if (handler == null) {
                 Timber.e("Statistics.OverviewStatisticsFragment.onCreateView() TaskHandler not found");
-                getAnkiActivity().finishWithoutAnimation();
+//                getAnkiActivity().finishWithoutAnimation();
                 return rootView;
             }
             mOverView = rootView.findViewById(R.id.over_view);

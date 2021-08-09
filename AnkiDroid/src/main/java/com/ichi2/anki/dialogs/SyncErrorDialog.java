@@ -77,7 +77,9 @@ public class SyncErrorDialog extends AsyncDialogFragment {
                 return builder.iconAttr(R.attr.dialogSyncErrorIcon)
                         .positiveText(res().getString(R.string.log_in))
                         .negativeText(res().getString(R.string.dialog_cancel))
-                        .onPositive((dialog, which) -> syncErrorDialogListener.loginToSyncServer())
+                        .onPositive((dialog, which) -> {
+                            if(syncErrorDialogListener!=null)syncErrorDialogListener.loginToSyncServer();
+                        })
                         .show();
             }
             case DIALOG_NO_ENOUGH_SERVER_SPACE: {
@@ -85,7 +87,9 @@ public class SyncErrorDialog extends AsyncDialogFragment {
                 return builder.iconAttr(R.attr.dialogSyncErrorIcon)
                         .positiveText(res().getString(R.string.upgrade))
                         .negativeText(res().getString(R.string.dialog_cancel))
-                        .onPositive((dialog, which) -> syncErrorDialogListener.goToUpgradeSpace())
+                        .onPositive((dialog, which) -> {
+                            if(syncErrorDialogListener!=null)syncErrorDialogListener.goToUpgradeSpace();
+                        })
                         .show();
             }
             case DIALOG_CONNECTION_ERROR: {
@@ -106,10 +110,14 @@ public class SyncErrorDialog extends AsyncDialogFragment {
                         .positiveText(res().getString(R.string.sync_conflict_local))
                         .negativeText(res().getString(R.string.sync_conflict_remote))
                         .neutralText(res().getString(R.string.dialog_cancel))
-                        .onPositive((dialog, which) -> syncErrorDialogListener
-                                .showSyncErrorDialog(DIALOG_SYNC_CONFLICT_CONFIRM_KEEP_LOCAL))
-                        .onNegative((dialog, which) -> syncErrorDialogListener
-                                .showSyncErrorDialog(DIALOG_SYNC_CONFLICT_CONFIRM_KEEP_REMOTE))
+                        .onPositive((dialog, which) -> {
+                            if(syncErrorDialogListener!=null)syncErrorDialogListener
+                                    .showSyncErrorDialog(DIALOG_SYNC_CONFLICT_CONFIRM_KEEP_LOCAL);
+                        })
+                        .onNegative((dialog, which) -> {
+                            if(syncErrorDialogListener!=null)syncErrorDialogListener
+                                    .showSyncErrorDialog(DIALOG_SYNC_CONFLICT_CONFIRM_KEEP_REMOTE);
+                        })
                         .onNeutral((dialog, which) -> dismissAllDialogFragments())
                         .show();
             }
@@ -140,10 +148,14 @@ public class SyncErrorDialog extends AsyncDialogFragment {
                 return builder.positiveText(res().getString(R.string.sync_sanity_local))
                         .neutralText(res().getString(R.string.sync_sanity_remote))
                         .negativeText(res().getString(R.string.dialog_cancel))
-                        .onPositive((dialog, which) -> syncErrorDialogListener
-                                .showSyncErrorDialog(DIALOG_SYNC_SANITY_ERROR_CONFIRM_KEEP_LOCAL))
-                        .onNeutral((dialog, which) -> syncErrorDialogListener
-                                .showSyncErrorDialog(DIALOG_SYNC_SANITY_ERROR_CONFIRM_KEEP_REMOTE))
+                        .onPositive((dialog, which) ->{
+                            if(syncErrorDialogListener!=null) syncErrorDialogListener
+                                    .showSyncErrorDialog(DIALOG_SYNC_SANITY_ERROR_CONFIRM_KEEP_LOCAL);
+                        })
+                        .onNeutral((dialog, which) -> {
+                            if(syncErrorDialogListener!=null)syncErrorDialogListener
+                                    .showSyncErrorDialog(DIALOG_SYNC_SANITY_ERROR_CONFIRM_KEEP_REMOTE);
+                        })
                         .show();
             }// Confirmation before pushing local collection to server after sanity check error
 // Confirmation before overwriting local collection with server collection after sanity check error

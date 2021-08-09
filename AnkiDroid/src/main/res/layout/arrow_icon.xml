@@ -1,0 +1,11 @@
+<!-- First child of DrawerLayout assumed to be main content, others are drawers.
+ We use a Coordinator layout as root View for main content as it allows snackbars
+ to be swiped off screen. Other behaviors can also be added in the future if necessary -->
+
+<ImageView   xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_alignParentRight="true"
+android:layout_centerVertical="true"
+android:src="@mipmap/icon_left_arrow_normal" />
+

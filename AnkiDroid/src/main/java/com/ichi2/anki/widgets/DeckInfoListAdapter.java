@@ -16,62 +16,90 @@
 
 package com.ichi2.anki.widgets;
 
-import android.content.Context;
+import android.app.Dialog;
+import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+import androidx.appcompat.widget.ListPopupWindow;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import timber.log.Timber;
 
-import android.net.Uri;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.bitmap.CenterCrop;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.tabs.TabLayout;
+import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.AnkiActivity;
+import com.ichi2.anki.AnkiDroidApp;
+import com.ichi2.anki.CardBrowser;
+import com.ichi2.anki.CardUtils;
+import com.ichi2.anki.CollectionHelper;
+import com.ichi2.anki.DeckPicker;
+import com.ichi2.anki.Previewer;
 import com.ichi2.anki.R;
 import com.ichi2.anki.SelfStudyActivity;
+import com.ichi2.anki.StudySettingActivity;
 import com.ichi2.anki.WebViewActivity;
+import com.ichi2.async.CollectionTask;
+import com.ichi2.async.TaskData;
+import com.ichi2.async.TaskListener;
+import com.ichi2.async.TaskListenerWithContext;
 import com.ichi2.compat.CompatHelper;
+import com.ichi2.libanki.Card;
 import com.ichi2.libanki.Collection;
 
 import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.sched.AbstractDeckTreeNode;
-import com.ichi2.libanki.sched.DeckDueTreeNode;
-import com.ichi2.libanki.sched.DeckTreeNode;
+import com.ichi2.libanki.stats.Stats;
 import com.ichi2.utils.AdaptionUtil;
 import com.ichi2.utils.CornerTransform;
 import com.ichi2.utils.HtmlUtils;
 
+
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
 import java.util.TreeMap;
+
+import static com.ichi2.anki.AbstractFlashcardViewer.DECK_OPTIONS;
+import static com.ichi2.anki.SelfStudyActivity.PREVIEW_CARDS;
+import static com.ichi2.anki.SelfStudyActivity.getPositionMap;
+import static com.ichi2.anki.StudyOptionsFragment.KEY_STRUCT_INIT;
+import static com.ichi2.anki.widgets.CardsListAdapter.getFlagRes;
+import static com.ichi2.async.CollectionTask.TASK_TYPE.DISMISS_MULTI;
+import static com.ichi2.async.CollectionTask.TASK_TYPE.SEARCH_CARDS;
 
 public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -94,10 +122,11 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Listeners
     private View.OnClickListener mDeckClickListener;
+    private View.OnLongClickListener mDeckLongClickListener;
     private View.OnClickListener mButtonStartClickListener;
     private View.OnClickListener mSelfStudyClickListener;
     private View.OnClickListener mDeckExpanderClickListener;
-    private View.OnLongClickListener mDeckLongClickListener;
+
     private View.OnClickListener mCountsClickListener;
 
     private Collection mCol;
@@ -119,6 +148,8 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // ViewHolder class to save inflated views for recycling
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public RelativeLayout deckLayout;
+        public RelativeLayout endLayout;
+
         public LinearLayout countsLayout;
         public ImageButton deckExpander;
         public ImageButton indentView;
@@ -138,6 +169,7 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             deckLearn = (TextView) v.findViewById(R.id.deckpicker_lrn);
             deckRev = (TextView) v.findViewById(R.id.deckpicker_rev);
             endIcon = (ImageView) v.findViewById(R.id.end_icon);
+//            endLayout = (RelativeLayout) v.findViewById(R.id.end_layout);
         }
     }
 
@@ -186,6 +218,7 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         mButtonStartClickListener = listener;
     }
 
+
     public void setSelfStudyClickListener(View.OnClickListener listener) {
         mSelfStudyClickListener = listener;
     }
@@ -221,51 +254,72 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
      * Consume a list of {@link AbstractDeckTreeNode}s to render a new deck list.
      */
     public void buildDeckList(List<AbstractDeckTreeNode> nodes, Collection col) {
-        mCol = col;
+        mCol=col;
         mDeckList.clear();
         mNew = mLrn = mRev = 0;
         mNumbersComputed = true;
         mHasSubdecks = false;
-        mIniCollapsedStatus=mCurrentDeck == mCol.getDecks().current();
+        mIniCollapsedStatus = mCurrentDeck == mCol.getDecks().current();
         mCurrentDeck = mCol.getDecks().current();
         processNames();
-
-        if (!mIniCollapsedStatus) {
+        long currentID = mCurrentDeck.optLong("id");
+        TreeMap<String, Long> map = mCol.getDecks().children(currentID);
+        if (!mIniCollapsedStatus&&!isInitStruct()) {
             mIniCollapsedStatus = true;
 
-            long currentID = mCurrentDeck.optLong("id");
-            Timber.i("buildDeckList：当前节点：%s", mCurrentDeck.optString("name"));
+//            Timber.i("buildDeckList：当前节点：%s", mCurrentDeck.optString("name"));
             for (long id : mCurrentIDs) {
-                Timber.i("关闭节点：%s", mCol.getDecks().get(id).optString("name"));
+//                Timber.i("关闭节点：%s", mCol.getDecks().get(id).optString("name"));
                 mCol.getDecks().get(id).put("collapsed", true);//有孩子节点的只能设置为true
 
             }
             for (Deck parent : mCol.getDecks().parents(currentID)) {
                 // 将当前节点的父辈节点全展开
-                Timber.i("打开父节点：%s", parent.optString("name"));
+//                Timber.i("打开父节点：%s", parent.optString("name"));
                 parent.put("collapsed", false);
                 mCol.getDecks().save(parent);
             }
-            TreeMap<String, Long> map = mCol.getDecks().children(currentID);
+
             // 将当前节点的孩子节点全展开
             Set<String> keySet = map.keySet();
             for (String str : keySet) {
-                Timber.i("打开孩子节点：%s", str);
+//                Timber.i("打开孩子节点：%s", str);
                 mCol.getDecks().get(map.get(str)).put("collapsed", false);
                 mCol.getDecks().save(mCol.getDecks().get(map.get(str)));
             }
             // 如果的确有孩子，记得自己展开
-            if (map.size() > 0) {
-                Timber.i("打开自己节点：%s", mCurrentDeck.optString("name"));
-                mCurrentDeck.put("collapsed", false);
-            }
+
+        }
+        if (map.size() > 0) {
+//                Timber.i("打开自己节点：%s", mCurrentDeck.optString("name"));
+            mCurrentDeck.put("collapsed", false);
         }
         processNodes(nodes);
-
         notifyDataSetChanged();
     }
 
+    private boolean isInitStruct(){
+        StringBuilder initIds = new StringBuilder(AnkiDroidApp.getSharedPrefs(mContext).getString(KEY_STRUCT_INIT, ""));
+        if (initIds.length() > 0) {
+            String[] ids = initIds.toString().split(",");
+            if (ids.length > 0) {
+                for (String id : ids) {
+                    if (mCol.getDecks().current().getLong("id") == Long.parseLong(id)) {
+                        //已经初始化过了，直接跳过
+                        return true;
+                    }
+                }
+            }
 
+        }
+        //没初始化过，那现在也初始化了。
+        if (!initIds.toString().isEmpty()) {
+            initIds.append(",");
+        }
+        initIds.append(mCol.getDecks().current().getLong("id"));
+        AnkiDroidApp.getSharedPrefs(mContext).edit().putString(KEY_STRUCT_INIT, initIds.toString()).apply();
+        return false;
+    }
     private boolean mIniCollapsedStatus = false;
     List<Long> mCurrentIDs = new ArrayList<>();
 
@@ -281,28 +335,36 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //祖先节点
                 long ancestorID = parent.optLong("id");
                 mCurrentIDs.add(ancestorID);
-//                TreeMap<String, Long> map = mCol.getDecks().children(ancestorID);
-//                Set<String> keySet = map.keySet();
-//                for (String str : keySet) {
+                TreeMap<String, Long> map = mCol.getDecks().children(ancestorID);
+                Set<String> keySet = map.keySet();
+                for (String str : keySet) {
 //                    Timber.d("find my id :%s,%s", str, map.get(str));
-////                    if(str.split("::").length!=deck.optString("name").split("::").length)
-//                    mCurrentIDs.add(map.get(str));
-//                }
+//                    if(str.split("::").length!=deck.optString("name").split("::").length)
+                    mCurrentIDs.add(map.get(str));
+                }
             }
         }
 //
-//        if (mCurrentIDs.isEmpty()) {
-        mCurrentIDs.add(id);
-        mCurrentIDs.addAll(mCol.getDecks().childDids(id, mCol.getDecks().childMap()));
+        if (mCurrentIDs.isEmpty()){
+            mCurrentIDs.add(id);
+            TreeMap<String, Long> map = mCol.getDecks().children(id);
+            Set<String> keySet = map.keySet();
+            for (String str : keySet) {
+//                Timber.d("find my child id :%s,%s", str, map.get(str));
+                mCurrentIDs.add(map.get(str));
+            }
+        }
+
+//        mCurrentIDs.addAll(mCol.getDecks().childDids(id, mCol.getDecks().childMap()));
         TreeMap<String, Long> map = mCol.getDecks().children(id);
         Set<String> keySet = map.keySet();
         for (String str : keySet) {
-            if (Decks.path(str).length>Decks.path(deck.optString("name")).length+1){
-                mHasSubdecks=true;
+            if (Decks.path(str).length > Decks.path(deck.optString("name")).length + 1) {
+                mHasSubdecks = true;
             }
         }
         for (Long findID : mCurrentIDs) {
-            Timber.d("find my id :%s", findID);
+            Timber.d("find my id :%s", mCol.getDecks().get(findID).optString("name"));
 
         }
 //        }
@@ -312,24 +374,41 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private final int VIEW_TYPE_HEADER = 0;
     private final int VIEW_TYPE_LIST = 1;
+    private final int VIEW_TYPE_BROWSER_TAB = 2;
+    private final int VIEW_TYPE_BROWSER_LIST = 3;
 
 
+    //mDeckList.size():5
+    //0:header
+    //1~5:list//<mDeckList.size()+1
+    //6:browser tab//==mDeckList.size()+1
+    //7~x:tab//>mDeckList.size()+1
     @Override
     public int getItemViewType(int position) {
-        return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_LIST;
+        return position == 0 ? VIEW_TYPE_HEADER : position == mDeckList.size() + 1 ? VIEW_TYPE_BROWSER_TAB : position > mDeckList.size() + 1 ? VIEW_TYPE_BROWSER_LIST : VIEW_TYPE_LIST;
     }
 
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v;
-        if (viewType == VIEW_TYPE_HEADER) {
+        if (viewType == VIEW_TYPE_LIST) {
+            v = mLayoutInflater.inflate(R.layout.deck_info_item, parent, false);
+            return new ViewHolder(v);
+        } else if (viewType == VIEW_TYPE_BROWSER_LIST) {
+            v = mLayoutInflater.inflate(R.layout.deck_item_self_study, parent, false);
+            return new CardsListAdapter.CardsViewHolder(v);
+        } else if (viewType == VIEW_TYPE_HEADER) {
             v = mLayoutInflater.inflate(R.layout.deck_info_item_header, parent, false);
             return new HeaderViewHolder(v);
         } else {
-            v = mLayoutInflater.inflate(R.layout.deck_info_item, parent, false);
-            return new ViewHolder(v);
+            v = mLayoutInflater.inflate(R.layout.deck_info_item_browser, null, false);
+            return new BrowserTabViewHolder(v);
         }
+//        else {
+//            v = mLayoutInflater.inflate(mStudyCountLayoutRes>0?mStudyCountLayoutRes:R.layout.item_self_study_count, parent, false);
+//            return new CardsListAdapter.HeaderViewHolder(v);
+//        }
     }
 
 
@@ -338,6 +417,7 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         private TextView mTextDeckName;
         private TextView mTextDeckDescription;
         private TextView mTextTodayNew;
+        private TextView mTextStudySetting;
         //    private TextView mTextTodayLrn;
         private TextView mTextTodayRev;
         //    private TextView mTextNewTotal;
@@ -351,13 +431,19 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         private ProgressBar mStudyProgress;
         private RelativeLayout mAdLayout;
         private ImageView mAdImage;
-        private CardView mSelfStudyHandle,mSelfStudyMark,mSelfStudyAnswer,mSelfStudyCustom;
+        private ImageView mSelfStudyAskIcon;
+        private CardView mSelfStudyHandle, mSelfStudyMark, mSelfStudyAnswer, mSelfStudyCustom;
+        private RelativeLayout mDeckListHeader;
+
 
         public HeaderViewHolder(View studyOptionsView) {
             super(studyOptionsView);
             mDeckInfoLayout = studyOptionsView.findViewById(R.id.studyoptions_deckinformation);
+            mDeckListHeader = studyOptionsView.findViewById(R.id.rl_deck_list_header);
             mStudyProgress = studyOptionsView.findViewById(R.id.study_progress);
             mTextDeckName = studyOptionsView.findViewById(R.id.studyoptions_deck_name);
+            mSelfStudyAskIcon = studyOptionsView.findViewById(R.id.self_study_ask_icon);
+            mTextStudySetting = studyOptionsView.findViewById(R.id.study_setting);
             mTextDeckDescription = studyOptionsView.findViewById(R.id.studyoptions_deck_description);
             mTextDeckDescription.setMovementMethod(LinkMovementMethod.getInstance());
             mButtonStart = studyOptionsView.findViewById(R.id.studyoptions_start);
@@ -384,6 +470,28 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 
 
+    public static class BrowserTabViewHolder extends RecyclerView.ViewHolder {
+
+        public TabLayout mTabLayout;
+        public RecyclerView mList;
+        public RelativeLayout mFixBottom;
+        public TextView mMore;
+        public final TextView cardsCount;
+
+
+        public BrowserTabViewHolder(View v) {
+            super(v);
+            mTabLayout = v.findViewById(R.id.tab_layout);
+            mList = v.findViewById(R.id.card_browser_list);
+            mFixBottom = v.findViewById(R.id.rl_fix_bottom);
+            cardsCount = v.findViewById(R.id.search_result_num);
+
+            mMore = v.findViewById(R.id.tx_more);
+        }
+    }
+
+
+
     public String mTextButtonStart, mTextDeckName, mTextCongratsMessage, mTextDeckDescription, mTextTodayNew, mTextTodayRev, mTextCountHandled, mTextCountLearning, mTextCountNew, mTextCountHard, mTextTotal, mTextHandledPercent, mTextHandledNum, mTextETA, mFullDeckName;
     public int mStudyProgress;
     public boolean mIsDynamic, mButtonStartEnable;
@@ -404,11 +512,15 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
 
+    Dialog mSelfStudyQADialog;
+
+
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder tempHolder, int position) {
         if (tempHolder instanceof HeaderViewHolder) {
             HeaderViewHolder holder = (HeaderViewHolder) tempHolder;
             holder.mTextDeckName.setText(mTextDeckName);
+            holder.mDeckListHeader.setVisibility(mDeckList.isEmpty() ? View.GONE : View.VISIBLE);
 //            holder.mTextCongratsMessage.setText(mTextCongratsMessage);
             holder.mTextDeckDescription.setText(mTextDeckDescription != null && mTextDeckDescription.length() > 0 ? formatDescription(mTextDeckDescription) : "");
             holder.mTextTodayNew.setText(mTextTodayNew);
@@ -423,6 +535,22 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             holder.mTextETA.setText(mTextETA);
             holder.mButtonStart.setText(mTextButtonStart);
             holder.mButtonStart.setOnClickListener(mButtonStartClickListener);
+            holder.mSelfStudyAskIcon.setOnClickListener(v -> {
+                if (mSelfStudyQADialog == null) {
+                    mSelfStudyQADialog = new Dialog(mContext, R.style.CommonDialogTheme);
+                    View view = View.inflate(mContext, R.layout.pop_window_self_study_introduce, null);
+                    mSelfStudyQADialog.setContentView(view);
+                    Window window = mSelfStudyQADialog.getWindow();
+                    WindowManager.LayoutParams lps = window.getAttributes();
+                    lps.width = WindowManager.LayoutParams.MATCH_PARENT;
+                    window.setAttributes(lps);
+                    window.setGravity(Gravity.BOTTOM);
+                    window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+
+                }
+                mSelfStudyQADialog.show();
+            });
             holder.mStudyProgress.setProgress(mStudyProgress);
 //            holder.mDeckInfoLayout.setVisibility(mDeckInfoLayoutVisible);
 //            holder.mTextCongratsMessage.setVisibility(mTextCongratsMessageVisible);
@@ -437,6 +565,12 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             holder.mSelfStudyMark.setOnClickListener(mSelfStudyClickListener);
             holder.mSelfStudyAnswer.setOnClickListener(mSelfStudyClickListener);
             holder.mSelfStudyCustom.setOnClickListener(mSelfStudyClickListener);
+            holder.mTextStudySetting.setVisibility(mCurrentDeck == null || mCurrentDeck.optInt("dyn", 0) == 1 ? View.GONE : View.VISIBLE);
+            holder.mTextStudySetting.setOnClickListener(v -> {
+                Intent i = new Intent(mContext, StudySettingActivity.class);
+                i.putExtra("did", mCurrentDeck.optLong("id"));
+                mContext.startActivityForResultWithAnimation(i, DECK_OPTIONS, ActivityTransitionAnimation.FADE);
+            });
             if (AD_IMAGE_URL != null && !AD_IMAGE_URL.isEmpty() && AD_LINK_URL != null && !AD_LINK_URL.isEmpty()) {
                 holder.mAdLayout.setVisibility(View.VISIBLE);
                 CornerTransform transformation = new CornerTransform(mContext, AdaptionUtil.dip2px(mContext, 9));
@@ -450,7 +584,7 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                         .load(AD_IMAGE_URL)
                         .apply(coverRequestOptions)
                         .into(holder.mAdImage);
-                holder.mAdLayout.setOnClickListener(v ->WebViewActivity.openUrlInApp(mContext, AD_LINK_URL,  "")  );
+                holder.mAdLayout.setOnClickListener(v -> WebViewActivity.openUrlInApp(mContext, AD_LINK_URL, ""));
             } else {
                 holder.mAdLayout.setVisibility(View.GONE);
             }
@@ -484,8 +618,8 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //        holder.deckLayout.setBackgroundResource(mRowCurrentDrawable);
             // Set background colour. The current deck has its own color
 //        if (isCurrentlySelectedDeck(node)) {
-            Timber.d("can be shown:%s", node.getDid());
-            Timber.d("mHasSubdecks:%s", mHasSubdecks + "");
+//            Timber.d("can be shown:%s", node.getDid());
+//            Timber.d("mHasSubdecks:%s", node.hasChildren() + "");
 //        if (mCurrentIDs.contains(node.getDid())) {
 //            holder.deckLayout.setVisibility(View.VISIBLE);
 //            holder.deckLayout.setBackgroundResource(mRowCurrentDrawable);
@@ -502,7 +636,7 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             if (mCol.getDecks().isDyn(node.getDid())) {
                 holder.deckName.setTextColor(mDeckNameDynColor);
             } else {
-                if (node.getDepth() == Decks.path(mCurrentDeck.optString("name")).length  ) {
+                if (node.getDepth() == Decks.path(mCurrentDeck.optString("name")).length) {
                     holder.deckName.setTextColor(mDeckNameDefaultColor);
                 } else {
                     holder.deckName.setTextColor(mDeckNameDefaultColorChild);
@@ -510,22 +644,424 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             }
 
             // Set the card counts and their colors
+
             if (node.shouldDisplayCounts()) {
-                holder.deckNew.setText(String.valueOf(node.getNewCount()));
-                holder.deckLearn.setText(String.valueOf(node.getLrnCount()));
-                holder.deckRev.setText(String.valueOf(node.getRevCount()+node.getLrnCount()));
+//                holder.deckNew.setText(String.valueOf(node.getNewCount()));
+//                holder.deckLearn.setText(String.valueOf(node.getLrnCount()));
+//                holder.deckRev.setText(String.valueOf(node.getRevCount()+node.getLrnCount()));
+                holder.deckNew.setText(String.valueOf(node.getNewCount() + node.getRevCount() + node.getLrnCount()));
+                String ids = Stats.deckLimit(node.getDid(), mCol);
+                holder.deckRev.setText(String.valueOf(mCol.cardCount(ids)));
+
+
             }
 
             // Store deck ID in layout's tag for easy retrieval in our click listeners
             holder.deckLayout.setTag(node.getDid());
             holder.countsLayout.setTag(node.getDid());
             holder.endIcon.setTag(node.getDid());
+//            holder.endLayout.setTag(node.getDid());
 
             // Set click listeners
             holder.deckLayout.setOnClickListener(mDeckClickListener);
             holder.deckLayout.setOnLongClickListener(mDeckLongClickListener);
             holder.countsLayout.setOnClickListener(mCountsClickListener);
             holder.endIcon.setOnClickListener(mCountsClickListener);
+//            holder.endLayout.setOnClickListener(mCountsClickListener);
+        } else if (mCurrentDeck != null) {
+            if (tempHolder instanceof CardsListAdapter.CardsViewHolder) {
+                CardsListAdapter.CardsViewHolder holder = (CardsListAdapter.CardsViewHolder) tempHolder;
+                CardBrowser.CardCache card = mCards.get(position - mDeckList.size() - 1 - 1);
+                String question = card.getColumnHeaderText(CardBrowser.Column.QUESTION);
+                if (card.getColumnHeaderText(CardBrowser.Column.SUSPENDED).equals("True")) {
+                    holder.deckQuestion.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
+                    holder.deckAnswer.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
+                }
+                if (question.isEmpty()) {
+                    holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME));
+                } else {
+                    holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
+                }
+
+//            String answer = card.getColumnHeaderText(CardBrowser.Column.ANSWER);
+//            if (answer.isEmpty()) {
+                holder.deckAnswer.setText(card.getColumnHeaderText(CardBrowser.Column.ANSWER));
+//            } else {
+//                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
+//            }
+                holder.reviewCount.setText(card.getColumnHeaderText(CardBrowser.Column.REVIEWS));
+                holder.forgetCount.setText(card.getColumnHeaderText(CardBrowser.Column.LAPSES));
+                holder.due.setText(card.getColumnHeaderText(CardBrowser.Column.DUE2));
+
+                holder.mark.setTag(card.getId());
+                holder.flag.setTag(card.getId());
+                holder.itemRoot.setTag(card.getId());
+                LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) holder.itemRoot.getLayoutParams();
+                layoutParams.rightMargin = 0;
+                holder.itemRoot.setLayoutParams(layoutParams);
+                if (card.getCard().note().hasTag("marked")) {
+                    holder.mark.setImageResource(R.mipmap.mark_star_normal);
+                } else {
+                    holder.mark.setImageResource(R.mipmap.note_star_unselected);
+                }
+                if (getFlagRes(card.getCard()) != -1) {
+                    holder.flag.setImageResource(getFlagRes(card.getCard()));
+                } else {
+                    holder.flag.setImageResource(R.mipmap.note_flag_unselected);
+                }
+
+                holder.mark.setOnClickListener(v -> {
+                    CollectionTask.launchCollectionTask(DISMISS_MULTI,
+                            markCardHandler(),
+                            new TaskData(new Object[] {new long[] {(long) v.getTag()}, Collection.DismissType.MARK_NOTE_MULTI}));
+                    notifyDataSetChanged();
+                });
+                holder.flag.setOnClickListener(v -> {
+                    if (mListPop == null) {
+                        mListPop = new ListPopupWindow(mContext);
+                        for (int i = 0; i < mFlagRes.length; i++) {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("img", mFlagRes[i]);
+                            map.put("content", mFlagContent[i]);
+                            mFlagList.add(map);
+                        }
+                        mListPop.setAdapter(new SimpleAdapter(mContext, mFlagList, R.layout.item_flags_list, new String[] {"img", "content"}, new int[] {R.id.flag_icon, R.id.flag_text}));
+                        mListPop.setWidth(v.getRootView().getWidth() / 2);
+                        mListPop.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+                        mListPop.setModal(true);//设置是否是模式
+
+
+                    }
+                    mListPop.setOnItemClickListener((parent, view, position1, id) -> {
+                        CollectionTask.launchCollectionTask(DISMISS_MULTI,
+                                flagCardHandler(),
+                                new TaskData(new Object[] {new long[] {(long) v.getTag()}, Collection.DismissType.FLAG, position1}));
+                        notifyDataSetChanged();
+                        mListPop.dismiss();
+                    });
+                    mListPop.setAnchorView(v);
+                    mListPop.show();
+                });
+
+                holder.itemRoot.setOnClickListener(v -> {
+                Intent previewer = new Intent(mContext, Previewer.class);
+                long[] ids =  getAllCardIds();
+                long targetId = (long) v.getTag();
+                if (ids.length > 100) {
+                    //为提高效率 直接复制卡牌
+                    long[] finalIds = new long[ids.length + 1];
+                    finalIds[0] = targetId;
+                    System.arraycopy(ids, 0, finalIds, 1, ids.length);
+                    previewer.putExtra("cardList", finalIds);
+                } else {
+                    for (int i = 0; i < ids.length; i++) {
+                        if (ids[i] == targetId) {
+                            ids[i] = ids[0];
+                            ids[0] = targetId;
+                        }
+                    }
+                    previewer.putExtra("cardList", ids);
+                }
+                previewer.putExtra("index", 0);
+                mContext.startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+                });
+//                holder.itemRoot.setOnLongClickListener(mDeckLongClickListener);
+            } else if (tempHolder instanceof BrowserTabViewHolder) {
+                BrowserTabViewHolder holder = (BrowserTabViewHolder) tempHolder;
+                String[] tabArray = mContext.getResources().getStringArray(R.array.deck_info_browser_tab);
+                holder.cardsCount.setText(String.format("筛选出%d张卡片", mCards.size()));
+//                CardsListAdapter  mCardsAdapter = new CardsListAdapter(mContext.getLayoutInflater(), mContext, new CardsListAdapter.CardListAdapterCallback() {
+//                    @Override
+//                    public List<CardBrowser.CardCache> getCards() {
+//                        if (mCards == null) {
+//                            mCards = new ArrayList<>();
+//                        }
+//                        return mCards;
+//                    }
+//
+//
+//                    @Override
+//                    public void onChangeMultiMode(boolean isMultiMode) {
+//                    }
+//
+//
+//                    @Override
+//                    public void onItemSelect(int count) {
+//                    }
+//                });
+//                mCardsAdapter.setStudyCountLayoutRes(R.layout.item_option_study_count);
+//                mCardsAdapter.setDeckClickListener(view -> {
+//                    Intent previewer = new Intent(mContext, Previewer.class);
+//                    long[] ids =  getAllCardIds();
+//                    long targetId = (long) view.getTag();
+//                    if (ids.length > 100) {
+//                        //为提高效率 直接复制卡牌
+//                        long[] finalIds = new long[ids.length + 1];
+//                        finalIds[0] = targetId;
+//                        System.arraycopy(ids, 0, finalIds, 1, ids.length);
+//                        previewer.putExtra("cardList", finalIds);
+//                    } else {
+//                        for (int i = 0; i < ids.length; i++) {
+//                            if (ids[i] == targetId) {
+//                                ids[i] = ids[0];
+//                                ids[0] = targetId;
+//                            }
+//                        }
+//                        previewer.putExtra("cardList", ids);
+//                    }
+//                    previewer.putExtra("index", 0);
+//                    mContext.startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+//                });
+//                holder.mList .setAdapter(mCardsAdapter);
+//                holder.mList.setRecycledViewPool(new RecyclerView.RecycledViewPool());
+//                holder.mList.setNestedScrollingEnabled(false);
+//                holder.mList.setHasFixedSize(true);
+//                holder.mList.setLayoutManager(new LinearLayoutManager(mContext));
+                holder.mMore.setTag(SelfStudyActivity.TAB_MAIN_STATE);
+                holder.mFixBottom.setVisibility(mDeckList.isEmpty() ? View.GONE : View.VISIBLE);
+                holder.mMore.setOnClickListener(mSelfStudyClickListener);
+                holder.mTabLayout.removeAllTabs();
+                LinearLayout linearLayout = (LinearLayout) holder.mTabLayout.getChildAt(0);
+                linearLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE);
+                linearLayout.setDividerDrawable(ContextCompat.getDrawable(mContext,
+                        R.drawable.divider_vertical)); //设置分割线的样式
+                linearLayout.setDividerPadding((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18, mContext.getResources().getDisplayMetrics())); //设置分割线间隔
+                for (int i = 0; i < tabArray.length; i++) {
+                    TabLayout.Tab tab = holder.mTabLayout.newTab();
+                    View view = mContext.getLayoutInflater().inflate(R.layout.item_option_tab, null);
+                    ((TextView) view.findViewById(R.id.name)).setText(tabArray[i]);
+                    tab.setCustomView(view);
+                    view.setTag(i);
+                    int finalI = i;
+                    view.setOnClickListener(v -> {
+                        if (mContext.colIsOpen()) {
+                            mCurrentSelectedTab = finalI;
+                            holder.mTabLayout.selectTab(holder.mTabLayout.getTabAt(finalI));
+                            //  estimate maximum number of cards that could be visible (assuming worst-case minimum row height of 20dp)
+                            int numCardsToRender = (int) Math.ceil(holder.mList.getHeight() /
+                                    TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, mContext.getResources().getDisplayMetrics())) + 5;
+                            Timber.i("I wanna get %d cards", numCardsToRender);
+                            // Perform database query to get all card ids
+                            mSearchCardsHandler = new SearchCardsHandler();
+                            String searchText = getRestrictByTab(finalI) + "deck:\"" + mCurrentDeck.getString("name") + "\" ";
+                            CollectionTask.launchCollectionTask(SEARCH_CARDS,
+                                    mSearchCardsHandler,
+                                    new TaskData(new Object[] {
+                                            searchText,
+                                            true,
+                                            numCardsToRender,
+                                            0,
+                                            0
+                                    })
+                            );
+                        }
+                    });
+                    holder.mTabLayout.addTab(tab);
+                }
+                holder.mTabLayout.selectTab(holder.mTabLayout.getTabAt(mCurrentSelectedTab));
+                if (!mInitBrowserCards) {
+                    mInitBrowserCards = true;
+                    holder.mTabLayout.getTabAt(0).getCustomView().performClick();
+                }
+            }
+
+        }
+    }
+
+    ListPopupWindow mListPop;
+    private final List<Map<String, Object>> mFlagList = new ArrayList<>();
+    private final String[] mFlagContent = {"无标志", "红色标志", "橙色标志", "绿色标志", "蓝色标志"};
+    private final int[] mFlagRes = {R.mipmap.button_white_flag_normal, R.mipmap.mark_red_flag_normal, R.mipmap.mark_yellow_flag_normal, R.mipmap.mark_green_flag_normal, R.mipmap.mark_blue_flag_normal};
+
+    private  FlagCardHandler flagCardHandler() {
+        return new  FlagCardHandler(this);
+    }
+
+
+    private static class FlagCardHandler extends  ListenerWithProgressBarCloseOnFalse {
+        public FlagCardHandler(DeckInfoListAdapter browser) {
+            super(browser);
+        }
+
+
+        @Override
+        protected void actualOnValidPostExecute(DeckInfoListAdapter browser, TaskData result) {
+            Card[] cards = (Card[]) result.getObjArray();
+            browser.updateCardsInList(Arrays.asList(cards), null);
+        }
+    }
+
+    private MarkCardHandler markCardHandler() {
+        return new  MarkCardHandler(this);
+    }
+
+
+    private static class MarkCardHandler extends  ListenerWithProgressBarCloseOnFalse {
+        public MarkCardHandler(DeckInfoListAdapter browser) {
+            super(browser);
+        }
+
+
+        @Override
+        protected void actualOnValidPostExecute(DeckInfoListAdapter browser, TaskData result) {
+            Card[] cards = (Card[]) result.getObjArray();
+            browser.updateCardsInList(CardUtils.getAllCards(CardUtils.getNotes(Arrays.asList(cards))), null);
+
+        }
+    }
+
+    private static abstract class ListenerWithProgressBarCloseOnFalse extends  ListenerWithProgressBar {
+        private final String mTimber;
+
+
+        public ListenerWithProgressBarCloseOnFalse(String timber, DeckInfoListAdapter browser) {
+            super(browser);
+            mTimber = timber;
+        }
+
+
+        public ListenerWithProgressBarCloseOnFalse(DeckInfoListAdapter browser) {
+            this(null, browser);
+        }
+
+
+        public void actualOnPostExecute(@NonNull DeckInfoListAdapter browser, TaskData result) {
+            if (mTimber != null) {
+                Timber.d(mTimber);
+            }
+            if (result.getBoolean()) {
+                actualOnValidPostExecute(browser, result);
+            }
+        }
+
+
+        protected abstract void actualOnValidPostExecute(DeckInfoListAdapter browser, TaskData result);
+    }
+
+    private static abstract class ListenerWithProgressBar extends TaskListenerWithContext<DeckInfoListAdapter> {
+        public ListenerWithProgressBar(DeckInfoListAdapter browser) {
+            super(browser);
+        }
+
+
+        @Override
+        public void actualOnPreExecute(@NonNull DeckInfoListAdapter browser) {
+
+        }
+    }
+    private void updateCardsInList(List<Card> cards, Map<Long, String> updatedCardTags) {
+        List<CardBrowser.CardCache> cardList = mCards;
+        Map<Long, Integer> idToPos = getPositionMap(cardList);
+        for (Card c : cards) {
+            // get position in the mCards search results HashMap
+            Integer pos = idToPos.get(c.getId());
+            if (pos == null || pos >= mCards.size()) {
+                continue;
+            }
+            // update Q & A etc
+            cardList.get(pos).load(true, 0, 1);
+        }
+
+        notifyDataSetChanged();
+    }
+    private int mCurrentSelectedTab = 0;
+    private boolean mInitBrowserCards = false;
+
+
+    private long[] getAllCardIds() {
+        long[] l = new long[mCards.size()];
+        for (int i = 0; i < mCards.size(); i++) {
+            l[i] = mCards.get(i).getId();
+        }
+        return l;
+    }
+
+
+    private void updateDeckNum(TabLayout tabLayout) {
+//        double[] stat =  new Stats(mContext.getCol(), mCurrentDeck.optLong("id")).calculateCardCommonInfoState();
+//        int todayCard=Integer.parseInt(mTextTodayNew)+Integer.parseInt(mTextTodayRev);
+//        double[] count = new double[]{todayCard,stat[0],stat[1]};
+//        Timber.i("tab layout count:"+tabLayout.getTabCount());
+//        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+//            ((TextView) tabLayout.getTabAt(i).view.findViewById(R.id.count)).setText("" + count[i]);
+//        }
+    }
+
+
+    private String getRestrictByTab(int index) {
+        String restrict = "";
+        switch (index) {
+            case 0: //全部
+//                restrict = "(is:due) ";//今日待学：取出今天要复习的新卡和复习卡，学完之后消失在今日待学里
+                restrict = "(duetoday:" + mTextTodayNew + ")";//今日待学：取出今天要复习的新卡和复习卡，学完之后消失在今日待学里
+                break;
+            case 1:
+                restrict = "(-is:new)";//fixme 学习记录，把卡牌根据学习时间排序，最新学习的排在最前 ；需要有排序功能
+                break;
+            case 2:
+                restrict = "((rated:31:1) or (rated:31:2))";
+                break;
+        }
+        return restrict;
+    }
+
+
+    private List<CardBrowser.CardCache> mCards = new ArrayList<>();
+    private SearchCardsHandler mSearchCardsHandler;
+
+
+
+    private class SearchCardsHandler extends TaskListener {
+//
+//        @Override
+//        public void actualOnPreExecute(@NonNull CardsListAdapter context) {
+//
+//        }
+//
+//
+//        @Override
+//        public void actualOnPostExecute(@NonNull TaskData result) {
+//            if (result != null) {
+//                mCards = result.getCards();
+//                notifyDataSetChanged();
+//
+//
+//            }
+//        }
+//
+//
+//        @Override
+//        public void actualOnCancelled( ) {
+//            super.actualOnCancelled( );
+//        }
+//
+//
+//        @Override
+//        public void actualOnPreExecute(@NonNull @NotNull Object context) {
+//
+//        }
+//
+//
+//        @Override
+//        public void actualOnPostExecute(@NonNull @NotNull Object context, TaskData result) {
+//
+//        }
+
+
+        @Override
+        public void onPreExecute() {
+
+        }
+
+
+        @Override
+        public void onPostExecute(TaskData result) {
+            if (result != null) {
+                mCards = result.getCards();
+                notifyDataSetChanged();
+
+
+            }
         }
     }
 
@@ -555,26 +1091,28 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemCount() {
-        return mDeckList.size() + 1;
+        return mDeckList.size() + 1 + 1 + mCards.size();
     }
 
 
     private void setDeckExpander(ImageButton expander, ImageButton indent, AbstractDeckTreeNode node) {
         boolean collapsed = mCol.getDecks().get(node.getDid()).optBoolean("collapsed", false);
         // Apply the correct expand/collapse drawable
-        if (collapsed) {
-            expander.setImageDrawable(mExpandImage);
-            expander.setContentDescription(expander.getContext().getString(R.string.expand));
-        } else if (node.hasChildren()) {
-            expander.setImageDrawable(mCollapseImage);
-            expander.setContentDescription(expander.getContext().getString(R.string.collapse));
+       if (node.hasChildren()) {
+           if (collapsed) {
+               expander.setImageDrawable(mExpandImage);
+               expander.setContentDescription(expander.getContext().getString(R.string.expand));
+           } else{
+               expander.setImageDrawable(mCollapseImage);
+               expander.setContentDescription(expander.getContext().getString(R.string.collapse));
+           }
         } else {
             expander.setImageDrawable(mNoExpander);
 
         }
         // Add some indenting for each nested level
         int width = (int) indent.getResources().getDimension(R.dimen.keyline_1) * (node.getDepth() - (Decks.path(mCurrentDeck.optString("name")).length - 1) - 1);
-        Timber.i("min width：%d", width);
+//        Timber.i("min width：%d", width);
         indent.setMinimumWidth(width);
     }
 
@@ -583,9 +1121,9 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         for (AbstractDeckTreeNode node : nodes) {
             Timber.i("节点审核：%s", node.getFullDeckName());
-            if (!mCurrentIDs.contains(node.getDid())) {
-                continue;
-            }
+//            if (!mCurrentIDs.contains(node.getDid())) {
+//                continue;
+//            }
             // If the default deck is empty, hide it by not adding it to the deck list.
             // We don't hide it if it's the only deck or if it has sub-decks.
             if (node.getDid() == 1 && nodes.size() > 1 && !node.hasChildren()) {

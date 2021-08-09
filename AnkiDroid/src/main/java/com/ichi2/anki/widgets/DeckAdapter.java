@@ -28,7 +28,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import timber.log.Timber;
 
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -40,6 +42,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.ichi2.anki.AnkiActivity;
+import com.ichi2.anki.DeckPicker;
 import com.ichi2.anki.R;
 import com.ichi2.libanki.Collection;
 
@@ -47,6 +50,7 @@ import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.sched.AbstractDeckTreeNode;
 import com.ichi2.libanki.stats.Stats;
 import com.ichi2.utils.AdaptionUtil;
+import com.ichi2.widget.SwipeItemLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +104,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     // ViewHolder class to save inflated views for recycling
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final LinearLayout deckLayout;
+        private final SwipeItemLayout root;
         private final LinearLayout countsLayout;
         //        public LinearLayout filebagLayout;
 //        public ImageButton deckExpander;
@@ -116,6 +121,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         public ViewHolder(View v) {
             super(v);
+            root = v.findViewById(R.id.root);
             deckLayout = v.findViewById(R.id.DeckPickerHoriz);
             countsLayout = v.findViewById(R.id.counts_layout);
 //            deckExpander = (ImageButton) v.findViewById(R.id.deckpicker_expander);
@@ -270,12 +276,12 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyItemChanged(0);
     }
 
-
+    private Collection mCol;
     /**
      * Consume a list of {@link AbstractDeckTreeNode}s to render a new deck list.
      */
     public void buildDeckList(List<AbstractDeckTreeNode> nodes, Collection col) {
-
+        mCol=col;
         mDeckList.clear();
         mNew = mLrn = mRev = 0;
         mNumbersComputed = true;
@@ -330,8 +336,8 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 holder.main_ad_layout.setOnClickListener(mAdClickListener);
                 holder.remove_ad.setOnClickListener(v -> {
                     holder.main_ad_layout.setVisibility(View.GONE);
-                    LinearLayout.LayoutParams params= (LinearLayout.LayoutParams) holder.today_title.getLayoutParams();
-                    params.topMargin= AdaptionUtil.dip2px(mContext, 9);
+//                    LinearLayout.LayoutParams params= (LinearLayout.LayoutParams) holder.today_title.getLayoutParams();
+//                    params.topMargin= AdaptionUtil.dip2px(mContext, 9);
                 });
             } else {
                 holder.main_ad_layout.setVisibility(View.GONE);
@@ -383,12 +389,12 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 //        }
             // Set deck name and colour. Filtered decks have their own colour
             holder.deckName.setText(node.getLastDeckNameComponent());
-            if (mContext.getCol().getDecks().isDyn(node.getDid())) {
+            if (mCol.getDecks().isDyn(node.getDid())) {
                 holder.deckName.setTextColor(mDeckNameDynColor);
             } else {
                 holder.deckName.setTextColor(mDeckNameDefaultColor);
             }
-
+            double[] data  ;
             // Set the card counts and their colors
             if (node.shouldDisplayCounts()) {
                 holder.deckNew.setText(String.valueOf(node.getNewCount()));
@@ -397,17 +403,33 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 //            holder.deckLearn.setTextColor((node.getLrnCount() == 0) ? mZeroCountColor : mLearnCountColor);
                 holder.deckRev.setText(String.valueOf(node.getRevCount()+node.getLrnCount()));
 //            holder.deckRev.setTextColor((node.getRevCount() == 0) ? mZeroCountColor : mReviewCountColor);
+                data = node.getStudyData();
+            }else {
+                data = new double[] {0.0,0.0,0.0};
             }
 
             // Store deck ID in layout's tag for easy retrieval in our click listeners
             holder.deckLayout.setTag(node.getDid());
             holder.countsLayout.setTag(node.getDid());
-            double[] data = calculateStat(mContext.getCol(), node.getDid());
-            double percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
+//            double[] data = calculateStat(mCol, node.getDid());
+
+            double percent=0;
+            if(data[2]==0){
+                //新卡已学完，显示已掌握
+                percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
+                holder.handled_num.setText(String.format(Locale.CHINA, "%.0f/%.0f", data[0], (data[0] + data[1] + data[2])));
+
+                holder.handled_percent.setText((String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%");
+            }else {
+                percent = (data[0] + data[1] + data[2] <= 0) ? 0 : ((data[0]+ data[1]) / (data[0] + data[1] + data[2]) * 100);
+                holder.handled_num.setText(String.format(Locale.CHINA, "%.0f/%.0f", data[0]+ data[1], (data[0] + data[1] + data[2])));
+
+                holder.handled_percent.setText((String.format(Locale.CHINA, "已学 %.1f", percent)) + "%");
+            }
+
             holder.studyProgress.setMax(100 * 100);
             holder.studyProgress.setProgress((int) (percent * 100));
-            holder.handled_num.setText(String.format(Locale.CHINA, "%.0f/%.0f", data[0], (data[0] + data[1] + data[2])));
-            holder.handled_percent.setText((String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%");
+
             // Set click listeners
             holder.deckLayout.setOnClickListener(mDeckClickListener);
             holder.deckLayout.setOnLongClickListener(mDeckLongClickListener);
@@ -417,12 +439,12 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
 
-    private double[] calculateStat(Collection col, long deckId) {
-        //计算已熟悉/全部卡片数
-        Stats stats = new Stats(col, deckId);
-        stats.calculateCardTypes(TYPE_LIFE);
-        return stats.getSeriesList()[0];
-    }
+//    private double[] calculateStat(Collection col, long deckId) {
+//        //计算已熟悉/全部卡片数
+//        Stats stats = new Stats(col, deckId);
+//        stats.calculateCardTypes(TYPE_LIFE);
+//        return stats.getSeriesList()[0];
+//    }
 
 
     private void setBackgroundAlpha(View view, @SuppressWarnings("SameParameterValue") double alphaPercentage) {
@@ -433,7 +455,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 
     private boolean isCurrentlySelectedDeck(AbstractDeckTreeNode node) {
-        return node.getDid() == mContext.getCol().getDecks().current().optLong("id");
+        return node.getDid() == mCol.getDecks().current().optLong("id");
     }
 
 
@@ -444,7 +466,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 
     private void setDeckExpander(ImageButton expander, ImageView fileBag, ImageButton indent, AbstractDeckTreeNode node) {
-        boolean collapsed = mContext.getCol().getDecks().get(node.getDid()).optBoolean("collapsed", false);
+        boolean collapsed = mCol.getDecks().get(node.getDid()).optBoolean("collapsed", false);
         // Apply the correct expand/collapse drawable
         Timber.d("setDeckExpander,collapsed:" + collapsed + ",has children：" + node.hasChildren());
         if (collapsed) {
@@ -474,12 +496,12 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 continue;//只添加一级节点
             }
             if (node.getDid() == 1 && nodes.size() > 1 && !node.hasChildren()) {
-                if (mContext.getCol().getDb().queryScalar("select 1 from cards where did = 1") == 0) {
+                if (mCol.getDb().queryScalar("select 1 from cards where did = 1") == 0) {
                     continue;
                 }
             }
             // If any of this node's parents are collapsed, don't add it to the deck list
-            for (Deck parent : mContext.getCol().getDecks().parents(node.getDid())) {
+            for (Deck parent : mCol.getDecks().parents(node.getDid())) {
                 mHasSubdecks = true;    // If a deck has a parent it means it's a subdeck so set a flag
                 if (parent.optBoolean("collapsed")) {
                     return;
@@ -515,7 +537,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
         // If the deck is not in our list, we search again using the immediate parent
-        List<Deck> parents = mContext.getCol().getDecks().parents(did);
+        List<Deck> parents = mCol.getDecks().parents(did);
         if (parents.size() == 0) {
             return 0;
         } else {
@@ -527,7 +549,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Nullable
     public Integer getEta() {
         if (mNumbersComputed) {
-            return mContext.getCol().getSched().eta(new int[] {mNew, mLrn, mRev});
+            return mCol.getSched().eta(new int[] {mNew, mLrn, mRev});
         } else {
             return null;
         }
@@ -566,5 +588,41 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public List<AbstractDeckTreeNode> getDeckList() {
         return mDeckList;
+    }
+    private GestureDetector detector;
+    private class TouchListener implements View.OnTouchListener {
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            // TODO Auto-generated method stub
+//            Toast.makeText(getApplicationContext(), "----?", event.getAction()).show();
+            return detector.onTouchEvent(event);
+//            return super.onTouch(v,event);
+        }
+
+    }
+    class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+//onFling方法的第一个参数是 手指按下的位置， 第二个参数是 手指松开的位置，第三个参数是手指的速度
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            float startX = e1.getX();//通过e1.getX（）获得手指按下位置的横坐标
+            float endX = e2.getX();//通过e2.getX（）获得手指松开位置的横坐标
+            float startY = e1.getY();//通过e1.getY（）获得手指按下位置的纵坐标
+            float endY = e2.getY();//通过e2.getY（）获得手指松开的纵坐标
+            if ((startX - endX) > 50 && Math.abs(startY - endY) < 200) {
+                //(startX - endX) > 50 是手指从按下到松开的横坐标距离大于50
+                // Math.abs(startY - endY) < 200 是手指从按下到松开的纵坐标的差的绝对值
+
+                //在这里通过Intent实现界面转跳
+                ((DeckPicker)mContext) .openCardBrowser();
+            }
+
+            if ((endX - startX) > 50 && Math.abs(startY - endY) <200) {
+                //在这里通过Intent实现界面转跳
+            }
+//返回值是重点：如果返回值是true则动作可以执行，如果是flase动作将无法执行
+            return true;
+        }
     }
 }

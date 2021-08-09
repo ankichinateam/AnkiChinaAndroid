@@ -59,6 +59,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
@@ -145,27 +147,31 @@ public class WebViewActivity extends AnkiActivity {
         webView.getSettings().setDomStorageEnabled(true);
 //        webView.getSettings().setAppCacheMaxSize(1024*1024*8);
         webView.getSettings().setUserAgentString("User-Agent:Android");
+
         webView.getSettings().setAllowFileAccess(true);    // 可以读取文件缓存
         webView.getSettings().setAppCacheEnabled(true);    //开启H5(APPCache)缓存功能
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         String appCachePath = getApplicationContext().getCacheDir().getAbsolutePath();
         webView.getSettings().setAppCachePath(appCachePath);
+//        webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ONLY);
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
             Request request = new Request.Builder()
-                    //下面图片的网址是在百度图片随便找的
                     .url(url)
                     .build();
             //构建我们的进度监听器
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath(), fileName);
             final ProgressResponseBody.ProgressListener listener = (bytesRead, contentLength1, done) -> {
                 //计算百分比并更新ProgressBar
-                final int percent = (int) (100 * bytesRead / contentLength1);
-                mProgressDialog.setProgress(percent);
+                if(contentLength1!=0){
+                    final int percent = (int) (100 * bytesRead / contentLength1);
+                    mProgressDialog.setProgress(percent);
+                }
                 if (done) {
                     runOnUiThread(() -> {
                         mProgressDialog.dismiss();
+                        //fixme 下载的如果不是卡牌，需要执行通用程序
                         AsyncDialogFragment newFragment = ImportDialog.newInstance(DIALOG_IMPORT_ADD_CONFIRM, file.getAbsolutePath(), WebViewActivity.this);
                         showAsyncDialogFragment(newFragment);
                     });
@@ -174,8 +180,7 @@ public class WebViewActivity extends AnkiActivity {
             OkHttpClient client = new OkHttpClient.Builder()
                     .addNetworkInterceptor(chain -> {
                         Response response = chain.proceed(chain.request());
-                        //这里将ResponseBody包装成我们的ProgressResponseBody
-                        return response.newBuilder()
+                         return response.newBuilder()
                                 .body(new ProgressResponseBody(response.body(), listener))
                                 .build();
                     })
@@ -195,7 +200,8 @@ public class WebViewActivity extends AnkiActivity {
                     writeFile(file, response);
                 }
             });
-            mProgressDialog = new MaterialDialog.Builder(this)
+
+            mProgressDialog = new MaterialDialog.Builder(WebViewActivity.this)
                     .title("正在下载")
                     .content("请不要做任何操作，保持屏幕常亮，切换页面或APP会导致下载中断！")
                     .progress(false, 100, false)
@@ -231,9 +237,12 @@ public class WebViewActivity extends AnkiActivity {
                     @SuppressWarnings("deprecation")
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-
-                        if (urlCanLoad(url.toLowerCase())) {  // 加载正常网页
-                            view.loadUrl(url);
+                        Timber.i("shouldOverrideUrlLoading:%s", url);
+                        if(url.startsWith("openexternalbrowser://url=")){
+//                            startThirdpartyApp("https://www.baidu.com");
+                            openUrl(Uri.parse(url.replace("openexternalbrowser://url=","")));
+                        }else  if (urlCanLoad(url.toLowerCase())) {  // 加载正常网页
+                            view.loadUrl(url,map);
                         } else {  // 打开第三方应用或者下载apk等
                             startThirdpartyApp(url);
                         }
@@ -254,6 +263,7 @@ public class WebViewActivity extends AnkiActivity {
         });
         webView.loadUrl(getIntent().getStringExtra("url"));
     }
+    Map<String, String > map = new HashMap<>() ;
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -361,7 +371,7 @@ public class WebViewActivity extends AnkiActivity {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript("window.localStorage.setItem('" + key + "','" + token + "');", null);
         } else {
-            webView.loadUrl("javascript:localStorage.setItem('" + key + "','" + token + "');");
+            webView.loadUrl("javascript:localStorage.setItem('" + key + "','" + token + "');",map);
         }
     }
 

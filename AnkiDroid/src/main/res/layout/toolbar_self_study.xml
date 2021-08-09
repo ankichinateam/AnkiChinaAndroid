@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="fill_parent"
@@ -9,26 +8,52 @@
         android:layout_alignParentTop="true"
         android:background="?attr/toolbarBackgroundColor"
         android:minHeight="?attr/actionBarSize"
-        android:theme="@style/ActionBarStyleNew"
-        app:contentInsetStart="0dp"
-        app:contentInsetStartWithNavigation="0dp"
+        android:theme="@style/ActionBarStyleNew2"
+        app:contentInsetLeft="16dp"
+        app:contentInsetStartWithNavigation="16dp"
         app:navigationContentDescription="@string/abc_action_bar_up_description"
-        app:navigationIcon="?attr/navBarBackRef">
+        app:navigationIcon="@null">
         <LinearLayout
-            android:background="@drawable/deckpicker_search_background"
             android:gravity="center"
-            android:layout_width="203dp"
-            android:layout_height="36dp">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <ImageView
+                android:id="@+id/iv_back"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:onClick="onBackPressed"
+                android:src="?attr/navBarBackRef"/>
             <TextView
-                android:id="@+id/toolbar_title"
+                android:id="@+id/tv_complete"
                 android:layout_width="wrap_content"
-                android:gravity="center"
                 android:layout_height="wrap_content"
-                android:textColor="@color/new_primary_text_third_color"
+                android:onClick="onBackPressed"
+                android:visibility="gone"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_color"
+                android:text="完成"
+                 />
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_marginStart="23dp"
+                app:queryHint="输入关键词或语法"
+                app:defaultQueryHint="输入关键词或语法"
+                app:searchIcon="@mipmap/home_search_pressed"
                 android:background="@drawable/deckpicker_search_background"
-                android:textSize="15sp"
-                app:drawableStartCompat="@mipmap/home_search_pressed" />
+                android:layout_width="wrap_content"
+                android:textSize="14sp"
+                android:focusable="true"
+
+                android:gravity="center_horizontal"
+                android:layout_height="36dp"
+                android:iconifiedByDefault="false"
+                android:queryHint="输入关键词或语法"
+                >
+            </androidx.appcompat.widget.SearchView>
         </LinearLayout>
+
+
 
 
         <Spinner

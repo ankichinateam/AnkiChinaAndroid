@@ -6,10 +6,10 @@
         android:orientation="vertical" >
         <RelativeLayout
             android:id="@+id/main_ad_layout"
-            android:layout_marginTop="9dp"
-            android:layout_width="match_parent"
+             android:layout_width="match_parent"
             android:background="@drawable/deck_picker_ad_background"
             android:paddingHorizontal="12dp"
+            android:layout_marginBottom="10dp"
             android:layout_height="47dp">
             <ImageView
                 android:layout_width="wrap_content"
@@ -50,7 +50,7 @@
             android:id="@+id/today_title"
             android:text="今日待学"
             android:textSize="17sp"
-            android:layout_marginTop="25dp"
+            android:layout_marginTop="15dp"
             android:textStyle="bold"
             android:textColor="?attr/primaryForthTextColor333333"
             android:layout_width="wrap_content"

@@ -23,6 +23,7 @@ import android.webkit.WebView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.stats.Stats;
@@ -171,7 +172,8 @@ public class AnkiStatsTaskHandler {
                 }
                 mOverView = (OverView) params[0];
                 mProgressBar = (ProgressBar) params[1];
-                OverviewStatsBuilder statsBuilder=new OverviewStatsBuilder(mOverView, mCollectionData, mDeckId, mStatType);
+//                OverviewStatsBuilder statsBuilder=new OverviewStatsBuilder(mOverView, mCollectionData, mDeckId, mStatType);
+                OverviewStatsBuilder statsBuilder=new OverviewStatsBuilder(mOverView, CollectionHelper.getInstance().getCol(mOverView.getContext()), mDeckId, mStatType);
                 statsBuilder.startCalculate();
                 return statsBuilder;
             } finally {

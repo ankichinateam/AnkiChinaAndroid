@@ -223,18 +223,18 @@ public class Preferences extends AppCompatPreferenceActivity implements Preferen
                 listener.addPreferencesFromResource(R.xml.preferences_reviewing);
                 screen = listener.getPreferenceScreen();
                 // Show error toast if the user tries to disable answer button without gestures on
-                android.preference.ListPreference fullscreenPreference = (android.preference.ListPreference)
-                        screen.findPreference("fullscreenMode");
-                fullscreenPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-                    SharedPreferences prefs = AnkiDroidApp.getSharedPrefs(Preferences.this);
-                    if (prefs.getBoolean("gestures", false) || !"2".equals(newValue)) {
-                        return true;
-                    } else {
-                        Toast.makeText(getApplicationContext(),
-                                R.string.full_screen_error_gestures, Toast.LENGTH_LONG).show();
-                        return false;
-                    }
-                });
+//                android.preference.ListPreference fullscreenPreference = (android.preference.ListPreference)
+//                        screen.findPreference("fullscreenMode");
+//                fullscreenPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+//                    SharedPreferences prefs = AnkiDroidApp.getSharedPrefs(Preferences.this);
+//                    if (prefs.getBoolean("gestures", false) || !"2".equals(newValue)) {
+//                        return true;
+//                    } else {
+//                        Toast.makeText(getApplicationContext(),
+//                                R.string.full_screen_error_gestures, Toast.LENGTH_LONG).show();
+//                        return false;
+//                    }
+//                });
                 // Custom buttons options
                 android.preference.Preference customButtonsPreference = screen.findPreference("custom_buttons_link");
                 customButtonsPreference.setOnPreferenceClickListener(preference -> {

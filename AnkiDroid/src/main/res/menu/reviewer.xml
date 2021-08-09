@@ -4,21 +4,28 @@
     <item
         android:id="@+id/action_clear_whiteboard"
         android:title="@string/clear_whiteboard"
-        android:icon="@drawable/ic_clear_white_24dp"
+        android:icon="?attr/reviewMenuClearIconRef"
         android:visible="false"
         ankidroid:showAsAction="always"/>
     <item
         android:id="@+id/action_hide_whiteboard"
         android:title="@string/hide_whiteboard"
-        android:icon="@drawable/ic_gesture_white_24dp"
+        android:icon="?attr/reviewMenuGestureIconRef"
         android:visible="false"
         ankidroid:showAsAction="always"/>
     <item
         android:id="@+id/action_change_whiteboard_pen_color"
-        android:icon="@drawable/ic_color_lens_white_24dp"
+        android:icon="?attr/reviewMenuColorLensIconRef"
         android:title="@string/title_whiteboard_pen_color"
         android:visible="false"
         ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_speak"
+        android:icon="?attr/reviewMenuSpeakIconRef"
+        android:title="@string/speak"
+        ankidroid:showAsAction="always" >
+
+    </item>
     <item
         android:id="@+id/action_undo"
         android:enabled="false"
@@ -53,6 +60,15 @@
         </menu>
     </item>
     <item
+        android:id="@+id/action_back"
+         
+        android:title="返回上一张"/>
+    <item
+        android:id="@+id/action_speak_setting"
+        android:title="朗读设置"
+        />
+
+    <item
         android:id="@+id/action_save_whiteboard"
         android:title="@string/save_whiteboard"
         android:visible="false"
@@ -60,60 +76,68 @@
     <item
         android:id="@+id/action_toggle_whiteboard"
         android:title="@string/enable_whiteboard"
-        android:icon="@drawable/ic_gesture_white_24dp"
+        android:icon="?attr/reviewMenuGestureIconRef"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_edit"
-        android:icon="@drawable/ic_mode_edit_white_24dp"
+        android:icon="?attr/reviewMenuEditIconRef"
         android:title="@string/cardeditor_title_edit_card"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_add_note_reviewer"
         android:title="@string/menu_add_note"
-        android:icon="@drawable/ic_add_white_24dp"
+        android:icon="?attr/menuAddIcon"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_tag"
-        android:icon="@drawable/ic_tag"
+        android:icon="?attr/reviewMenuTagIconRef"
         android:title="@string/menu_edit_tags"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_replay"
         android:title="@string/replay_audio"
-        android:icon="@drawable/ic_play_circle_white"
+        android:visible="false"
+        android:icon="?attr/reviewMenuPlayIconRef"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_toggle_mic_tool_bar"
         android:title="@string/toggle_mic_tool_bar"
-        android:icon="@drawable/ic_action_mic"
+        android:icon="?attr/reviewMenuMicIconRef"
         ankidroid:showAsAction="never"/>
     <item
         android:id="@+id/action_bury"
         android:title="@string/menu_bury"
-        android:icon="@drawable/ic_flip_to_back_white_24dp"/>
+        android:icon="?attr/reviewMenuFlipIconRef"/>
     <item
         android:id="@+id/action_suspend"
         android:title="@string/menu_suspend"
-        android:icon="@drawable/ic_action_suspend" />
+        android:icon="?attr/reviewMenuSuspendIconRef" />
     <item
         android:id="@+id/action_delete"
         android:title="@string/menu_delete_note"
-        android:icon="@drawable/ic_delete_white_24dp"/>
+        android:icon="?attr/reviewMenuDeleteIconRef"/>
     <item
         android:id="@+id/action_mark_card"
-        android:icon="@drawable/ic_star_outline_white_24dp"
+        android:icon="?attr/reviewMenuMarkIconRef"
         android:title="@string/menu_mark_note"
         ankidroid:showAsAction="ifRoom"/>
     <item
         android:id="@+id/action_schedule"
         android:title="@string/card_editor_reschedule_card"
-        android:icon="@drawable/ic_card_reschedule_white">
+        android:icon="?attr/reviewMenuRescheduleIconRef">
         <menu/>
     </item>
     <item
         android:id="@+id/action_search_dictionary"
         android:title="@string/menu_select"
         android:visible="false"/>
+    <item
+        android:id="@+id/action_button_config"
+        android:title="@string/top_button_config" />
+    <item
+        android:id="@+id/action_gesture"
+        android:title="手势操作"
+        />
     <item
         android:id="@+id/action_open_deck_options"
         android:title="@string/study_options" />

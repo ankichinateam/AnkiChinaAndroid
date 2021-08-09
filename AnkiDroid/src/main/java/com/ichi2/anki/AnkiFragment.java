@@ -31,9 +31,9 @@ import timber.log.Timber;
 
 public abstract class AnkiFragment extends Fragment {
 
-    public DeckPicker getAnkiActivity() {
+    public AnkiActivity getAnkiActivity() {
 //        if (getActivity() == null) {
-            return (DeckPicker) mContext;
+            return (AnkiActivity) mContext;
 //        }
 //        return ((DeckPicker) getActivity());
     }
@@ -42,7 +42,16 @@ public abstract class AnkiFragment extends Fragment {
     public void onCollectionLoaded(Collection col) {
     }
 
+    protected void onRefreshRestCloudSpace(){
 
+    }
+    private String mVipUrl;
+    private boolean mVip;
+    private int mVipDay;
+    private String mVipExpireAt;
+    protected void onRefreshVipState(boolean isVip,String vipUrl,int vipDay,String vipExpireAt){
+
+    }
     private Context mContext;
 
 

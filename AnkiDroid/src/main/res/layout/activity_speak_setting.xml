@@ -1,0 +1,194 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
+    android:fitsSystemWindows="true"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+
+    >
+    <include layout="@layout/toolbar"/>
+    <ScrollView
+        android:layout_below="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:id="@+id/rl_max_learn_card"
+                android:background="?attr/settingItemBackgroundRound"
+                style="@style/StudySettingLayout">
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_speak_auto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:theme="@style/SwitchCompat.Control" />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="自动朗读"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:id="@+id/rl_tts_first"
+                style="@style/StudySettingLayout"
+                android:layout_height="wrap_content"
+                android:paddingVertical="12dp"
+                android:background="?attr/settingItemBackgroundRound"
+                >
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_tts_first"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:theme="@style/SwitchCompat.Control" />
+                <TextView
+                    android:id="@+id/tts_first"
+                    style="@style/StudySettingContentStyle"
+                    android:layout_centerVertical="false"
+                    android:text="优先TTS自动朗读"
+                    />
+
+                <TextView
+                    android:layout_below="@id/tts_first"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="?attr/primary_text_third_color999999"
+                    style="@style/customFontStyle"
+                    android:layout_alignParentRight="false"
+                    android:layout_marginTop="3dp"
+                    android:text="当有内置语音时优先TTS自动朗读"
+                    />
+            </RelativeLayout>
+
+
+
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginStart="12dp"-->
+<!--                android:layout_marginTop="11dp"-->
+<!--                android:text="普通用户，每天可以朗读20张卡牌，成为超级学霸，不限朗读次数"-->
+<!--                android:textColor="@color/primary_color"-->
+<!--                android:textSize="13sp"-->
+<!--                  />-->
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:id="@+id/rl_engine"
+                android:background="?attr/settingItemBackgroundTop"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_engine"
+                    style="@style/StudySettingNumStyle"
+                    android:text="离线引擎"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="引擎选择"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_front_language"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_front_language"
+                    style="@style/StudySettingNumStyle"
+                    android:text="中文"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="正面朗读语言"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_back_language"
+                android:background="?attr/settingItemBackgroundBottom"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_back_language"
+                    style="@style/StudySettingNumStyle"
+                    android:text="中文"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="背面朗读语言"
+                    />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="11dp"
+                android:background="?attr/settingItemBackgroundRound"
+                android:orientation="vertical"
+                android:paddingTop="15dp"
+                android:paddingBottom="14dp"
+                android:paddingEnd="16dp"
+                android:paddingStart="16dp">
+
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="朗读速度"
+                    />
+                <com.jaygoo.widget.RangeSeekBar
+                    android:id="@+id/sb_speak_speed"
+                    app:rsb_mode="single"
+                    app:rsb_gravity="center"
+                    app:rsb_max="200"
+                    app:rsb_progress_drawable_default="@drawable/deckpicker_progress_bar"
+                    app:rsb_progress_drawable="@color/primary_color"
+                    app:rsb_progress_height="3dp"
+                    app:rsb_min_interval="10"
+                    app:rsb_thumb_drawable="@drawable/thumb_green"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    style="@style/StudySettingNumStyle"
+                    android:layout_marginTop="4dp"
+                    android:text="下次长按声音图标可唤起该页面"
+                    />
+            </LinearLayout>
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:background="?attr/settingItemBackgroundRound"
+                style="@style/StudySettingLayout">
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_speak_icon_show"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:theme="@style/SwitchCompat.Control" />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="显示朗读图标"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>
+

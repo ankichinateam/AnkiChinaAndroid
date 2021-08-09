@@ -56,7 +56,8 @@ public class CustomDialogPreference extends android.preference.DialogPreference 
                 editor.commit();
             } else {
                 // Main Preferences :: Reset Languages
-                if (MetaDB.resetLanguages(mContext)) {
+                if (MetaDB.resetLanguages(mContext)&&MetaDB.resetSpeech(mContext)) {
+
                     Toast successReport = Toast.makeText(this.getContext(),
                             AnkiDroidApp.getAppResources().getString(R.string.reset_confirmation), Toast.LENGTH_SHORT);
                     successReport.show();

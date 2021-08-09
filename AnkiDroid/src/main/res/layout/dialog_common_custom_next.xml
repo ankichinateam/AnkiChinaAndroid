@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="286dp"
+	android:layout_height="wrap_content"
+	android:layout_margin="10dp"
+	app:cardBackgroundColor="?attr/mainItemBackgroundColor"
+	app:cardCornerRadius="13dp"
+	 >
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:paddingVertical="15dp"
+		android:paddingHorizontal="21dp">
+		<TextView
+			android:id="@+id/title"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="选择服务器"
+			android:textColor="?attr/primaryTextColor"
+			android:textSize="17sp"
+			android:textStyle="bold" />
+		<LinearLayout
+			android:id="@+id/ll_content"
+			android:orientation="vertical"
+			android:layout_marginTop="10dp"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content">
+			<TextView
+				android:id="@+id/message"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center"
+
+				android:text="这是弹窗"
+				android:visibility="gone"
+				android:textColor="?attr/primaryForthTextColor333333"
+				android:textSize="13sp" />
+			<LinearLayout
+				android:id="@+id/ll_edit_content"
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content">
+				<EditText
+					android:id="@+id/editor"
+					android:theme="@style/MyEditText"
+					android:textSize="17sp"
+					android:layout_width="match_parent"
+					android:inputType="number"
+					android:maxLength="11"
+					android:layout_height="43dp"/>
+				<TextView
+					android:id="@+id/hint"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:text="未来每天学习量=新卡数x6，设置了每天新卡30张，一段时间后每天新卡+复习180张，大概需要30张"
+					android:textColor="?attr/primary_text_third_color999999"
+					android:textSize="11sp" />
+			</LinearLayout>
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_marginTop="9dp"
+			android:id="@+id/rl_common_style_buttons"
+			android:orientation="vertical"
+			android:layout_gravity="center"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content">
+			<Button
+				android:id="@+id/confirm"
+				android:layout_width="match_parent"
+				android:layout_height="47dp"
+				android:text="下一步"
+				android:layout_marginTop="9dp"
+				android:background="@drawable/selector_start_study_button"
+				android:textSize="17sp"
+				android:textStyle="bold"
+				android:textColor="@color/white"
+				/>
+			<TextView
+				android:id="@+id/cancel"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="6dp"
+				android:layout_gravity="center_horizontal"
+				android:text="取消"
+				android:textColor="?attr/primary_text_third_color999999"
+				android:textSize="17sp" />
+		</LinearLayout>
+
+	</LinearLayout>
+</androidx.cardview.widget.CardView>
+
+

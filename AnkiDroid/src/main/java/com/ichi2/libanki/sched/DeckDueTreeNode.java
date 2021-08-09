@@ -24,12 +24,14 @@ public class DeckDueTreeNode extends AbstractDeckTreeNode<DeckDueTreeNode> {
     private int mRevCount;
     private int mLrnCount;
     private int mNewCount;
+    private double[] mStudyData;
 
-    public DeckDueTreeNode(Collection col, String mName, long mDid, int mRevCount, int mLrnCount, int mNewCount) {
+    public DeckDueTreeNode(Collection col, String mName, long mDid, int mRevCount, int mLrnCount, int mNewCount,double[] studyData) {
         super(col, mName, mDid);
         this.mRevCount = mRevCount;
         this.mLrnCount = mLrnCount;
         this.mNewCount = mNewCount;
+        this.mStudyData = studyData;
     }
 
     @Override
@@ -51,13 +53,21 @@ public class DeckDueTreeNode extends AbstractDeckTreeNode<DeckDueTreeNode> {
         return mNewCount;
     }
 
+    @Override
+    public double[] getStudyData() {
+        return mStudyData;
+    }
+
     private void limitNewCount(int limit) {
         mNewCount = Math.max(0, Math.min(mNewCount, limit));
     }
 
+
+
     public int getLrnCount() {
         return mLrnCount;
     }
+
 
     public void setChildren(@NonNull List<DeckDueTreeNode> children, boolean addRev) {
         super.setChildren(children, addRev);
@@ -67,6 +77,7 @@ public class DeckDueTreeNode extends AbstractDeckTreeNode<DeckDueTreeNode> {
             mNewCount += ch.getNewCount();
             if (addRev) {
                 mRevCount += ch.getRevCount();
+
             }
         }
         // limit the counts to the deck's limits
@@ -76,7 +87,7 @@ public class DeckDueTreeNode extends AbstractDeckTreeNode<DeckDueTreeNode> {
             limitNewCount(conf.getJSONObject("new").getInt("perDay") - deck.getJSONArray("newToday").getInt(1));
             if (addRev) {
                 limitRevCount(conf.getJSONObject("rev").getInt("perDay") - deck.getJSONArray("revToday").getInt(1));
-            }
+             }
         }
     }
 

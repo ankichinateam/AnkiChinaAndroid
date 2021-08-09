@@ -36,7 +36,44 @@
     <style name="customFontStyle" parent="@android:style/TextAppearance.Small">
         <item name="android:fontFamily">@font/font_oswald</item>
     </style>
+    <style name="StudySettingNumStyle" >
+        <item name="android:fontFamily">@font/font_oswald</item>
+        <item name="android:textColor">?attr/primary_text_third_color999999</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_marginRight">16dp</item>
+<!--        <item name="android:paddingTop">4dp</item>-->
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+<!--        <item name="android:drawableEnd">@mipmap/icon_left_arrow_normal</item>-->
+<!--        <item name="android:drawablePadding">5dp</item>-->
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:layout_alignParentRight">true</item>
 
+    </style>
+    <style name="StudySettingContentStyle" parent="@android:style/TextAppearance.Small">
+        <item name="android:color">?attr/primaryForthTextColor333333</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_centerVertical">true</item>
+    </style>
+    <style name="StudySettingLayout" parent="@android:style/TextAppearance.Small">
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">18dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_height">51dp</item>
+        <item name="android:layout_width">match_parent</item>
+
+    </style>
+
+    <style name="WarpLinearLayoutDefault">
+        <item name="gravity">left</item>
+        <item name="horizontal_Space">20dp</item>
+        <item name="vertical_Space">20dp</item>
+        <item name="isFull">false</item>
+    </style>
     <!--  Material Design-style persistent footer button -->
     <style name="FooterButtonBase">
         <item name="android:layout_height">54dp</item>
@@ -93,7 +130,14 @@
     <style name="EasyButtonTimeStyle" parent="FooterButtonNextTime">
         <item name="android:textColor">?attr/easyButtonTextColor</item>
     </style>
-
+    <style name="Preview3ButtonTextStyle" parent="FooterButtonEaseTextBase">
+        <item name="android:textSize">13sp</item>
+        <item name="android:drawablePadding">3dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="gravity">center</item>
+        <item name="android:drawableStart">@mipmap/button_white_flag_normal</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
     <!-- FAB menu items -->
     <style name="menu_labels_style">
         <item name="android:background">?attr/fab_item_background</item>
@@ -109,6 +153,21 @@
         <!-- Overflow menu style -->
         <item name="popupTheme">@style/ActionBar.Popup</item>
     </style>
+    <style name="ActionBarStyleNew2" parent="Base.ThemeOverlay.AppCompat.ActionBar">
+        <!-- Colors: hamburger, title text, overflow icon -->
+        <item name="android:textColorPrimary">?attr/toolbarTextColor</item>
+        <!-- Colors: subtitle text -->
+        <item name="android:textColorSecondary">?attr/toolbarTextColor</item>
+<!--        <item name="android:textStyle">bold</item>-->
+        <!-- Overflow menu style -->
+
+        <item name="popupTheme">@style/ActionBar.Popup</item>
+        <item name="actionMenuTextAppearance">@style/MenuTextStyle</item>
+    </style>
+    <style name="MenuTextStyle">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">15sp</item>
+    </style>
 
     <style name="ActionBarStyle" parent="Base.ThemeOverlay.AppCompat.ActionBar">
         <!-- Colors: hamburger, title text, overflow icon -->
@@ -120,7 +179,7 @@
     </style>
     <style name="SwitchCompat.Control" parent="Theme.AppCompat.Light">
         <!-- active thumb & track color (30% transparency) -->
-        <item name="colorControlActivated">?attr/primaryBaseColor</item>
+        <item name="colorControlActivated">@color/primary_color</item>
         <item name="colorSwitchThumbNormal">?attr/primaryMirrorColor</item>
     </style>
     <!-- For all other action bar popups like overflow menu (except spinner dropdown in Lollipop). -->
@@ -153,7 +212,29 @@
         <!-- 遮罩层 -->
         <item name="android:backgroundDimAmount">0.0</item>
     </style>
+    <style name="CustomCheckboxTheme" parent="@android:style/Widget.CompoundButton.CheckBox">
 
+        <item name="android:button">@drawable/check_box_button_selector</item>
+
+    </style>
+
+    <style name="CommonDialogTheme" parent="@android:style/Theme.Dialog">
+        <!-- 边框 -->
+        <item name="android:windowFrame">@null</item>
+        <!-- 是否浮现在activity之上 -->
+        <item name="android:windowIsFloating">true</item>
+        <!-- 半透明 -->
+        <item name="android:windowIsTranslucent">true</item>
+        <!-- 无标题 -->
+        <item name="android:windowNoTitle">true</item>
+<!--        <item name="android:background">@android:color/transparent</item>-->
+        <!-- 背景透明 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- 模糊 -->
+        <item name="android:backgroundDimEnabled">true</item>
+        <!-- 遮罩层 -->
+<!--        <item name="android:backgroundDimAmount">0.5</item>-->
+    </style>
     <!-- dialog的动画 -->
     <style name="main_menu_animStyle">
         <item name="android:windowEnterAnimation">@anim/slide_down_in</item>

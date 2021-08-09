@@ -77,8 +77,6 @@ public class MyAccount extends AnkiActivity {
     private MaterialDialog mProgressDialog;
     Toolbar mToolbar = null;
     private TextInputLayout mAuthCodeLayout;
-
-
     private void switchToState(int newState) {
         switch (newState) {
             case STATE_LOGGED_IN:
@@ -306,7 +304,7 @@ public class MyAccount extends AnkiActivity {
 
         if (PhoneFormatCheckUtils.isChinaPhoneLegal(phone) && !"".equalsIgnoreCase(authCode) && authCode.length() == 6) {
             try {
-                JSONObject jo = new JSONObject();
+                org.json.JSONObject jo = new  org.json.JSONObject();
                 jo.put("phone", phone);
                 jo.put("code", authCode);
                 jo.put("key", getAuthKey());
@@ -375,6 +373,7 @@ public class MyAccount extends AnkiActivity {
     void stopAuthCodeTimer() {
         continueTimer = false;
         authCodeTimer.removeCallbacksAndMessages(null);
+        if(mSendAuthCode!=null)
         mSendAuthCode.setText(getString(R.string.auth_hint));
         timerCount = 60;
     }
@@ -391,7 +390,7 @@ public class MyAccount extends AnkiActivity {
         String phone = mPhoneNum.getText().toString().trim(); // trim spaces, issue 1586
         if (!"".equalsIgnoreCase(phone)) {
             try {
-                JSONObject jo = new JSONObject();
+                org.json.JSONObject jo = new  org.json.JSONObject();
                 jo.put("phone", phone);
                 Connection.sendCommonPost(sendAuthCodeListener, new Connection.Payload("verification-codes", jo.toString(), Payload.REST_TYPE_POST, HostNumFactory.getInstance(this)));
             } catch (Exception e) {
@@ -601,12 +600,12 @@ public class MyAccount extends AnkiActivity {
             if (data.success) {
                 Timber.i("User successfully preLogged in!");
                 try {
-                    JSONObject result = ((JSONObject) data.result).getJSONObject("data");
+                    org.json.JSONObject result = (( org.json.JSONObject) data.result).getJSONObject("data");
                     String anki_username = result.getString("anki_username");
                     String anki_password = result.getString("anki_password");
 //                    String anki_username = "zhangsan";
 //                    String anki_password ="zhangsan";
-                    JSONObject meta = result.getJSONObject("meta");
+                    org.json.JSONObject meta = result.getJSONObject("meta");
                     String token = meta.getString("token");
                     String expired_at = meta.getString("expired_at");
                     saveToken(token, expired_at);
@@ -661,7 +660,7 @@ public class MyAccount extends AnkiActivity {
             if (data.success) {
                 Timber.i("send auth code successfully!");
                 try {
-                    JSONObject result = ((JSONObject) data.result).getJSONObject("data");
+                    org.json.JSONObject result = (( org.json.JSONObject) data.result).getJSONObject("data");
                     String key = result.getString("key");
                     String expired_at = result.getString("expired_at");
                     saveAuthKey(key, expired_at);

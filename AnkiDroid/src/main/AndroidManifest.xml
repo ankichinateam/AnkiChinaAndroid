@@ -49,7 +49,16 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- .apkg files -->
+                <data
+                    android:host="ankichina"
+                    android:path="/home"
+                    android:scheme="scheme" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:host="*"
                     android:mimeType="*/*"
@@ -151,8 +160,9 @@
         <activity
             android:name=".SelfStudyActivity"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
+            android:windowSoftInputMode="adjustPan|stateHidden"
             android:exported="false"
-            android:label="@string/model_self_study_label" />
+             android:label="@string/model_self_study_label" />
         <activity
             android:name=".ModelBrowser"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
@@ -300,6 +310,22 @@
             android:exported="false"
             android:label="@string/card_template_browser_appearance_title" />
         <activity android:name=".ChooseLoginServerActivity" />
+        <activity
+            android:name="com.ichi2.anki.Previewer2"
+            android:configChanges="locale"
+            android:exported="false"
+            android:label="主动学习" />
+        <activity
+            android:name="com.ichi2.anki.StudySettingActivity"
+            android:configChanges="locale"
+            android:exported="false"
+            android:label="学习设置" />
+        <activity
+            android:name="com.ichi2.anki.SpeakSettingActivity"
+            android:configChanges="locale"
+            android:exported="false"
+            android:label="朗读设置" />
+        <activity android:name=".SwitchEngineActivity" />
 
         <activity-alias
             android:name="com.ichi2.anki.CardBrowserContextMenuAction"
@@ -454,6 +480,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <uses-sdk tools:overrideLibrary="android.support.customtabs, com.getbase.floatingactionbutton" />
 

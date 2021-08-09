@@ -17,6 +17,7 @@ package com.ichi2.anki.stats;
 
 import android.graphics.Paint;
 
+import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.stats.Stats;
@@ -67,7 +68,8 @@ public class ChartBuilder {
     }
 
     private void calcStats(Stats.AxisType type){
-        Stats stats = new Stats(mCollectionData, mDeckId);
+//        Stats stats = new Stats(mCollectionData, mDeckId);
+        Stats stats = new Stats(CollectionHelper.getInstance().getCol(mChartView.getContext()), mDeckId);
         switch (mChartType){
             case FORECAST:
                 stats.calculateDue(mChartView.getContext(), type);

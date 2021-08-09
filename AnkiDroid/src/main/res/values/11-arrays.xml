@@ -41,6 +41,7 @@
     </string-array>
     <string-array name="gestures_labels">
         <item>不采取行动</item>
+        <item>切换显示答案/问题</item>
         <item>显示答案</item>
         <item>回答按钮 1</item>
         <item>回答按钮 2</item>
@@ -67,6 +68,7 @@
         <item>移除标识</item>
         <item>向上翻页</item>
         <item>向下翻页</item>
+
     </string-array>
     <string-array name="leech_action_labels">
         <item>暂停卡片</item>
@@ -95,6 +97,16 @@
         <item>混合新卡片和复习</item>
         <item>复习后再学习新卡片</item>
         <item>学习新卡片后再复习</item>
+    </string-array>
+    <string-array name="mind_mode_labels">
+        <item>长记模式(默认)</item>
+        <item>中记模式</item>
+        <item>突击模式</item>
+    </string-array>
+    <string-array name="mind_mode_hint">
+        <item>需长期学习的内容</item>
+        <item>用Anki30天左右，应对近期考试</item>
+        <item>明天或今天有考试</item>
     </string-array>
     <string-array name="override_font_labels">
         <item>当卡片中没有指定字体时</item>
@@ -127,5 +139,42 @@
         <item>紫色</item>
         <item>灰色</item>
         <item>白色</item>
+    </string-array>
+    <string-array name="self_study_items_study">
+        <item>全选</item>
+        <item>学习中</item>
+        <item>未学习</item>
+        <item>已掌握</item>
+        <item>疑难</item>
+        <item>暂停</item>
+    </string-array>
+    <string-array name="self_study_items_mark">
+        <item>全选</item>
+        <item>红色</item>
+        <item>橙色</item>
+        <item>绿色</item>
+        <item>蓝色</item>
+        <item>Mark</item>
+    </string-array>
+    <string-array name="self_study_items_answer">
+        <item>全选</item>
+        <item>忘记</item>
+        <item>困难</item>
+        <item>一般</item>
+        <item>简单</item>
+    </string-array>
+    <string-array name="self_study_items_main">
+        <item>全部</item>
+        <item>学习记录</item>
+        <item>未学习</item>
+        <item>学习中</item>
+        <item>已掌握</item>
+        <item>近期难点</item>
+        <item>暂停</item>
+    </string-array>
+    <string-array name="deck_info_browser_tab">
+        <item>今日待学</item>
+        <item>学习记录</item>
+        <item>近期难点</item>
     </string-array>
 </resources>

@@ -44,6 +44,7 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -57,6 +58,7 @@ import com.ichi2.anki.dialogs.DialogHandler;
 import com.ichi2.anki.dialogs.ExportDialog;
 import com.ichi2.anki.dialogs.ImportDialog;
 import com.ichi2.anki.dialogs.SimpleMessageDialog;
+import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.exception.DeckRenameException;
 import com.ichi2.async.CollectionLoader;
 import com.ichi2.async.CollectionTask;
@@ -86,6 +88,17 @@ import java.util.concurrent.ExecutionException;
 
 import timber.log.Timber;
 
+import static com.ichi2.anki.DeckPicker.BE_VIP;
+import static com.ichi2.anki.DeckPicker.CONFIRM_PRIVATE_STRATEGY;
+import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE;
+import static com.ichi2.anki.DeckPicker.REQUEST_BROWSE_CARDS;
+import static com.ichi2.anki.MyAccount.NOT_LOGIN_ANKI_CHINA;
+import static com.ichi2.anki.MyAccount.NO_TOKEN_RECORD;
+import static com.ichi2.anki.MyAccount.NO_WRITEABLE_PERMISSION;
+import static com.ichi2.anki.MyAccount.TOKEN_IS_EXPIRED;
+import static com.ichi2.anki.SelfStudyActivity.ALL_DECKS_ID;
+import static com.ichi2.anki.SelfStudyActivity.TAB_MAIN_STATE;
+import static com.ichi2.anki.SelfStudyActivity.saveLastDeckId;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.DELETE_DECK;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.EMPTY_CRAM;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.EXPORT_APKG;
@@ -94,7 +107,7 @@ import static com.ichi2.async.CollectionTask.TASK_TYPE.IMPORT_REPLACE;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.REBUILD_CRAM;
 import static com.ichi2.themes.Themes.NO_SPECIFIC_STATUS_BAR_COLOR;
 
-public class AnkiActivity extends AppCompatActivity implements SimpleMessageDialog.SimpleMessageDialogListener , ExportDialog.ExportDialogListener, CustomStudyDialog.CustomStudyListener, ImportDialog.ImportDialogListener {
+public class AnkiActivity extends AppCompatActivity implements SimpleMessageDialog.SimpleMessageDialogListener, ExportDialog.ExportDialogListener, CustomStudyDialog.CustomStudyListener, ImportDialog.ImportDialogListener {
 
     public final int SIMPLE_NOTIFICATION_ID = 0;
     public static final int REQUEST_REVIEW = 901;
@@ -115,14 +128,92 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         super();
         this.mActivityName = getClass().getSimpleName();
     }
+
+    public void openCardBrowser(long deckId) {
+        saveLastDeckId(deckId);
+        Intent intent = new Intent(this, SelfStudyActivity.class);
+        intent.putExtra("type",TAB_MAIN_STATE);
+        startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
+    }
+    public void openCardBrowser() {
+        Intent intent = new Intent(this, SelfStudyActivity.class);
+        intent.putExtra("type",TAB_MAIN_STATE);
+        startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
+    }
+    public void openOldCardBrowser() {
+        Intent intent = new Intent(this, CardBrowser.class);
+        startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
+
+    }
+
     MyAccount _myAccount;
+
+
     public MyAccount getAccount() {
         if (_myAccount == null) {
             _myAccount = new MyAccount();
         }
         return _myAccount;
     }
+
+
     public long serverRestSpace = -1;
+
+
+    public void openVipUrl(String url) {
+        getAccount().getToken(this, new MyAccount.TokenCallback() {
+            @Override
+            public void onSuccess(String token) {
+                if (url != null && !url.isEmpty()) {
+                    WebViewActivity.openUrlInApp(AnkiActivity.this, String.format(url, token, BuildConfig.VERSION_NAME), token, BE_VIP);
+                }
+//                openUrl(Uri.parse(getResources().getString(R.string.shared_decks_url, token)));
+            }
+
+
+            @Override
+            public void onFail(String message) {
+//                if (message.equals(NOT_LOGIN_ANKI_CHINA)) {
+//
+//
+////                        Toast.makeText(getAnkiActivity(), "Anki Web账号登录，无需扩容", Toast.LENGTH_SHORT).show();
+////                            UIUtils.showSimpleSnackbar(getAnkiActivity(), "Anki Web账号登录，无需扩容", true);
+//                    return;
+//                } else if (message.equals(NO_TOKEN_RECORD)) {
+//
+//                }
+                Toast.makeText(AnkiActivity.this, "当前未使用Anki记忆卡账号登录，无法获得超级学霸功能", Toast.LENGTH_SHORT).show();
+                Intent myAccount = new Intent(AnkiActivity.this, MyAccount.class);
+                myAccount.putExtra("notLoggedIn", true);
+                startActivityForResultWithAnimation(myAccount, REFRESH_LOGIN_STATE, ActivityTransitionAnimation.FADE);
+//                startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                handleGetTokenFailed(message);
+//                WebViewActivity.openUrlInApp(DeckPicker.this,String.format(url+"app-inner=yes&app-token=%s&app-version=%s", "",BuildConfig.VERSION_NAME),"");
+
+            }
+        });
+
+    }
+
+
+    protected void handleGetTokenFailed(String message) {
+        if (message.equals(NO_WRITEABLE_PERMISSION)) {
+            onNoWriteablePermission();
+        } else if (message.equals(TOKEN_IS_EXPIRED)) {
+            onTokenExpired();
+        }
+    }
+
+
+    protected void onNoWriteablePermission() {
+
+    }
+
+
+    protected void onTokenExpired() {
+
+    }
+
 
     protected boolean showedActivityFailedScreen(Bundle savedInstanceState) {
         if (!AnkiDroidApp.isInitialized()) {
@@ -157,6 +248,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         return true;
     }
 
+
     public void saveServerRestSpace(long space) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(this);
         SharedPreferences.Editor editor = preferences.edit();
@@ -174,16 +266,18 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         serverRestSpace = preferences.getLong("serverRestSpace", -1);
         return serverRestSpace;
     }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Timber.i("AnkiActivity::onCreate - %s-%d", mActivityName,getStatusBarColorAttr());
+        Timber.i("AnkiActivity::onCreate - %s-%d", mActivityName, getStatusBarColorAttr());
         // The hardware buttons should control the music volume
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         // Set the theme
-                        TypedValue value = new TypedValue();
-                 getTheme().resolveAttribute(getStatusBarColorAttr(), value, true);
-        Timber.i("AnkiActivity::onCreate - %s-%d", mActivityName,value.resourceId);
-        Themes.setTheme(this,isStatusBarTransparent(),getStatusBarColorAttr());
+        TypedValue value = new TypedValue();
+        getTheme().resolveAttribute(getStatusBarColorAttr(), value, true);
+        Timber.i("AnkiActivity::onCreate - %s-%d", mActivityName, value.resourceId);
+        Themes.setTheme(this, isStatusBarTransparent(), getStatusBarColorAttr());
         super.onCreate(savedInstanceState);
         // Disable the notifications bar if running under the test monkey.
         if (AdaptionUtil.isUserATestClient()) {
@@ -192,12 +286,16 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         mCustomTabActivityHelper = new CustomTabActivityHelper();
     }
 
-    protected boolean isStatusBarTransparent(){
+
+    protected boolean isStatusBarTransparent() {
         return false;
     }
-    protected int getStatusBarColorAttr(){
+
+
+    protected int getStatusBarColorAttr() {
         return NO_SPECIFIC_STATUS_BAR_COLOR;
     }
+
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -233,11 +331,15 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     protected void onResume() {
         Timber.i("AnkiActivity::onResume - %s", mActivityName);
         super.onResume();
-        UsageAnalytics.sendAnalyticsScreenView(this);
+
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(SIMPLE_NOTIFICATION_ID);
         // Show any pending dialogs which were stored persistently
         mHandler.readMessage();
-        MobclickAgent.onResume(this);
+        if ( AnkiDroidApp.getSharedPrefs(this).contains(CONFIRM_PRIVATE_STRATEGY)){
+            UsageAnalytics.sendAnalyticsScreenView(this);
+            MobclickAgent.onResume(this);
+        }
+
     }
 
 
@@ -256,6 +358,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
                 Timber.i("Home button pressed");
                 finishWithoutAnimation();
                 return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -267,7 +370,10 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         hideProgressBar();
     }
 
+
     private static final int REQUEST_STORAGE_PERMISSION = 0;
+
+
     public Collection getCol(Context context) {
         return CollectionHelper.getInstance().getCol(context);
     }
@@ -324,13 +430,13 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     @Deprecated
     @Override
     public void startActivity(Intent intent) {
-        Timber.i("startActivity:"+intent.getPackage());
+        Timber.i("startActivity:" + intent.getPackage());
         super.startActivity(intent);
     }
 
 
     public void startActivityWithoutAnimation(Intent intent) {
-        Timber.i("startActivityWithoutAnimation:"+intent.getPackage());
+        Timber.i("startActivityWithoutAnimation:" + intent.getPackage());
         disableIntentAnimation(intent);
         super.startActivity(intent);
         disableActivityAnimation();
@@ -338,7 +444,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
     public void startActivityWithAnimation(Intent intent, int animation) {
-        Timber.i("startActivityWithAnimation:"+intent.getComponent());
+        Timber.i("startActivityWithAnimation:" + intent.getComponent());
         enableIntentAnimation(intent);
         super.startActivity(intent);
         enableActivityAnimation(animation);
@@ -357,7 +463,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
     public void startActivityForResultWithoutAnimation(Intent intent, int requestCode) {
-        Timber.i("startActivityForResultWithoutAnimation:"+intent.getPackage());
+        Timber.i("startActivityForResultWithoutAnimation:" + intent.getPackage());
         disableIntentAnimation(intent);
         startActivityForResult(intent, requestCode);
         disableActivityAnimation();
@@ -365,7 +471,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
     public void startActivityForResultWithAnimation(Intent intent, int requestCode, int animation) {
-        Timber.i("finishWithoutAnimation:"+intent.getPackage());
+        Timber.i("finishWithoutAnimation:" + intent.getPackage());
         enableIntentAnimation(intent);
         startActivityForResult(intent, requestCode);
         enableActivityAnimation(animation);
@@ -426,13 +532,16 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         ActivityTransitionAnimation.slide(activity, ActivityTransitionAnimation.UP);
     }
 
+
     /**
      * Finish Activity using FADE animation
      **/
-    public static void finishActivityWithFade(Activity activity,int direction) {
+    public static void finishActivityWithFade(Activity activity, int direction) {
         activity.finish();
         ActivityTransitionAnimation.slide(activity, direction);
     }
+
+
     private void disableIntentAnimation(Intent intent) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
     }
@@ -512,7 +621,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     public void openUrl(Uri url) {
         //DEFECT: We might want a custom view for the toast, given i8n may make the text too long for some OSes to
         //display the toast
-        Timber.i("final get url:%s", url );
+        Timber.i("final get url:%s", url);
 
         if (!AdaptionUtil.hasWebBrowser(this)) {
             UIUtils.showThemedToast(this, getResources().getString(R.string.no_browser_notification) + url, false);
@@ -573,6 +682,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     public void showAsyncDialogFragment(AsyncDialogFragment newFragment) {
         showAsyncDialogFragment(newFragment, NotificationChannels.Channel.GENERAL);
     }
+
 
     public void showDatabaseErrorDialog(int id) {
         AsyncDialogFragment newFragment = DatabaseErrorDialog.newInstance(id);
@@ -703,8 +813,6 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 //    }
 
 
-
-
     // Restart the activity
     public void restartActivity() {
         Timber.i("AnkiActivity -- restartActivity()");
@@ -734,9 +842,6 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
             setSupportActionBar(toolbar);
         }
     }
-
-
-
 
 
     // Callback to show study options for currently selected deck
@@ -800,9 +905,18 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         showDialogFragment(DeckPickerConfirmDeleteDeckDialog.newInstance(msg));
     }
 
+
     protected long mContextMenuDid;
+
+
     public void setContextMenuDid(long mContextMenuDid) {
         this.mContextMenuDid = mContextMenuDid;
+    }
+
+
+    // Callback to delete currently selected deck
+    public void deleteContextMenuDeck() {
+        deleteDeck(mContextMenuDid);
     }
 
 
@@ -819,31 +933,41 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         mContextMenuDid = savedInstanceState.getLong("mContextMenuDid");
     }
 
+
     public void deleteDeck(final long did) {
         try {
             TaskListener listener = deleteDeckListener(did);
             CollectionTask.launchCollectionTask(DELETE_DECK, listener, new TaskData(did));
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
 
     }
 
-    protected TaskListener deleteDeckListener(long did) throws Exception  {
-       throw new Exception("not implemented delete listener");
+
+    protected TaskListener deleteDeckListener(long did) throws Exception {
+        throw new Exception("not implemented delete listener");
     }
 
-    protected TaskListener exportListener( ) throws Exception {
+
+    protected TaskListener exportListener() throws Exception {
         throw new Exception("not implemented export listener");
     }
+
 
     protected void refreshDeckListUI(boolean onlyRefresh) throws Exception {
         throw new Exception("not override refresh deck ui ");
     }
+
+
     // Callback to show dialog to rename the current deck
     public void renameDeckDialog() {
         renameDeckDialog(mContextMenuDid);
     }
 
+
     private EditText mDialogEditText;
+
+
     public void renameDeckDialog(final long did) {
         final Resources res = getResources();
         mDialogEditText = new EditText(this);
@@ -894,6 +1018,8 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         msg = getResources().getString(R.string.confirm_apkg_export_deck, getCol().getDecks().get(did).getString("name"));
         showDialogFragment(ExportDialog.newInstance(msg, did, this));
     }
+
+
     @Override
     public void exportApkg(String filename, Long did, boolean includeSched, boolean includeMedia) {
         File exportDir = new File(getExternalCacheDir(), "export");
@@ -929,10 +1055,13 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         }
 
     }
+
+
     @Override
     public void dismissAllDialogFragments() {
         getSupportFragmentManager().popBackStack("dialog", FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
+
 
     public void emailFile(String path) {
         // Make sure the file actually exists
@@ -970,6 +1099,8 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     protected String mExportFileName;
 
     public static final int PICK_EXPORT_FILE = 1004;
+
+
     @TargetApi(19)
     public void saveExportFile(String path) {
         // Make sure the file actually exists
@@ -1003,6 +1134,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         }
     }
 
+
     private boolean exportToProvider(Intent intent, boolean deleteAfterExport) {
         if ((intent == null) || (intent.getData() == null)) {
             Timber.e("exportToProvider() provided with insufficient intent data %s", intent);
@@ -1033,6 +1165,8 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         }
         return true;
     }
+
+
     public void rebuildFiltered() {
         getCol().getDecks().select(mContextMenuDid);
         CollectionTask.launchCollectionTask(REBUILD_CRAM, simpleProgressListener());
@@ -1043,6 +1177,8 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         getCol().getDecks().select(mContextMenuDid);
         CollectionTask.launchCollectionTask(EMPTY_CRAM, simpleProgressListener());
     }
+
+
     /**
      * Show progress bars and rebuild deck list on completion
      */
@@ -1064,17 +1200,20 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
         @Override
-        public void actualOnPostExecute(@NonNull AnkiActivity deckPicker, TaskData result)   {
+        public void actualOnPostExecute(@NonNull AnkiActivity deckPicker, TaskData result) {
 //            deckPicker.onRequireDeckListUpdate();
 //            if (deckPicker.mDeckPickerFragment.mFragmented) {
 //                deckPicker.mDeckPickerFragment.loadStudyOptionsFragment(false);
 //            }
-            try {deckPicker.refreshDeckListUI(false);
+            try {
+                deckPicker.refreshDeckListUI(false);
 
-            }catch (Exception e){}
+            } catch (Exception e) {
+            }
 
         }
     }
+
 
     public void createSubdeckDialog() {
         createSubDeckDialog(mContextMenuDid);
@@ -1095,7 +1234,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
                     String textValue = mDialogEditText.getText().toString();
                     String newName = getCol().getDecks().getSubdeckName(did, textValue);
                     if (Decks.isValidDeckName(newName)) {
-                        createNewDeck(newName);
+                        createSubNewDeck(newName);
                     } else {
                         Timber.i("createSubDeckDialog - not creating invalid subdeck name '%s'", newName);
                         UIUtils.showThemedToast(this, getString(R.string.invalid_deck_name), false);
@@ -1111,16 +1250,34 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
                 .build().show();
     }
 
+
     public void createNewDeck(String deckName) {
         Timber.i("AnkiActivity:: Creating new deck...");
         getCol().getDecks().id(deckName, true);
-
         try {
             refreshDeckListUI(false);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
+    public void createSubNewDeck(String deckName) {
+        Timber.i("AnkiActivity:: Creating new sub deck...");
+        try {
+            long newID = getCol().getDecks().id(deckName, true);
+            long parentConfID = getCol().getDecks().get(mContextMenuDid).getLong("conf");
+            getCol().getDecks().get(newID).put("conf", parentConfID);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            refreshDeckListUI(false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void onCreateCustomStudySession() {
@@ -1147,19 +1304,20 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-           if ((requestCode == PICK_EXPORT_FILE) && (resultCode == RESULT_OK)) {
+        if ((requestCode == PICK_EXPORT_FILE) && (resultCode == RESULT_OK)) {
             if (exportToProvider(intent, true)) {
                 UIUtils.showSimpleSnackbar(this, getString(R.string.export_save_apkg_successful), true);
             } else {
                 UIUtils.showSimpleSnackbar(this, getString(R.string.export_save_apkg_unsuccessful), false);
             }
-        }else if ((requestCode == PICK_APKG_FILE) && (resultCode == RESULT_OK)) {
-               ImportUtils.ImportResult importResult = ImportUtils.handleFileImport(this, intent);
-               if (!importResult.isSuccess()) {
-                   ImportUtils.showImportUnsuccessfulDialog(this, importResult.getHumanReadableMessage(), false);
-               }
-           }
+        } else if ((requestCode == PICK_APKG_FILE) && (resultCode == RESULT_OK)) {
+            ImportUtils.ImportResult importResult = ImportUtils.handleFileImport(this, intent);
+            if (!importResult.isSuccess()) {
+                ImportUtils.showImportUnsuccessfulDialog(this, importResult.getHumanReadableMessage(), false);
+            }
+        }
     }
+
 
     @Override
     public void importAdd(String importPath) {
@@ -1173,14 +1331,16 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
     }
 
-    protected TaskListener importAddListener( ) throws Exception {
+
+    protected TaskListener importAddListener() throws Exception {
         throw new Exception("not implemented import listener");
     }
 
 
-    protected TaskListener importReplaceListener( ) throws Exception {
+    protected TaskListener importReplaceListener() throws Exception {
         throw new Exception("not implemented import replace listener");
     }
+
 
     @Override
     public void importReplace(String importPath) {
@@ -1198,7 +1358,10 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         showImportDialog(id, "");
     }
 
+
     public static final int PICK_APKG_FILE = 13;
+
+
     @TargetApi(Build.VERSION_CODES.KITKAT)
     @Override
     public void showImportDialog(int id, String message) {
@@ -1220,7 +1383,6 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
             startActivityForResultWithoutAnimation(intent, PICK_APKG_FILE);
         }
     }
-
 
 
 }

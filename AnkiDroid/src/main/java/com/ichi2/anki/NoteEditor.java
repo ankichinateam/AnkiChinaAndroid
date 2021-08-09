@@ -951,6 +951,11 @@ public class NoteEditor extends AnkiActivity {
             // Check whether note type has been changed
             final Model newModel = getCurrentlySelectedModel();
             final Model oldModel = (mCurrentEditedCard == null) ? null : mCurrentEditedCard.model();
+            File target =new File(FileUtil.createTmpDir(this),mCurrentEditedCard.getId()+".wav");
+            if(target.exists()){
+                Timber.i("editing card audio is exists,delete it");
+                target.delete();
+            }
             if (!newModel.equals(oldModel)) {
                 mReloadRequired = true;
                 if (mModelChangeCardMap.size() < mEditorNote.numberOfCards() || mModelChangeCardMap.containsValue(null)) {

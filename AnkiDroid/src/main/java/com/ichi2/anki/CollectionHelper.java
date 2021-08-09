@@ -94,6 +94,7 @@ public class CollectionHelper {
      */
     public static CollectionHelper getInstance() {
         return LazyHolder.INSTANCE;
+//        return new CollectionHelper();
     }
 
 
@@ -225,7 +226,13 @@ public class CollectionHelper {
      * @return the folder path
      */
     public static String getDefaultAnkiDroidDirectory() {
-        return new File(Environment.getExternalStorageDirectory(), "AnkiDroid").getAbsolutePath();
+        if(new File(Environment.getExternalStorageDirectory(), "AnkiChina").exists()){
+            return new File(Environment.getExternalStorageDirectory(), "AnkiChina").getAbsolutePath();
+        }
+        if(new File(Environment.getExternalStorageDirectory(), "AnkiDroid").exists()){
+            return new File(Environment.getExternalStorageDirectory(), "AnkiDroid").getAbsolutePath();
+        }
+        return new File(Environment.getExternalStorageDirectory(), "AnkiChina").getAbsolutePath();
     }
 
     /**

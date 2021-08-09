@@ -186,6 +186,9 @@ public abstract class AbstractDeckTreeNode<T extends AbstractDeckTreeNode<T>> im
         throw new UnsupportedOperationException();
     }
 
+    public double[] getStudyData() {
+        throw new UnsupportedOperationException();
+    }
 
     public boolean knownToHaveRep() {
         return false;

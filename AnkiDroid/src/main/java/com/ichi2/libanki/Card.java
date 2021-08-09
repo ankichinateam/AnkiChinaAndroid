@@ -29,8 +29,11 @@ import com.ichi2.utils.LanguageUtil;
 import com.ichi2.utils.JSONObject;
 
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +43,7 @@ import java.util.Set;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+import timber.log.Timber;
 
 import static com.ichi2.libanki.stats.Stats.SECONDS_PER_DAY;
 
@@ -685,7 +689,32 @@ public class Card implements Cloneable {
         }
         return t;
     }
+    public String getDueString2() {
 
+        long due = getDue();
+        if (getODid() != 0) {
+            return "已过滤";
+        }else  if (getQueue() < 0) {
+            return "已暂停";
+        }else if (getQueue() == Consts.QUEUE_TYPE_NEW || getType() == Consts.CARD_TYPE_NEW){
+            return "新卡牌";
+        }else if (getQueue() == Consts.QUEUE_TYPE_LRN) {
+//            long date  = due;
+//            long nbDaySinceCreation = (due - getCol().getSched().getToday());
+            Calendar now=Calendar.getInstance();
+//             Calendar calendar=Calendar.getInstance();
+//             calendar.setTimeInMillis(due*1000);
+//            calendar.get(Calendar.DAY_OF_MONTH);
+            long diff=due-now.getTimeInMillis()/1000;
+            return diff>=0?diff+"秒后复习":"已逾期"+(diff*-1)+"秒";
+        }else if (getQueue() == Consts.QUEUE_TYPE_REV || getQueue() == Consts.QUEUE_TYPE_DAY_LEARN_RELEARN || (getType() == Consts.CARD_TYPE_REV && getQueue() < 0)) {
+//            long time = mCol.getTime().intTime();
+            long nbDaySinceCreation = (due - getCol().getSched().getToday());
+            return nbDaySinceCreation>=0?nbDaySinceCreation+"天后复习":"已逾期"+(nbDaySinceCreation*-1)+"天";
+//            long date = time + (nbDaySinceCreation * SECONDS_PER_DAY);
+        }
+        return "";
+    }
     // as in Anki aqt/browser.py
     private String nextDue() {
         long date;
@@ -695,14 +724,17 @@ public class Card implements Cloneable {
         } else if (getQueue() == Consts.QUEUE_TYPE_LRN) {
             date = due;
         } else if (getQueue() == Consts.QUEUE_TYPE_NEW || getType() == Consts.CARD_TYPE_NEW) {
+            Timber.i("show you the due:"+due+","+getQueue());
             return (new Long(due)).toString();
         } else if (getQueue() == Consts.QUEUE_TYPE_REV || getQueue() == Consts.QUEUE_TYPE_DAY_LEARN_RELEARN || (getType() == Consts.CARD_TYPE_REV && getQueue() < 0)) {
             long time = mCol.getTime().intTime();
             long nbDaySinceCreation = (due - getCol().getSched().getToday());
             date = time + (nbDaySinceCreation * SECONDS_PER_DAY);
         } else {
+            Timber.i("show you the due:"+due+","+getQueue());
             return "";
         }
+        Timber.i("show you the due:"+date+","+getQueue());
         return LanguageUtil.getShortDateFormatFromS(date);
     }
 

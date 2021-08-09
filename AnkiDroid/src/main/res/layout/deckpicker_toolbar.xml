@@ -9,24 +9,32 @@
         android:layout_alignParentTop="true"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ActionBarStyleNew"
+        app:contentInsetLeft="16dp"
+        app:contentInsetStartWithNavigation="16dp"
         app:navigationContentDescription="@string/abc_action_bar_up_description"
         app:navigationIcon="?attr/homeAsUpIndicator">
-        <LinearLayout
-            android:background="@drawable/deckpicker_search_background"
+        <RelativeLayout
             android:gravity="center"
             android:layout_gravity="center"
-            android:layout_width="203dp"
+            android:layout_width="match_parent"
             android:layout_height="36dp">
-            <TextView
-                android:id="@+id/toolbar_title"
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                app:tabIndicatorHeight="0dp"
+                app:tabPaddingStart="0dp"
+                app:tabPaddingEnd="19dp"
                 android:layout_width="wrap_content"
-                android:gravity="center"
+                android:layout_height="48dp"/>
+            <ImageView
+                android:id="@+id/vip_logo"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/new_primary_text_third_color"
-                android:background="@drawable/deckpicker_search_background"
-                android:textSize="15sp"
-                app:drawableStartCompat="@mipmap/home_search_pressed" />
-        </LinearLayout>
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:src="@mipmap/super_heroes_normal"
+                />
+
+        </RelativeLayout>
 
 
         <Spinner

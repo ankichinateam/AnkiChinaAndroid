@@ -29,7 +29,7 @@ import android.util.Pair;
 import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.R;
 import com.ichi2.anki.UIUtils;
-import com.ichi2.anki.analytics.UsageAnalytics;
+//import com.ichi2.anki.analytics.UsageAnalytics;
 import com.ichi2.anki.exception.ConfirmModSchemaException;
 import com.ichi2.async.CollectionTask;
 import com.ichi2.libanki.exception.NoSuchDeckException;
@@ -138,7 +138,7 @@ public class Collection {
             +
             // review options
             "'activeDecks': [1], " + "'curDeck': 1, " + "'newSpread': " + Consts.NEW_CARDS_DISTRIBUTE + ", "
-            + "'collapseTime': 1200, " + "'timeLim': 0, " + "'estTimes': True, " + "'dueCounts': True, "
+            + "'collapseTime': 3600, " + "'timeLim': 0, " + "'estTimes': True, " + "'dueCounts': True, "
             +
             // other config
             "'curModel': null, " + "'nextPos': 1, " + "'sortType': \"noteFld\", "
@@ -223,6 +223,7 @@ public class Collection {
     // Note: Additional members in the class duplicate this
     private void _loadScheduler() {
         int ver = schedVer();
+        Timber.i("_loadScheduler");
         if (ver == 1) {
             mSched = new Sched(this);
         } else if (ver == 2) {
@@ -286,6 +287,7 @@ public class Collection {
         // efficiency Models are loaded lazily on demand. The
         // application layer can asynchronously pre-fetch those parts;
         // otherwise they get loaded when required.
+        Timber.i("load new collection");
         mDecks.load(loadColumn("decks"), deckConf);
     }
 
@@ -459,8 +461,8 @@ public class Collection {
 
 
     public void reopen() {
-        Timber.i("Reopening Database");
         if (mDb == null) {
+            Timber.i("Reopening Database");
             mDb = new DB(mPath);
             mMedia.connect();
             _openLog();
@@ -985,7 +987,9 @@ public class Collection {
     public int cardCount(Long[] ls) {
         return mDb.queryScalar("SELECT count() FROM cards WHERE did IN " + Utils.ids2str(ls));
     }
-
+    public int cardCount(String ids) {
+        return mDb.queryScalar("SELECT count() FROM cards WHERE did IN " + ids);
+    }
 
     /**
      * Bulk delete cards by ID.
@@ -1914,7 +1918,7 @@ public class Collection {
             for (int i = 0; ((i < 10) && (integrityCheckProblems.size() > i)); i++) {
                 additionalInfo.append(integrityCheckProblems.get(i)).append("\n");
                 // log analytics event so we can see trends if user allows it
-                UsageAnalytics.sendAnalyticsEvent("DatabaseCorruption", integrityCheckProblems.get(i));
+//                UsageAnalytics.sendAnalyticsEvent("DatabaseCorruption", integrityCheckProblems.get(i));
             }
             Timber.i("fixIntegrity() Problem list (limited to first 10):\n%s", additionalInfo);
         } else {
@@ -1996,7 +2000,7 @@ public class Collection {
      */
 
     public DB getDb() {
-        return mDb;
+         return mDb;
     }
 
 

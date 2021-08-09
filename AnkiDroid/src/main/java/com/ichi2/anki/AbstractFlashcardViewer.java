@@ -32,9 +32,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,12 +60,15 @@ import androidx.core.view.GestureDetectorCompat;
 import androidx.appcompat.app.ActionBar;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -83,12 +90,19 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.baidu.tts.chainofresponsibility.logger.LoggerProxy;
+import com.baidu.tts.client.SpeechSynthesizer;
+import com.baidu.tts.client.SpeechSynthesizerListener;
+import com.baidu.tts.client.SynthesizerTool;
+import com.baidu.tts.client.TtsMode;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.ichi2.anim.ActivityTransitionAnimation;
@@ -105,6 +119,14 @@ import com.ichi2.anki.reviewer.ReviewerUi;
 import com.ichi2.anki.cardviewer.TypedAnswer;
 import com.ichi2.async.CollectionTask;
 import com.ichi2.async.TaskListener;
+import com.ichi2.bd.Auth;
+import com.ichi2.bd.AutoCheck;
+import com.ichi2.bd.FileSaveListener;
+import com.ichi2.bd.IOfflineResourceConst;
+import com.ichi2.bd.InitConfig;
+import com.ichi2.bd.MySyntherizer;
+import com.ichi2.bd.NonBlockSyntherizer;
+import com.ichi2.bd.OfflineResource;
 import com.ichi2.compat.CompatHelper;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.sched.AbstractSched;
@@ -118,14 +140,17 @@ import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.template.Template;
 import com.ichi2.themes.HtmlColors;
 import com.ichi2.themes.Themes;
+import com.ichi2.ui.CustomStyleDialog;
 import com.ichi2.utils.AdaptionUtil;
 import com.ichi2.utils.DiffEngine;
+import com.ichi2.utils.FileUtil;
 import com.ichi2.utils.FunctionalInterfaces.Consumer;
 import com.ichi2.utils.FunctionalInterfaces.Function;
 
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONException;
 import com.ichi2.utils.JSONObject;
+import com.ichi2.utils.OKHttpUtil;
 import com.ichi2.utils.WebViewDebugging;
 
 import java.io.ByteArrayInputStream;
@@ -139,6 +164,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -146,8 +174,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okio.BufferedSink;
 import timber.log.Timber;
 
+import static com.ichi2.anki.DeckPicker.BE_VIP;
+import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE;
+import static com.ichi2.anki.DeckPicker.REFRESH_VOICE_INFO;
+import static com.ichi2.anki.SpeakSettingActivity.REQUEST_CODE_SPEAK_SETTING;
 import static com.ichi2.anki.cardviewer.CardAppearance.calculateDynamicFontSize;
 import static com.ichi2.anki.cardviewer.ViewerCommand.*;
 import static com.ichi2.anki.reviewer.CardMarker.*;
@@ -155,6 +193,13 @@ import static com.ichi2.async.CollectionTask.TASK_TYPE.*;
 
 import com.ichi2.async.TaskData;
 
+import static com.ichi2.bd.MainHandlerConstant.PRINT;
+import static com.ichi2.bd.MainHandlerConstant.UI_CHANGE_INPUT_TEXT_SELECTION;
+import static com.ichi2.bd.MainHandlerConstant.UI_CHANGE_SYNTHES_TEXT_SELECTION;
+import static com.ichi2.bd.MainHandlerConstant.UI_PLAY_END;
+import static com.ichi2.bd.MainHandlerConstant.UI_PLAY_START;
+import static com.ichi2.libanki.Consts.KEY_SELECT_ONLINE_SPEAK_ENGINE;
+import static com.ichi2.libanki.Consts.KEY_SHOW_TTS_ICON;
 import static com.ichi2.libanki.Sound.SoundSide;
 
 import com.github.zafarkhaja.semver.Version;
@@ -173,7 +218,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
      */
     public static final int EDIT_CURRENT_CARD = 0;
     public static final int DECK_OPTIONS = 1;
-
+    public static final int REFRESH_TOP_BUTTONS = 5;
+    public static final int REFRESH_GESTURE = 6;
     public static final int EASE_1 = 1;
     public static final int EASE_2 = 2;
     public static final int EASE_3 = 3;
@@ -295,6 +341,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     protected TextView mEase2;
     protected TextView mEase3;
     protected TextView mEase4;
+
     protected LinearLayout mFlipCardLayout;
     protected LinearLayout mEaseButtonsLayout;
     protected LinearLayout mEase1Layout;
@@ -302,6 +349,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     protected LinearLayout mEase3Layout;
     protected LinearLayout mEase4Layout;
     protected FrameLayout mPreviewButtonsLayout;
+
+
     protected ImageView mPreviewPrevCard;
     protected ImageView mPreviewNextCard;
     protected TextView mPreviewToggleAnswerText;
@@ -312,6 +361,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     private android.text.ClipboardManager mClipboard;
 
     protected Card mCurrentCard;
+    protected Card mPreCard;
+    protected LinkedList<Long> mCardIDs = new LinkedList<>();
     private int mCurrentEase;
 
     private boolean mButtonHeightSet = false;
@@ -359,7 +410,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
     protected AbstractSched mSched;
 
-    private Sound mSoundPlayer = new Sound();
+    protected Sound mSoundPlayer = new Sound();
 
     /**
      * Time taken o play all medias in mSoundPlayer
@@ -619,6 +670,24 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     };
 
 
+    protected boolean hasSched() {
+        return true;
+    }
+
+
+    protected void displayPre() {
+        if (mCardIDs.size() > 0) {
+            mCurrentCard = getCol().getCard(mCardIDs.pop());
+            // Start reviewing next card
+            updateTypeAnswerInfo();
+            hideProgressBar();
+            unblockControls();
+            displayCardQuestion();
+            refreshActionBar();
+            findViewById(R.id.root_layout).requestFocus();
+        }
+    }
+
 
     abstract class NextCardHandler extends TaskListener {
         private boolean mNoMoreCards;
@@ -639,13 +708,15 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         protected void displayNext(Card nextCard) {
 
             Resources res = getResources();
-
-            if (mSched == null) {
+            Timber.i("display next:" + hasSched() + "," + (mSched == null));
+            if (hasSched() && mSched == null) {
                 // TODO: proper testing for restored activity
                 finishWithoutAnimation();
                 return;
             }
-
+            if (mCurrentCard != null) {
+                mCardIDs.push(mCurrentCard.getId());
+            }
             mCurrentCard = nextCard;
             if (mCurrentCard == null) {
                 // If the card is null means that there are no more cards scheduled for review.
@@ -898,13 +969,14 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     // ANDROID METHODS
     // ----------------------------------------------------------------------------
     protected TextView mTitle;
+    private SharedPreferences preferences;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Timber.d("onCreate()");
 
-        SharedPreferences preferences = restorePreferences();
+        preferences = restorePreferences();
         mCardAppearance = CardAppearance.create(new ReviewerCustomFonts(this.getBaseContext()), preferences);
         super.onCreate(savedInstanceState);
         setContentView(getContentViewAttr(mPrefFullscreenReview));
@@ -912,19 +984,18 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         // Make ACTION_PROCESS_TEXT for in-app searching possible on > Android 4.0
         getDelegate().setHandleNativeActionModesEnabled(true);
 
-        View mainView = findViewById(android.R.id.content);
-//        initNavigationDrawer(mainView);
+        //        initNavigationDrawer(mainView);
         Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
             // enable ActionBar app icon to behave as action to toggle nav drawer
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeButtonEnabled(true);
-            int[] attrs = new int[] {
-                    R.attr.reviewStatusBarColor,
-                   };
-            TypedArray ta = obtainStyledAttributes(attrs);
-            toolbar.setBackground(ta.getDrawable(0));
+//            int[] attrs = new int[] {
+//                    R.attr.reviewStatusBarColor,
+//            };
+//            TypedArray ta = obtainStyledAttributes(attrs);
+//            toolbar.setBackground(ta.getDrawable(0));
             mTitle = toolbar.findViewById(R.id.toolbar_title);
             mTitle.setVisibility(View.VISIBLE);
 
@@ -932,6 +1003,27 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //            toolbar.setNavigationOnClickListener(v -> onNavigationPressed());
         }
         mShortAnimDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        mFreeVipCount = preferences.getInt("speak_count", 0);
+        mVip = preferences.getBoolean(Consts.KEY_IS_VIP, false);
+        mFreeOnlineEngineCount = preferences.getInt(Consts.KEY_REST_ONLINE_SPEAK_COUNT, 1000);
+//        mFreeVipRecordDay = preferences.getInt("speak_count_day", 0);
+//        Calendar calendar = Calendar.getInstance();
+//        if (mFreeVipRecordDay != calendar.get(Calendar.DAY_OF_YEAR)) {//已经不是记录里的同一天
+//            mFreeVipCount = 0;
+//            preferences.edit().putInt("speak_count", mFreeVipCount)
+//                    .putInt("speak_count_day", calendar.get(Calendar.DAY_OF_YEAR)).apply();
+//        }
+        mainHandler = new Handler() {
+            /*
+             * @param msg
+             */
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                handle(msg);
+            }
+
+        };
     }
 
 
@@ -984,9 +1076,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         }
 
         // Initialize text-to-speech. This is an asynchronous operation.
-        if (mSpeakText) {
-            ReadText.initializeTts(this, new ReadTextListener());
-        }
+//        if (mSpeakText) {
+//            ReadText.initializeTts(this, true,false,new ReadTextListener());
+//        }
 
         // Initialize dictionary lookup feature
         Lookup.initialize(this);
@@ -1009,22 +1101,18 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         pauseTimer();
         mSoundPlayer.stopSounds();
-
+        stopOnlineSpeaking();
         // Prevent loss of data in Cookies
         CompatHelper.getCompat().flushWebViewCookies();
     }
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        resumeTimer();
-        // Set the context for the Sound manager
-        mSoundPlayer.setContext(new WeakReference<Activity>(this));
-        // Reset the activity title
-        setTitle();
-        updateActionBar();
-//        selectNavigationItem(-1);
+    private void stopOnlineSpeaking() {
+        if (synthesizer != null && synthesizer.isInitied()) {
+            synthesizer.stop();
+            mOnlineSpeaking = false;
+            speakingHandler.obtainMessage(10086).sendToTarget();
+        }
     }
 
 
@@ -1037,8 +1125,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             mSched.discardCurrentCard();
         }
         Timber.d("onDestroy()");
-        if (mSpeakText) {
+        speakingHandler.removeCallbacksAndMessages(null);
+        if (mTtsInitialized) {
             ReadText.releaseTts();
+        }
+        if (synthesizer != null && synthesizer.isInitied()) {
+            synthesizer.release();
         }
         if (mUnmountReceiver != null) {
             unregisterReceiver(mUnmountReceiver);
@@ -1048,6 +1140,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         if (mCardFrame != null) {
             mCardFrame.removeAllViews();
         }
+
         destroyWebView(mCardWebView); //OK to do without a lock
     }
 
@@ -1165,13 +1258,23 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == DeckPicker.RESULT_DB_ERROR) {
+        Timber.i("onActivityResult:" + requestCode);
+        if (requestCode == BE_VIP || requestCode == REFRESH_LOGIN_STATE) {
+            mRefreshVipStateOnResume = true;
+            mTurnToVipHtml = requestCode == REFRESH_LOGIN_STATE;
+        } else if (requestCode == REFRESH_VOICE_INFO) {
+            mRefreshVoiceInfoStateOnResume = true;
+        } else if (resultCode == DeckPicker.RESULT_DB_ERROR) {
             closeReviewer(DeckPicker.RESULT_DB_ERROR, false);
-        }
-
-        if (resultCode == DeckPicker.RESULT_MEDIA_EJECTED) {
+        } else if (resultCode == DeckPicker.RESULT_MEDIA_EJECTED) {
             finishNoStorageAvailable();
+        } else if (requestCode == REFRESH_TOP_BUTTONS) {
+            restorePreferences();
+            invalidateOptionsMenu();
+        } else if (requestCode == REQUEST_CODE_SPEAK_SETTING) {
+            mReInitBDVoice = true;
+        } else if (requestCode == REFRESH_GESTURE) {
+            initLayout();
         }
 
         /* Reset the schedule and reload the latest card off the top of the stack if required.
@@ -1381,6 +1484,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 .onPositive((dialog, which) -> {
                     Timber.i("AbstractFlashcardViewer:: OK button pressed to delete note %d", mCurrentCard.getNid());
                     mSoundPlayer.stopSounds();
+                    stopOnlineSpeaking();
                     dismiss(Collection.DismissType.DELETE_NOTE);
                 })
                 .build().show();
@@ -1449,6 +1553,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mTimerHandler.removeCallbacks(removeChosenAnswerText);
         mTimerHandler.postDelayed(removeChosenAnswerText, mShowChosenAnswerLength);
         mSoundPlayer.stopSounds();
+        stopOnlineSpeaking();
         mCurrentEase = ease;
 
         CollectionTask.launchCollectionTask(ANSWER_CARD, mAnswerCardHandler(true),
@@ -1558,6 +1663,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         }
 
         mPreviewButtonsLayout = findViewById(R.id.preview_buttons_layout);
+
         mPreviewPrevCard = findViewById(R.id.preview_previous_flashcard);
         mPreviewNextCard = findViewById(R.id.preview_next_flashcard);
         mPreviewToggleAnswerText = findViewById(R.id.preview_flip_flashcard);
@@ -1567,6 +1673,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mChosenAnswer = (TextView) findViewById(R.id.choosen_answer);
 
         mAnswerField = (EditText) findViewById(R.id.answer_field);
+
 
         mLookUpIcon = findViewById(R.id.lookup_button);
         mLookUpIcon.setVisibility(View.GONE);
@@ -1581,6 +1688,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             }
 
         });
+
+
         initControls();
 
         // Position answer buttons
@@ -1635,6 +1744,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         // Javascript interface for calling AnkiDroid functions in webview, see card.js
         webView.addJavascriptInterface(javaScriptFunction(), "AnkiDroidJS");
+//        webView.setOnTouchListener((v, event) -> {
+//            if(event.getAction()==MotionEvent.ACTION_DOWN){
+//
+//            }
+//            return false;
+//        });
         return webView;
     }
 
@@ -1701,6 +1816,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 webView.setWebChromeClient(null);
                 webView.setWebViewClient(null);
                 webView.destroy();
+                if (fetchRenderHandler != null) {
+                    fetchRenderHandler.removeCallbacksAndMessages(null);
+                }
             }
         } catch (NullPointerException npe) {
             Timber.e(npe, "WebView became null on destruction");
@@ -1721,7 +1839,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         // hide "Show Answer" button
 //        if (animationDisabled()) {
-            after.run();
+        after.run();
 //        } else {
 //            mFlipCardLayout.setAlpha(1);
 //            mFlipCardLayout.animate().alpha(0).setDuration(mShortAnimDuration).withEndAction(after);
@@ -1736,6 +1854,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             mEase2Layout.setVisibility(View.GONE);
             mEase3Layout.setVisibility(View.GONE);
             mEase4Layout.setVisibility(View.GONE);
+
+
             mNext1.setText("");
             mNext2.setText("");
             mNext3.setText("");
@@ -1747,7 +1867,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mFlipCardLayout.setVisibility(View.VISIBLE);
 
 //        if (animationDisabled() || !easeButtonsVisible) {
-            after.run();
+        after.run();
 //        } else {
 //            mFlipCardLayout.setAlpha(0);
 //            mFlipCardLayout.animate().alpha(1).setDuration(mShortAnimDuration).withEndAction(after);
@@ -1984,6 +2104,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 }
             }
         }
+
+
+        @Override
+        public void ttsInitialized() {
+            AbstractFlashcardViewer.this.ttsInitialized();
+        }
     }
 
 
@@ -2020,9 +2146,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
     protected void displayCardQuestion() {
         displayCardQuestion(false);
-
         // js api initialisation / reset
         jsApiInit();
+
     }
 
 
@@ -2052,12 +2178,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
             displayString = CardAppearance.enrichWithQADiv(question, false);
 
-            //if (mSpeakText) {
-            // ReadText.setLanguageInformation(Model.getModel(DeckManager.getMainDeck(),
-            // mCurrentCard.getCardModelId(), false).getId(), mCurrentCard.getCardModelId());
-            //}
+//            if (mSpeakText) {
+//             ReadText.setLanguageInformation(Model.getModel(DeckManager.getMainDeck(),
+//             mCurrentCard.getCardModelId(), false).getId(), mCurrentCard.getCardModelId());
+//            }
         }
-
+        Timber.d("displayCardQuestion:" + displayString);
         updateCard(displayString);
         hideEaseButtons();
 
@@ -2133,6 +2259,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         String answer = mCurrentCard.a();
 
         mSoundPlayer.stopSounds();
+        stopOnlineSpeaking();
         answer = getCol().getMedia().escapeImages(answer);
 
         mAnswerField.setVisibility(View.GONE);
@@ -2295,27 +2422,217 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         fillFlashcard();
 
         if (!mConfigurationChanged) {
-            playSounds(false); // Play sounds if appropriate
+            playSoundsVIP(false);
         }
     }
 
 
-    /**
-     * Plays sounds (or TTS, if configured) for currently shown side of card.
-     *
-     * @param doAudioReplay indicates an anki desktop-like replay call is desired, whose behavior is identical to
-     *                      pressing the keyboard shortcut R on the desktop
-     */
-    protected void playSounds(boolean doAudioReplay) {
-        boolean replayQuestion = getConfigForCurrentCard().optBoolean("replayq", true);
+    protected boolean mRefreshVipStateOnResume = true;
+    protected boolean mRefreshVoiceInfoStateOnResume = true;
+    protected boolean mReInitBDVoice = false;
+    protected boolean mTurnToVipHtml = false;
+    private boolean hasRecord = false;
+    private boolean originVipState = false;
 
-        if (getConfigForCurrentCard().optBoolean("autoplay", false) || doAudioReplay) {
+
+    protected String mVipUrl;
+    protected String mBuyOnlineEngineUrl;
+    protected int mFreeOnlineEngineCount = -10086;
+    protected boolean mVip = false;
+    protected int mVipDay;
+    protected int mFreeVipCount = 1;
+
+    protected String mVipExpireAt;
+    private CustomStyleDialog mBeVipDialog;
+    private String mTtsEngine = "";
+
+
+    @Override
+    protected void onResume() {
+        Timber.d("onResume()");
+        super.onResume();
+        resumeTimer();
+        // Set the context for the Sound manager
+        mSoundPlayer.setContext(new WeakReference<Activity>(this));
+        // Reset the activity title
+        setTitle();
+        updateActionBar();
+        if (mTtsInitialized) {
+            ReadText.releaseTts();
+        }
+        mTtsEngine = ReadText.initializeTts(this, mFreeVipCount < VIP_FREE_COUNT, false, new ReadTextListener());
+        invalidateOptionsMenu();
+        Timber.e("using default tts engine:" + mTtsEngine);
+        if (mRefreshVipStateOnResume) {
+            mRefreshVipStateOnResume = false;
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    //获取vip状态
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/vipInfo", token, "", new OKHttpUtil.MyCallBack() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+//                            mVip = false;//断网不改变vip状态
+                        }
+
+
+                        @Override
+                        public void onResponse(Call call, String token, Object arg1, Response response) {
+                            if (response.isSuccessful()) {
+//                            Timber.i("init vip info successfully!:%s", response.body());
+                                try {
+                                    final org.json.JSONObject object = new org.json.JSONObject(response.body().string());
+                                    final org.json.JSONObject item = object.getJSONObject("data");
+                                    mVipUrl = item.getString("vip_url");
+                                    Timber.i("get vip url ：%s", mVipUrl);
+                                    mVip = item.getBoolean("is_vip");
+                                    if (!hasRecord) {
+                                        originVipState = mVip;
+                                        if (mVip) {
+                                            ReadText.releaseTts();
+                                            ReadText.initializeTts(AbstractFlashcardViewer.this, true, false, new ReadTextListener());
+                                        }
+                                    } else {
+                                        if (mVip && !originVipState) {
+                                            runOnUiThread(() -> {
+                                                ReadText.releaseTts();
+                                                ReadText.initializeTts(AbstractFlashcardViewer.this, true, false, new ReadTextListener());
+                                                if (mBeVipDialog != null && mBeVipDialog.isShowing()) {
+                                                    mBeVipDialog.dismiss();
+                                                }
+                                                Toast.makeText(AbstractFlashcardViewer.this, "你已成为超级学霸", Toast.LENGTH_SHORT).show();
+                                            });
+                                        }
+                                    }
+                                    if (!mVip && mTurnToVipHtml) {
+                                        mTurnToVipHtml = false;
+                                        WebViewActivity.openUrlInApp(AbstractFlashcardViewer.this, String.format(mVipUrl, token, BuildConfig.VERSION_NAME), token, BE_VIP);
+                                    }
+                                    mVipDay = item.getInt("vip_day");
+                                    mVipExpireAt = item.getString("vip_expire_at");
+                                    hasRecord = true;
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                Timber.e("init vip info failed, error code %d", response.code());
+                            }
+
+
+                        }
+                    });
+                    if (mRefreshVoiceInfoStateOnResume) {
+                        mRefreshVoiceInfoStateOnResume = false;
+                        updateOnlineVoiceInfo(token);
+                    }
+                }
+
+
+                @Override
+                public void onFail(String message) {
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/vipInfo", "", "", new OKHttpUtil.MyCallBack() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+
+                        }
+
+
+                        @Override
+                        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+                            if (response.isSuccessful()) {
+//                                Timber.i("init vip info successfully!:%s", response.body());
+                                try {
+                                    final org.json.JSONObject object = new org.json.JSONObject(response.body().string());
+                                    final org.json.JSONObject item = object.getJSONObject("data");
+                                    mVipUrl = item.getString("vip_url");
+                                    mVip = item.getBoolean("is_vip");
+                                    mVipDay = item.getInt("vip_day");
+                                    mVipExpireAt = item.getString("vip_expire_at");
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                Timber.e("init vip info failed, error code %d", response.code());
+
+                            }
+
+                        }
+                    });
+                    mVip = false;
+
+                }
+            });
+        }
+        if (mRefreshVoiceInfoStateOnResume) {
+            mRefreshVoiceInfoStateOnResume = false;
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    //获取在线语音引擎可用次数
+                    updateOnlineVoiceInfo(token);
+                }
+
+
+                @Override
+                public void onFail(String message) {
+
+                }
+            });
+        }
+
+        if (AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)) {
+            if (synthesizer == null) {
+                initBDTTs();
+            }
+//            else if (mReInitBDVoice) {
+//                synthesizer.release();
+//                mainHandler.removeCallbacksAndMessages(null);
+//                initBDTTs();
+//            }
+        }
+//        selectNavigationItem(R.id.nav_browser);
+    }
+
+
+    static final int VIP_FREE_COUNT = 16;
+
+
+    //1、使用谷歌引擎，走原始方法，即选择country language available
+    //2、使用收费引擎，走兼容方法，即选择language available
+    //3、使用收费引擎，未开启vip时有次数限制
+    //测试：
+    // 1、谷歌引擎是否能在未开启vip时一直正常使用
+    // 2、收费引擎是否能正常触发次数限制
+
+
+    private boolean useVipSpeechEngine() {
+//        return mVip || mFreeVipCount <= VIP_FREE_COUNT;
+        return mTtsEngine != null && !mTtsEngine.equalsIgnoreCase("com.google.android.tts");
+    }
+
+
+    //1、判断是否是点击按钮，如果是则播放tts
+    //2、如果开启了自动朗读，则判断是否有内置语音，有内置语音，且没有开启优先tts，则读内置语音；否则使用tts朗读
+    //3、如果开启了优先tts， 则判断是否有开启了自动朗读tts，有则自动朗读，否则不做动作（默认开启优先tts时会同时开启自动朗读）
+    //3、如果开启了自动朗读，
+    protected void playSoundsVIP(boolean doAudioReplay) {
+        if (mCurrentCard == null) {
+            return;
+        }
+        boolean replayQuestion = getConfigForCurrentCard().optBoolean("replayq", true);
+        boolean autoPlay = getConfigForCurrentCard().optBoolean("autoplay", false);//自动播放，always true
+
+        boolean autoPlayTts = AnkiDroidApp.getSharedPrefs(this).getBoolean(Consts.KEY_AUTO_PLAY_TTS, false);//自动播放tts，mSpeakText：开启tts优先
+
+        Timber.w("play sound  :无内置语音:" + (!(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion())) + ",tts优先：" + mSpeakText + ",自动播放tts：" + autoPlayTts);
+        if (autoPlay || doAudioReplay) {//自动播放或点击了播放按钮
             // Use TTS if TTS preference enabled and no other sound source
-            boolean useTTS = mSpeakText &&
-                    !(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion());
+//            boolean useTTS =doAudioReplay||(mSpeakText && !(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion())) ;
+            boolean useTTS = doAudioReplay || (autoPlayTts && ((!(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion())) || mSpeakText));
+            //点击按钮或(自动朗读tts+（优先tts或没有内置语音）），则使用tts
             // We need to play the sounds from the proper side of the card
             if (!useTTS) { // Text to speech not in effect here
-                if (doAudioReplay && replayQuestion && sDisplayAnswer) {
+                if (replayQuestion && sDisplayAnswer) {
                     // only when all of the above are true will question be played with answer, to match desktop
                     mSoundPlayer.playSounds(SoundSide.QUESTION_AND_ANSWER);
                 } else if (sDisplayAnswer) {
@@ -2330,20 +2647,330 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                         mUseTimerDynamicMS = mSoundPlayer.getSoundsLength(SoundSide.QUESTION_AND_ANSWER);
                     }
                 }
-            } else { // Text to speech is in effect here
+            } else {
+                // Text to speech is in effect here
                 // If the question is displayed or if the question should be replayed, read the question
-                if (mTtsInitialized) {
-                    if (!sDisplayAnswer || doAudioReplay && replayQuestion) {
-                        readCardText(mCurrentCard, SoundSide.QUESTION);
-                    }
-                    if (sDisplayAnswer) {
-                        readCardText(mCurrentCard, SoundSide.ANSWER);
-                    }
+
+//                Timber.i("play sound tts state:" + mVip + "," + useVipSpeechEngine() + "," + (mFreeVipCount >= VIP_FREE_COUNT));
+                if (!mVip && useVipSpeechEngine() && mFreeVipCount >= VIP_FREE_COUNT) {//非vip使用收费引擎且超出免费次数
+                    mBeVipDialog = new CustomStyleDialog.Builder(this)
+                            .setCustomLayout(R.layout.dialog_common_custom_next)
+                            .setTitle("功能次数已使用完！")
+                            .centerTitle()
+                            .setMessage("普通用户，可免费朗读15次，成为超级学霸，不限次数！")
+                            .setPositiveButton("前往了解", (dialog, which) -> {
+                                dialog.dismiss();
+                                AnkiDroidApp.getSharedPrefs(this).edit().putBoolean("tts", false).apply();
+                                AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(Consts.KEY_AUTO_PLAY_TTS, false).apply();
+                                openVipUrl(mVipUrl);
+                            })
+
+                            .create();
+                    mBeVipDialog.setOnDismissListener(dialog -> {
+                        AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit().putBoolean("tts", false).apply();
+                        AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit().putBoolean(Consts.KEY_AUTO_PLAY_TTS, false).apply();
+                    });
+                    mBeVipDialog.show();
                 } else {
-                    mReplayOnTtsInit = true;
+                    mFreeVipCount++;
+                    preferences.edit().putInt("speak_count", mFreeVipCount).apply();
+                    if (mTtsInitialized) {
+                        if (!sDisplayAnswer || (doAudioReplay && replayQuestion && !AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false))) {
+                            Timber.i("ready to read question");
+                            readCardText(mCurrentCard, SoundSide.QUESTION);
+                        }
+                        if (sDisplayAnswer) {
+                            Timber.i("ready to read answer");
+                            readCardText(mCurrentCard, SoundSide.ANSWER);
+                        }
+                    } else {
+                        mReplayOnTtsInit = true;
+                    }
                 }
             }
         }
+
+
+    }
+
+
+    private Handler speakingHandler = new Handler();
+    private Runnable speakingRunnable;
+    private int speakingIndex = 0;
+
+    private ImageButton mVipSpeakMenuItem;
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem speak = menu.findItem(R.id.action_speak);
+
+        if (speak != null) {
+            speakingHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    super.handleMessage(msg);
+                    if (msg.what == 10086) {
+                        speakingHandler.removeCallbacksAndMessages(null);
+                        ((ImageButton) speak.getActionView()).setImageResource(R.mipmap.nav_bar_aloud_normal);
+                    }
+                }
+            };
+            speak.setVisible(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SHOW_TTS_ICON, true));
+            if (mVipSpeakMenuItem == null) {
+                mVipSpeakMenuItem = new ImageButton(this);
+            }
+            mVipSpeakMenuItem.setBackground(null);
+            speak.setActionView(mVipSpeakMenuItem);
+            mVipSpeakMenuItem.setImageResource(R.mipmap.nav_bar_aloud_normal);
+            speak.getActionView().setOnLongClickListener(v -> {
+                SpeakSettingActivity.OpenSpeakSetting(mCurrentCard.getId(), mCurrentCard.getDid(), AbstractFlashcardViewer.this);
+                return false;
+            });
+            speak.getActionView().setOnClickListener(v -> {
+                if (ReadText.isSpeaking()/*||(synthesizer!=null&&synthesizer.isInitied()&&synthesizer.)*/) {
+                    ReadText.stopTts();
+                } else if (mOnlineSpeaking && synthesizer != null && synthesizer.isInitied()) {
+                    stopOnlineSpeaking();
+                    mSoundPlayer.stopSounds();
+                } else {
+                    playSoundsVIP(true);
+                }
+            });
+            speakingRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    speakingIndex++;
+//                Timber.i("running speaking!:"+speakingIndex );
+                    if (isSpeaking()) {
+//                    Timber.i("running is speaking! " );
+                        ((ImageButton) speak.getActionView()).setImageResource(speakingIndex % 2 == 0 ? R.mipmap.nav_bar_aloud_one : R.mipmap.nav_bar_aloud_two);
+                        speakingHandler.postDelayed(this, 200);
+                    } else {
+//                    Timber.i("running is speaking end! " );
+                        speakingHandler.removeCallbacksAndMessages(null);
+                        ((ImageButton) speak.getActionView()).setImageResource(R.mipmap.nav_bar_aloud_normal);
+                    }
+
+                }
+            };
+        }
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+    private boolean isSpeaking() {
+        return ReadText.isSpeaking() || mOnlineSpeaking;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.action_speak_setting:
+                if (mCurrentCard == null) {
+                    Toast.makeText(this, "卡牌加载中", Toast.LENGTH_SHORT).show();
+                } else {
+                    SpeakSettingActivity.OpenSpeakSetting(mCurrentCard.getId(), mCurrentCard.getDid(), this);
+                }
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        return true;
+    }
+
+
+    /**
+     * Plays sounds (or TTS, if configured) for currently shown side of card.
+     *
+     * @param doAudioReplay indicates an anki desktop-like replay call is desired, whose behavior is identical to
+     * pressing the keyboard shortcut R on the desktop
+     */
+//    protected void playSounds(boolean doAudioReplay) {
+//        boolean replayQuestion = getConfigForCurrentCard().optBoolean("replayq", true);
+//
+//        if (getConfigForCurrentCard().optBoolean("autoplay", false) || doAudioReplay) {
+//            // Use TTS if TTS preference enabled and no other sound source
+//            boolean useTTS = mSpeakText &&
+//                    !(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion());
+//            // We need to play the sounds from the proper side of the card
+//            if (!useTTS) { // Text to speech not in effect here
+//                if (doAudioReplay && replayQuestion && sDisplayAnswer) {
+//                    // only when all of the above are true will question be played with answer, to match desktop
+//                    mSoundPlayer.playSounds(SoundSide.QUESTION_AND_ANSWER);
+//                } else if (sDisplayAnswer) {
+//                    mSoundPlayer.playSounds(SoundSide.ANSWER);
+//                    if (mUseTimer) {
+//                        mUseTimerDynamicMS = mSoundPlayer.getSoundsLength(SoundSide.ANSWER);
+//                    }
+//                } else { // question is displayed
+//                    mSoundPlayer.playSounds(SoundSide.QUESTION);
+//                    // If the user wants to show the answer automatically
+//                    if (mUseTimer) {
+//                        mUseTimerDynamicMS = mSoundPlayer.getSoundsLength(SoundSide.QUESTION_AND_ANSWER);
+//                    }
+//                }
+//            } else {
+//                // Text to speech is in effect here
+//                // If the question is displayed or if the question should be replayed, read the question
+//
+//                if (mTtsInitialized) {
+//                    if (!sDisplayAnswer || doAudioReplay && replayQuestion) {
+//                        readCardText(mCurrentCard, SoundSide.QUESTION);
+//                    }
+//                    if (sDisplayAnswer) {
+//                        readCardText(mCurrentCard, SoundSide.ANSWER);
+//                    }
+//                } else {
+//                    mReplayOnTtsInit = true;
+//                }
+//            }
+//        }
+//    }
+
+
+    // 主控制类，所有合成控制方法从这个类开始
+    protected MySyntherizer synthesizer;
+    protected String appId;
+
+    protected String appKey;
+
+    protected String secretKey;
+
+    protected String sn; // 纯离线合成SDK授权码；离在线合成SDK没有此参数
+
+    // TtsMode.MIX; 离在线融合，在线优先； TtsMode.ONLINE 纯在线； TtsMode.OFFLINE 纯离线合成，需要纯离线SDK
+    protected TtsMode ttsMode = IOfflineResourceConst.DEFAULT_SDK_TTS_MODE;
+
+    protected boolean isOnlineSDK = TtsMode.ONLINE.equals(IOfflineResourceConst.DEFAULT_SDK_TTS_MODE);
+
+    // 离线发音选择，VOICE_FEMALE即为离线女声发音。
+    // assets目录下bd_etts_common_speech_m15_mand_eng_high_am-mix_vXXXXXXX.dat为离线男声模型文件；
+    // assets目录下bd_etts_common_speech_f7_mand_eng_high_am-mix_vXXXXX.dat为离线女声模型文件;
+    // assets目录下bd_etts_common_speech_yyjw_mand_eng_high_am-mix_vXXXXX.dat 为度逍遥模型文件;
+    // assets目录下bd_etts_common_speech_as_mand_eng_high_am_vXXXX.dat 为度丫丫模型文件;
+    // 在线合成sdk下面的参数不生效
+    protected String offlineVoice = OfflineResource.VOICE_MALE;
+    protected Handler mainHandler;
+
+
+    private void initBDTTs() {
+
+        appId = Auth.getInstance(this).getAppId();
+        appKey = Auth.getInstance(this).getAppKey();
+        secretKey = Auth.getInstance(this).getSecretKey();
+        sn = Auth.getInstance(this).getSn(); // 离线合成SDK必须有此参数；在线合成SDK没有此参数
+        LoggerProxy.printable(true); // 日志打印在logcat中
+        String tmpDir = FileUtil.createTmpDir(this);
+        // 设置初始化参数
+        // 此处可以改为 含有您业务逻辑的SpeechSynthesizerListener的实现类
+        SpeechSynthesizerListener listener = new FileSaveListener(mainHandler, tmpDir);
+        InitConfig config = getInitConfig(listener);
+        synthesizer = new NonBlockSyntherizer(this, config, mainHandler); // 此处可以改为MySyntherizer 了解调用过程
+        if (!isOnlineSDK) {
+            Timber.i("SynthActivity" + "so version:" + SynthesizerTool.getEngineInfo());
+        }
+    }
+
+
+    private boolean mOnlineSpeaking = false;
+
+
+    protected void handle(Message msg) {
+        int what = msg.what;
+        switch (what) {
+            case PRINT:
+                Timber.i(String.valueOf(msg));
+                break;
+            case UI_PLAY_START:
+                mOnlineSpeaking = true;
+                consumeOnlineVoiceInfo(mCacheToken);
+                break;
+            case UI_PLAY_END:
+                mOnlineSpeaking = false;
+                speakingHandler.obtainMessage(10086).sendToTarget();
+//                speakingHandler.removeCallbacksAndMessages(null);
+                break;
+            case UI_CHANGE_INPUT_TEXT_SELECTION:
+            case UI_CHANGE_SYNTHES_TEXT_SELECTION:
+
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    protected InitConfig getInitConfig(SpeechSynthesizerListener listener) {
+        Map<String, String> params = getParams();
+        // 添加你自己的参数
+        InitConfig initConfig;
+        // appId appKey secretKey 网站上您申请的应用获取。注意使用离线合成功能的话，需要应用中填写您app的包名。包名在build.gradle中获取。
+        if (sn == null) {
+            initConfig = new InitConfig(appId, appKey, secretKey, ttsMode, params, listener);
+        } else {
+            initConfig = new InitConfig(appId, appKey, secretKey, sn, ttsMode, params, listener);
+        }
+        // 如果您集成中出错，请将下面一段代码放在和demo中相同的位置，并复制InitConfig 和 AutoCheck到您的项目中
+        // 上线时请删除AutoCheck的调用
+
+        return initConfig;
+    }
+
+
+    /**
+     * 合成的参数，可以初始化时填写，也可以在合成前设置。
+     *
+     * @return 合成参数Map
+     */
+    protected Map<String, String> getParams() {
+        Map<String, String> params = new HashMap<>();
+        // 以下参数均为选填
+        // 设置在线发声音人： 0 普通女声（默认） 1 普通男声 3 情感男声<度逍遥> 4 情感儿童声<度丫丫>, 其它发音人见文档
+        params.put(SpeechSynthesizer.PARAM_SPEAKER, "0");
+        // 设置合成的音量，0-15 ，默认 5
+        params.put(SpeechSynthesizer.PARAM_VOLUME, "15");
+        // 设置合成的语速，0-15 ，默认 5
+//        params.put(SpeechSynthesizer.PARAM_SPEED, String.valueOf(ReadText.getSpeechRate(mCurrentCard.getDid(), mCurrentCard.getOrd())*5));
+        params.put(SpeechSynthesizer.PARAM_SPEED, "5");
+        // 设置合成的语调，0-15 ，默认 5
+        params.put(SpeechSynthesizer.PARAM_PITCH, "5");
+        if (!isOnlineSDK) {
+            // 在线SDK版本没有此参数。
+
+            /*
+            params.put(SpeechSynthesizer.PARAM_MIX_MODE, SpeechSynthesizer.MIX_MODE_DEFAULT);
+            // 该参数设置为TtsMode.MIX生效。即纯在线模式不生效。
+            // MIX_MODE_DEFAULT 默认 ，wifi状态下使用在线，非wifi离线。在线状态下，请求超时6s自动转离线
+            // MIX_MODE_HIGH_SPEED_SYNTHESIZE_WIFI wifi状态下使用在线，非wifi离线。在线状态下， 请求超时1.2s自动转离线
+            // MIX_MODE_HIGH_SPEED_NETWORK ， 3G 4G wifi状态下使用在线，其它状态离线。在线状态下，请求超时1.2s自动转离线
+            // MIX_MODE_HIGH_SPEED_SYNTHESIZE, 2G 3G 4G wifi状态下使用在线，其它状态离线。在线状态下，请求超时1.2s自动转离线
+            // params.put(SpeechSynthesizer.PARAM_MIX_MODE_TIMEOUT, SpeechSynthesizer.PARAM_MIX_TIMEOUT_TWO_SECOND);
+            // 离在线模式，强制在线优先。在线请求后超时2秒后，转为离线合成。
+            */
+            // 离线资源文件， 从assets目录中复制到临时目录，需要在initTTs方法前完成
+            OfflineResource offlineResource = createOfflineResource(offlineVoice);
+            // 声学模型文件路径 (离线引擎使用), 请确认下面两个文件存在
+            params.put(SpeechSynthesizer.PARAM_TTS_TEXT_MODEL_FILE, offlineResource.getTextFilename());
+            params.put(SpeechSynthesizer.PARAM_TTS_SPEECH_MODEL_FILE, offlineResource.getModelFilename());
+        }
+        return params;
+    }
+
+
+    protected OfflineResource createOfflineResource(String voiceType) {
+        OfflineResource offlineResource = null;
+        try {
+            offlineResource = new OfflineResource(this, voiceType);
+        } catch (IOException e) {
+            // IO 错误自行处理
+            e.printStackTrace();
+            Timber.i("【error】:copy files from assets failed." + e.getMessage());
+        }
+        return offlineResource;
     }
 
 
@@ -2353,37 +2980,245 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
      * @param card     The card to play TTS for
      * @param cardSide The side of the current card to play TTS for
      */
+    private String mCacheToken = "";
+
+
+    private boolean isNetworkAvailable(@NonNull Context context) {
+        //获取 ConnectivityManager
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert connectivityManager != null;
+
+        //如果版本大于 Build.VERSION_CODES.M （23）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+            //获取 NetWork
+            Network network = connectivityManager.getActiveNetwork();
+
+            if (network != null) {
+                //获取 NetworkCapabilities
+                NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
+
+                return (networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+            }
+
+        } else {
+
+            //获取NetworkInfo
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+            return (networkInfo != null && networkInfo.isConnected());
+        }
+
+        return false;
+    }
+
+
     private void readCardText(final Card card, final SoundSide cardSide) {
         final String cardSideContent;
-        if (SoundSide.QUESTION == cardSide) {
-            cardSideContent = card.q(true);
-        } else if (SoundSide.ANSWER == cardSide) {
-            cardSideContent = card.getPureAnswer();
-        } else {
-            Timber.w("Unrecognised cardSide");
+        if ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty())) {
+            mainHandler.postDelayed(() -> {
+                showProgressBar();
+                Toast.makeText(AbstractFlashcardViewer.this,"朗读请求中，网络不佳",Toast.LENGTH_SHORT).show();
+            }, 3000);
+            nNeedSpeakFinalRenderContent = true;
+            if (!fetchingRenderContent) {
+                fetchWebViewRenderContent(mCardWebView);
+            }
             return;
         }
+        mainHandler.removeCallbacksAndMessages(null);
+        hideProgressBar();
+        cardSideContent = cardSide == SoundSide.QUESTION ? mFinalLoadQuestion : mFinalLoadAnswer;//在这里获取最后的内容
+        Timber.i("finally i wanna say:%s,showing answer:%s", cardSideContent, sDisplayAnswer);
+        if (AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)) {
+            //使用在线语音引擎
+            File target = new File(FileUtil.createTmpDir(this), card.getId() + "-" + cardSide + ".wav");
+            Timber.i("target audio :%s", target.getAbsolutePath());
+            if (target.exists()) {
+                Timber.i("target audio is exists,play it now");
+                mSoundPlayer.playSound(target.getAbsolutePath(), mp -> mOnlineSpeaking = false);
+                mOnlineSpeaking = true;
+                speakingHandler.postDelayed(speakingRunnable, 300);
+                return;
+            }
+            if (!isNetworkAvailable(AbstractFlashcardViewer.this)) {
+                CustomStyleDialog customStyleDialog = new CustomStyleDialog.Builder(AbstractFlashcardViewer.this)
+                        .setCustomLayout(R.layout.dialog_common_custom_next)
+                        .setTitle("在线朗读需联网！")
+                        .centerTitle()
+                        .setMessage("没有网络时可以点下方按钮切换成本地引擎")
+                        .setPositiveButton("切换本地引擎", (dialog, which) -> {
+                            dialog.dismiss();
+                            AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false).apply();
+
+                        })
+                        .create();
+                customStyleDialog.show();
+                return;
+            }
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    mCacheToken = token;
+                    if (mFreeOnlineEngineCount != -10086) {
+                        if (mFreeOnlineEngineCount > 0) {
+                            List<Pair<String, String>> texts = splitAry(cardSideContent, 59, String.valueOf(card.getId()), cardSide);
+                            Map<String, String> params = new HashMap<>();
+                            params.put(SpeechSynthesizer.PARAM_SPEED, String.valueOf(ReadText.getSpeechRate(mCurrentCard.getDid(), mCurrentCard.getOrd()) * 5));
+                            synthesizer.setParams(params);
+                            int result = synthesizer.batchSpeak(texts);
+                            checkResult(result, "speak");
+//                            if (result == 0) {
+//                                consumeOnlineVoiceInfo(token);
+//                            }
+                        } else {
+                            CustomStyleDialog customStyleDialog = new CustomStyleDialog.Builder(AbstractFlashcardViewer.this)
+                                    .setCustomLayout(R.layout.dialog_common_custom_next)
+                                    .setTitle("在线朗读次数已用完")
+                                    .centerTitle()
+                                    .setMessage("请前往充值在线朗读次数，学霸用户可以切换离线引擎，不限朗读次数")
+                                    .setPositiveButton("前往充值", (dialog, which) -> {
+                                        dialog.dismiss();
+                                        WebViewActivity.openUrlInApp(AbstractFlashcardViewer.this, String.format(mBuyOnlineEngineUrl, token, BuildConfig.VERSION_NAME), token, REFRESH_VOICE_INFO);
+                                    }).setNegativeButton("使用离线引擎", (dialog, which) -> {
+                                        dialog.dismiss();
+                                        AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit().putBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false).apply();
+                                    })
+
+                                    .create();
+
+                            customStyleDialog.show();
+                        }
+                    } else {
+                        updateOnlineVoiceInfo(token);
+                    }
+                }
+
+
+                @Override
+                public void onFail(String message) {
+                    Timber.e("need login while using online speak engine ");
+                    Toast.makeText(AbstractFlashcardViewer.this, "当前未使用Anki记忆卡账号登录，无法使用在线语音引擎", Toast.LENGTH_SHORT).show();
+                    Intent myAccount = new Intent(AbstractFlashcardViewer.this, MyAccount.class);
+                    myAccount.putExtra("notLoggedIn", true);
+                    startActivityForResultWithAnimation(myAccount, REFRESH_VOICE_INFO, ActivityTransitionAnimation.FADE);
+                }
+            });
+            speakingHandler.postDelayed(speakingRunnable, 300);
+            return;
+        }
+
         String clozeReplacement = this.getString(R.string.reviewer_tts_cloze_spoken_replacement);
-        ReadText.readCardSide(cardSide, cardSideContent, getDeckIdForCard(card), card.getOrd(), clozeReplacement);
+        ReadText.readCardSide(cardSide, cardSideContent, card.getId(), getDeckIdForCard(card), card.getOrd(), clozeReplacement, useVipSpeechEngine());
+        speakingHandler.postDelayed(speakingRunnable, 300);
     }
+
+
+    private static List<Pair<String, String>> splitAry(String ary, int subSize, String id, final SoundSide cardSide) {
+        int count = ary.length() % subSize == 0 ? ary.length() / subSize : ary.length() / subSize + 1;
+        List<Pair<String, String>> texts = new ArrayList<>();
+        Timber.i("split ary:%s", ary);
+        for (int i = 0; i < count; i++) {
+            int start = Math.min(i * subSize, ary.length());
+            int end = Math.min((i + 1) * subSize, ary.length());
+            Timber.i("split ary，start：" + start + ",end:" + end);
+            texts.add(new Pair<>(ary.substring(start, end), i + "-" + (count - 1) + "-" + id + "-" + cardSide));
+        }
+        return texts;
+    }
+
+
+    private void consumeOnlineVoiceInfo(String token) {
+        RequestBody formBody = new FormBody.Builder()
+                .build();
+
+        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/consumeVoice", formBody, token, "", new OKHttpUtil.MyCallBack() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+
+            @Override
+            public void onResponse(Call call, String token, Object arg1, Response response) {
+                if (response.isSuccessful()) {
+                    try {
+                        final org.json.JSONObject object = new org.json.JSONObject(response.body().string());
+                        final org.json.JSONObject item = object.getJSONObject("data");
+                        mFreeOnlineEngineCount = item.getInt("total");
+//                        mFreeOnlineEngineCount = 100;
+                        preferences.edit().putInt(Consts.KEY_REST_ONLINE_SPEAK_COUNT, mFreeOnlineEngineCount).apply();
+                        Timber.e("consume voice successfully, current total is %d", mFreeOnlineEngineCount);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Timber.e("consume voice failed, error code %d", response.code());
+                }
+
+
+            }
+        });
+    }
+
+
+    private void updateOnlineVoiceInfo(String token) {
+        OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/voiceInfo", token, "", new OKHttpUtil.MyCallBack() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+
+            @Override
+            public void onResponse(Call call, String token, Object arg1, Response response) {
+                if (response.isSuccessful()) {
+                    try {
+                        final org.json.JSONObject object = new org.json.JSONObject(response.body().string());
+                        final org.json.JSONObject item = object.getJSONObject("data");
+                        Timber.e("init voice info success: %s", item.toString());
+                        mBuyOnlineEngineUrl = item.getString("buy_url");
+                        mFreeOnlineEngineCount = item.getInt("total");
+//                        mFreeOnlineEngineCount = 100;
+                        preferences.edit().putInt(Consts.KEY_REST_ONLINE_SPEAK_COUNT, mFreeOnlineEngineCount).apply();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Timber.e("init voice info failed, error code %d", response.code());
+                }
+
+
+            }
+        });
+    }
+
+
+    private void checkResult(int result, String method) {
+        if (result != 0) {
+            Timber.e("error code :" + result + " method:" + method);
+        }
+    }
+
+
+    private boolean nNeedSpeakFinalRenderContent;
 
 
     /**
      * Shows the dialogue for selecting TTS for the current card and cardside.
      */
-    protected void showSelectTtsDialogue() {
-        if (mTtsInitialized) {
-            if (!sDisplayAnswer) {
-                ReadText.selectTts(getTextForTts(mCurrentCard.q(true)), getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(),
-                        SoundSide.QUESTION);
-            } else {
-                ReadText.selectTts(getTextForTts(mCurrentCard.getPureAnswer()), getDeckIdForCard(mCurrentCard),
-                        mCurrentCard.getOrd(), SoundSide.ANSWER);
-            }
-        }
-    }
-
-
+//    protected void showSelectTtsDialogue() {
+//        if (mTtsInitialized) {
+//            if (!sDisplayAnswer) {
+//                ReadText.selectTts(getTextForTts(mCurrentCard.q(true)), getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(),
+//                        SoundSide.QUESTION, useVipSpeechEngine(), null);
+//            } else {
+//                ReadText.selectTts(getTextForTts(mCurrentCard.getPureAnswer()), getDeckIdForCard(mCurrentCard),
+//                        mCurrentCard.getOrd(), SoundSide.ANSWER, useVipSpeechEngine(), null);
+//            }
+//        }
+//    }
     private String getTextForTts(String text) {
         String clozeReplacement = this.getString(R.string.reviewer_tts_cloze_spoken_replacement);
         String clozeReplaced = text.replace(Template.CLOZE_DELETION_REPLACEMENT, clozeReplacement);
@@ -2407,7 +3242,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
      * @param card The {@link Card} to get the deck ID
      * @return The deck ID of the {@link Card}
      */
-    private static long getDeckIdForCard(final Card card) {
+    public static long getDeckIdForCard(final Card card) {
         // Try to get the configuration by the original deck ID (available in case of a cram deck),
         // else use the direct deck ID (in case of a 'normal' deck.
         return card.getODid() == 0 ? card.getDid() : card.getODid();
@@ -2422,7 +3257,10 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             return;
         }
         final String cardContent = mCardContent;
-        processCardAction(cardWebView -> loadContentIntoCard(cardWebView, cardContent));
+        processCardAction(cardWebView -> {
+            loadContentIntoCard(cardWebView, cardContent);
+            fetchWebViewRenderContent(cardWebView);
+        });
         mGestureDetectorImpl.onFillFlashcard();
         if (mShowTimer && mCardTimer.getVisibility() == View.INVISIBLE) {
             switchTopBarVisibility(View.VISIBLE);
@@ -2433,10 +3271,92 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
+    private String mFinalLoadAnswer = "";
+    private String mFinalLoadQuestion = "";
+//    private String mPreFinalLoadContent = "";
+
+
+
+    public class ComJSInterface {
+        @JavascriptInterface
+        public void getSource(String content) {
+//            Timber.i("load final :" + content);
+            if (sDisplayAnswer) {
+                mFinalLoadAnswer = content;
+            } else {
+                mFinalLoadQuestion = content;
+            }
+
+            if (!mFinalLoadQuestion.isEmpty() && mFinalLoadAnswer.contains(mFinalLoadQuestion)) {
+                Timber.i("replace content:" + mFinalLoadQuestion.length());
+//                mFinalLoadContent = mFinalLoadContent.replaceFirst(mPreFinalLoadContent,"");
+                mFinalLoadAnswer = mFinalLoadAnswer.substring(mFinalLoadQuestion.length());
+            }
+            Timber.i("current content :" + mFinalLoadAnswer);
+            Timber.i("pre content :" + mFinalLoadQuestion);
+//            mFinalLoadQuestion = mFinalLoadAnswer;
+            if (((sDisplayAnswer && !mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && !mFinalLoadQuestion.isEmpty())) && nNeedSpeakFinalRenderContent) {
+                nNeedSpeakFinalRenderContent = false;
+                fetchRenderHandler.removeCallbacksAndMessages(null);
+                mainHandler.post(() -> readCardText(mCurrentCard, sDisplayAnswer ? SoundSide.ANSWER : SoundSide.QUESTION));
+            }
+
+        }
+    }
+
+
+
+    public ComJSInterface webViewRenderContentCallback;
+    private Handler fetchRenderHandler;
+    private boolean fetchingRenderContent;
+
+
+    private void fetchWebViewRenderContent(WebView webView) {
+        if (sDisplayAnswer) {
+            mFinalLoadAnswer = "";
+        }
+        if (!sDisplayAnswer) {
+            mFinalLoadQuestion = "";
+        }
+//        Timber.i("fetchWebViewRenderContent:" +mFinalLoadQuestion+""+ mFinalLoadAnswer);
+        if (fetchRenderHandler == null) {
+            fetchRenderHandler = new Handler();
+        }
+        fetchingRenderContent = true;
+        fetchRenderHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Timber.i("fetchWebViewRenderContent:" + mFinalLoadQuestion + "" + mFinalLoadAnswer);
+                if ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty())) {
+                    if (webView != null) {
+                        webView.loadUrl("javascript:java_obj.getSource(document.documentElement.innerText);void(0);");
+                    }
+                    fetchRenderHandler.removeCallbacksAndMessages(null);
+                    fetchRenderHandler.postDelayed(this, 100);
+                } else {
+                    fetchingRenderContent = false;
+                }
+            }
+        }, 500);
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (fetchRenderHandler != null) {
+            fetchRenderHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+
     private void loadContentIntoCard(WebView card, String content) {
         if (card != null) {
             CompatHelper.getCompat().setHTML5MediaAutoPlay(card.getSettings(), getConfigForCurrentCard().optBoolean("autoplay"));
+
+            card.addJavascriptInterface(new ComJSInterface(), "java_obj");
             card.loadDataWithBaseURL(mBaseUrl + "__viewer__.html", content, "text/html", "utf-8", null);
+
         }
     }
 
@@ -2455,7 +3375,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
-    private void unblockControls() {
+    void unblockControls() {
         mControlBlocked = ControlBlock.UNBLOCKED;
         mCardFrame.setEnabled(true);
         mFlipCardLayout.setEnabled(true);
@@ -2658,7 +3578,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 showDeleteNoteDialog();
                 return true;
             case COMMAND_PLAY_MEDIA:
-                playSounds(true);
+                playSoundsVIP(true);
                 return true;
             case COMMAND_TOGGLE_FLAG_RED:
                 toggleFlag(FLAG_RED);
@@ -2690,6 +3610,13 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 return true;
             case COMMAND_PAGE_DOWN:
                 onPageDown();
+                return true;
+            case COMMAND_FLIP_CARD:
+                if (!sDisplayAnswer) {
+                    displayCardAnswer();
+                } else {
+                    displayCardQuestion();
+                }
                 return true;
             default:
                 Timber.w("Unknown command requested: %s", which);
@@ -2977,6 +3904,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
+            Timber.i("onSingleTapUp");
+
             if (mTouchStarted) {
                 longClickHandler.removeCallbacks(longClickTestRunnable);
                 mTouchStarted = false;
@@ -2987,6 +3916,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
+            Timber.i("onSingleTapConfirmed");
+
             // Go back to immersive mode if the user had temporarily exited it (and ignore the tap gesture)
             if (onSingleTap()) {
                 return true;
@@ -3001,14 +3932,15 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 int width = mTouchLayer.getWidth();
                 float posX = e.getX();
                 float posY = e.getY();
+                final boolean b = posY > height * (1 - posX / width);
                 if (posX > posY / height * width) {
-                    if (posY > height * (1 - posX / width)) {
+                    if (b) {
                         executeCommand(mGestureTapRight);
                     } else {
                         executeCommand(mGestureTapTop);
                     }
                 } else {
-                    if (posY > height * (1 - posX / width)) {
+                    if (b) {
                         executeCommand(mGestureTapBottom);
                     } else {
                         executeCommand(mGestureTapLeft);
@@ -3180,7 +4112,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     public void ttsInitialized() {
         mTtsInitialized = true;
         if (mReplayOnTtsInit) {
-            playSounds(true);
+            playSoundsVIP(true);
         }
     }
 

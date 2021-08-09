@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        android:background="?attr/hardButtonRef"
+        android:background="@color/primary_color"
         android:visibility="gone"
         tools:visibility="visible">
 
@@ -46,7 +46,7 @@
             android:layout_gravity="start|center_vertical"
             android:padding="12dp"
             android:focusable="true"
-            android:background="?attr/hardButtonRef"
+            android:background="@color/primary_color"
             app:srcCompat="@drawable/ic_baseline_chevron_left_24"
             app:tint="?attr/hardButtonTextColor" />
 
@@ -57,11 +57,125 @@
             android:layout_gravity="end|center_vertical"
             android:padding="12dp"
             android:focusable="true"
-            android:background="?attr/hardButtonRef"
+            android:background="@color/primary_color"
             app:srcCompat="@drawable/ic_baseline_chevron_right_24"
             app:tint="?attr/hardButtonTextColor" />
     </FrameLayout>
+    <FrameLayout
+        android:id="@+id/mark_options_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+        <LinearLayout
+            android:id="@+id/mark_buttons"
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:background="?attr/answerButtonBackgroundColor"
+            android:layout_height="match_parent">
+            <!--            <ImageView-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="1dp"-->
+            <!--                android:src="?attr/settingDividerColor"/>-->
+            <LinearLayout
 
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginHorizontal="5.5dp"
+                android:layout_marginVertical="7dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    style="@style/FooterButton"
+                    android:background="?attr/againButtonRef"
+                    android:layout_marginHorizontal="5.5dp"
+                    android:id="@+id/mark1"
+                    android:layout_width="0dip"
+                    android:layout_height="@dimen/touch_target"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+<!--                    <ImageView-->
+<!--                        style="@style/AgainButtonEaseStyle"/>-->
+                    <TextView
+                        android:id="@+id/mark1_text"
+                        android:text="再来一次"
+                        style="@style/Preview3ButtonTextStyle"
+                        android:drawableStart="@null"
+                         />
+                </LinearLayout>
+
+<!--                <LinearLayout-->
+<!--                    style="@style/FooterButton"-->
+<!--                    android:background="?attr/hardButtonRef"-->
+<!--                    android:layout_marginHorizontal="5.5dp"-->
+<!--                    android:id="@+id/mark2"-->
+<!--                    android:layout_width="0dip"-->
+<!--                    android:layout_height="@dimen/touch_target"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:orientation="vertical">-->
+
+<!--                    <TextView-->
+<!--                        android:id="@+id/mark2_text"-->
+<!--                        android:text="标橙"-->
+<!--                        style="@style/Preview3ButtonTextStyle" />-->
+<!--                </LinearLayout>-->
+
+<!--                <LinearLayout-->
+<!--                    style="@style/FooterButton"-->
+<!--                    android:background="?attr/goodButtonRef"-->
+<!--                    android:layout_marginHorizontal="5.5dp"-->
+<!--                    android:id="@+id/mark3"-->
+<!--                    android:layout_width="0dip"-->
+<!--                    android:layout_height="@dimen/touch_target"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:orientation="vertical">-->
+
+<!--                    <TextView-->
+<!--                        android:id="@+id/mark3_text"-->
+<!--                        android:text="标绿"-->
+<!--                        style="@style/Preview3ButtonTextStyle"/>-->
+<!--                </LinearLayout>-->
+                <LinearLayout
+                    style="@style/FooterButton"
+                    android:background="?attr/goodButtonRef"
+                    android:layout_marginHorizontal="5.5dp"
+                    android:id="@+id/next"
+                    android:layout_width="0dip"
+                    android:layout_height="@dimen/touch_target"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/next_text"
+                        android:text="学会了"
+                        android:drawableStart="@null"
+                        style="@style/Preview3ButtonTextStyle" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/flashcard_layout_flip_preview2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="?attr/answerButtonBackgroundColor"
+            android:visibility="gone">
+
+            <Button
+                style="?android:attr/borderlessButtonStyle"
+                android:background="?attr/showAnswerButtonColor"
+                android:id="@+id/flip_card_preview2"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:clickable="false"
+                android:textStyle="bold"
+                android:text="@string/show_answer"
+                android:textSize="17sp"
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+    </FrameLayout>
     <FrameLayout
         android:id="@+id/answer_options_layout"
         android:layout_width="fill_parent"
@@ -94,17 +208,17 @@
                     android:layout_height="@dimen/touch_target"
                     android:layout_weight="1"
                     android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/nextTime1"
-
-                        style="@style/AgainButtonTimeStyle"
-                        tools:text="&lt; 10 min" />
-
                     <TextView
                         android:id="@+id/ease1"
                         android:text="@string/ease_button_again"
-                        style="@style/AgainButtonEaseStyle"/>
+                        style="@style/AgainButtonTimeStyle"
+                        />
+                    <TextView
+                        android:id="@+id/nextTime1"
+                        style="@style/AgainButtonEaseStyle"
+                        tools:text="&lt; 10 min" />
+
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -116,16 +230,16 @@
                     android:layout_height="@dimen/touch_target"
                     android:layout_weight="1"
                     android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/nextTime2"
-                        style="@style/HardButtonTimeStyle"
-                        tools:text="2 d" />
-
                     <TextView
                         android:id="@+id/ease2"
                         android:text="@string/ease_button_hard"
-                        style="@style/HardButtonEaseStyle" />
+                        style="@style/HardButtonTimeStyle" />
+                    <TextView
+                        android:id="@+id/nextTime2"
+                        style="@style/HardButtonEaseStyle"
+                        tools:text="2 d" />
+
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -138,15 +252,16 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/nextTime3"
-                        style="@style/GoodButtonTimeStyle"
-                        tools:text="3 d" />
+
 
                     <TextView
                         android:id="@+id/ease3"
                         android:text="@string/ease_button_good"
-                        style="@style/GoodButtonEaseStyle"/>
+                        style="@style/GoodButtonTimeStyle"/>
+                    <TextView
+                        android:id="@+id/nextTime3"
+                        style="@style/GoodButtonEaseStyle"
+                        tools:text="3 d" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -159,15 +274,16 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/nextTime4"
-                        style="@style/EasyButtonTimeStyle"
-                        tools:text="4 d" />
 
                     <TextView
                         android:id="@+id/ease4"
                         android:text="@string/ease_button_easy"
-                        style="@style/EasyButtonEaseStyle" />
+                        style="@style/EasyButtonTimeStyle" />
+
+                    <TextView
+                        android:id="@+id/nextTime4"
+                        style="@style/EasyButtonEaseStyle"
+                        tools:text="4 d" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -179,14 +295,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="?attr/answerButtonBackgroundColor"
-
             tools:visibility="gone">
 
             <Button
                 style="?android:attr/borderlessButtonStyle"
-
-
-            android:background="?attr/showAnswerButtonColor"
+                android:background="?attr/showAnswerButtonColor"
                 android:id="@+id/flip_card"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
@@ -195,76 +308,7 @@
                 android:text="@string/show_answer"
                 android:textSize="17sp"
                 android:textColor="@color/white" />
-<!--            <LinearLayout-->
-<!--                android:weightSum="3"-->
-<!--                android:paddingVertical="13dp"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content">-->
-<!--                <LinearLayout-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:layout_width="0dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    >-->
-<!--                    <TextView-->
-<!--                        android:text="新卡"-->
-<!--                        android:textSize="11sp"-->
-<!--                        android:textColor="?attr/primaryTextColor"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                    <TextView-->
-<!--                        android:id="@+id/new_number"-->
-<!--                        android:layout_marginStart="4dp"-->
-<!--                        android:text="298"-->
-<!--                        android:textStyle="bold"-->
-<!--                        android:textSize="20sp"-->
-<!--                        android:textColor="?attr/primaryTextColor"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                </LinearLayout>-->
-<!--                <LinearLayout-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:layout_width="0dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:layout_height="wrap_content">-->
-<!--                    <TextView-->
-<!--                        android:text="困难"-->
-<!--                        android:textSize="11sp"-->
-<!--                        android:textColor="@color/hard_button_text_color"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                    <TextView-->
-<!--                        android:id="@+id/learn_number"-->
-<!--                        android:layout_marginStart="4dp"-->
-<!--                        android:text="298"-->
-<!--                        android:textStyle="bold"-->
-<!--                        android:textSize="20sp"-->
-<!--                        android:textColor="@color/hard_button_text_color"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                </LinearLayout>-->
-<!--                <LinearLayout-->
-<!--                    android:layout_weight="1"-->
-<!--                    android:gravity="center"-->
-<!--                    android:layout_width="0dp"-->
-<!--                    android:layout_height="wrap_content">-->
-<!--                    <TextView-->
-<!--                        android:text="复习"-->
-<!--                        android:textSize="11sp"-->
-<!--                        android:textColor="@color/review_button_text_color"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                    <TextView-->
-<!--                        android:layout_marginStart="4dp"-->
-<!--                        android:text="298"-->
-<!--                        android:textSize="20sp"-->
-<!--                        android:textStyle="bold"-->
-<!--                        android:id="@+id/review_number"-->
-<!--                        android:textColor="@color/review_button_text_color"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"/>-->
-<!--                </LinearLayout>-->
-<!--            </LinearLayout>-->
+
         </LinearLayout>
     </FrameLayout>
 </LinearLayout>

@@ -29,7 +29,7 @@ public class MetaDB {
     private static final String DATABASE_NAME = "ankidroid.db";
 
     /** The Database Version, increase if you want updates to happen on next upgrade. */
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     // Possible values for the qa column of the languages table.
     /** The language refers to the question. */
@@ -76,6 +76,7 @@ public class MetaDB {
 
         if (mMetaDb.getVersion() < 4) {
             mMetaDb.execSQL("DROP TABLE IF EXISTS languages;");
+            mMetaDb.execSQL("DROP TABLE IF EXISTS speechRate;");
             mMetaDb.execSQL("DROP TABLE IF EXISTS customDictionary;");
             mMetaDb.execSQL("DROP TABLE IF EXISTS whiteboardState;");
         }
@@ -83,6 +84,8 @@ public class MetaDB {
         // Create tables if not exist
         mMetaDb.execSQL("CREATE TABLE IF NOT EXISTS languages (" + " _id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "did INTEGER NOT NULL, ord INTEGER, " + "qa INTEGER, " + "language TEXT)");
+        mMetaDb.execSQL("CREATE TABLE IF NOT EXISTS speechRate (" + " _id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + "did INTEGER NOT NULL, ord INTEGER, " + "rate FLOAT)");
         mMetaDb.execSQL("CREATE TABLE IF NOT EXISTS customDictionary (" + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "did INTEGER NOT NULL, " + "dictionary INTEGER)");
         mMetaDb.execSQL("CREATE TABLE IF NOT EXISTS smallWidgetStatus (" + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -151,6 +154,8 @@ public class MetaDB {
         try {
             mMetaDb.execSQL("DROP TABLE IF EXISTS languages;");
             Timber.i("MetaDB:: Resetting all language assignment");
+            mMetaDb.execSQL("DROP TABLE IF EXISTS speechRate;");
+            Timber.i("MetaDB:: Resetting all speech rate assignment");
             mMetaDb.execSQL("DROP TABLE IF EXISTS whiteboardState;");
             Timber.i("MetaDB:: Resetting whiteboard state");
             mMetaDb.execSQL("DROP TABLE IF EXISTS customDictionary;");
@@ -178,6 +183,22 @@ public class MetaDB {
         try {
             Timber.i("MetaDB:: Resetting all language assignments");
             mMetaDb.execSQL("DROP TABLE IF EXISTS languages;");
+            upgradeDB(mMetaDb, DATABASE_VERSION);
+            return true;
+        } catch (Exception e) {
+            Timber.e(e, "Error resetting MetaDB ");
+        }
+        return false;
+    }
+
+    /** Reset the speech associations for all the decks and card models. */
+    public static boolean resetSpeech(Context context) {
+        if (mMetaDb == null || !mMetaDb.isOpen()) {
+            openDB(context);
+        }
+        try {
+            Timber.i("MetaDB:: Resetting all speech rate assignments");
+            mMetaDb.execSQL("DROP TABLE IF EXISTS speechRate;");
             upgradeDB(mMetaDb, DATABASE_VERSION);
             return true;
         } catch (Exception e) {
@@ -230,6 +251,23 @@ public class MetaDB {
     }
 
 
+    public static void storeSpeech(Context context, long did, int ord,  float rate) {
+        openDBIfClosed(context);
+        try {
+            if (getSpeech(context, did, ord )==1.0) {
+                mMetaDb.execSQL("INSERT INTO speechRate (did, ord, rate ) " + " VALUES (?, ?, ?);", new Object[] {
+                        did, ord, rate });
+                Timber.v("Store speech rate for deck %d", did);
+            } else {
+                mMetaDb.execSQL("UPDATE speechRate SET rate = ? WHERE did = ? AND ord = ? ;", new Object[] {
+                        rate, did, ord});
+                Timber.v("Update speech rate for deck %d", did);
+            }
+        } catch (Exception e) {
+            Timber.e(e,"Error storing speech rate in MetaDB ");
+        }
+    }
+
     /**
      * Returns the language associated with the given deck, model and card model, for the given type.
      * 
@@ -256,6 +294,27 @@ public class MetaDB {
             }
         }
         return language;
+    }
+
+    public static float getSpeech(Context context, long did, int ord) {
+        openDBIfClosed(context);
+        float rate = 1 ;
+        Cursor cur = null;
+        try {
+            String query = "SELECT rate FROM speechRate WHERE did = ? AND ord = ?  LIMIT 1";
+            cur = mMetaDb.rawQuery(query, new String[] {Long.toString(did), Integer.toString(ord)});
+            Timber.v("getSpeech: %s", query);
+            if (cur.moveToNext()) {
+                rate = cur.getFloat(0);
+            }
+        } catch (Exception e) {
+            Timber.e(e, "Error fetching speech ");
+        } finally {
+            if (cur != null && !cur.isClosed()) {
+                cur.close();
+            }
+        }
+        return rate;
     }
 
 

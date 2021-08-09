@@ -60,17 +60,18 @@
             android:defaultValue="@string/empty_string"
             android:key="language"
             android:title="@string/language" />
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="analyticsOptIn"
-            android:summary="@string/analytics_summ"
-            android:title="@string/analytics_title" />
-        <ListPreference
-            android:defaultValue="1"
-            android:entries="@array/error_reporting_choice_labels"
-            android:entryValues="@array/error_reporting_choice_values"
-            android:key="reportErrorMode"
-            android:title="@string/error_reporting_choice" />
+<!--        <CheckBoxPreference-->
+<!--            android:defaultValue="false"-->
+<!--            android:key="analyticsOptIn"-->
+<!--            android:visibility="gone"-->
+<!--            android:summary="@string/analytics_summ"-->
+<!--            android:title="@string/analytics_title" />-->
+<!--        <ListPreference-->
+<!--            android:defaultValue="1"-->
+<!--            android:entries="@array/error_reporting_choice_labels"-->
+<!--            android:entryValues="@array/error_reporting_choice_values"-->
+<!--            android:key="reportErrorMode"-->
+<!--            android:title="@string/error_reporting_choice" />-->
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/notification_pref"
         android:key="category_general_notification_pref">

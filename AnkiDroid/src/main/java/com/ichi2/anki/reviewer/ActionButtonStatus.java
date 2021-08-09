@@ -45,7 +45,8 @@ public class ActionButtonStatus {
 
     public void setup(SharedPreferences preferences) {
         // NOTE: the default values below should be in sync with preferences_custom_buttons.xml and reviewer.xml
-        setupButton(preferences, R.id.action_undo, "customButtonUndo", SHOW_AS_ACTION_ALWAYS);
+        setupButton(preferences, R.id.action_speak, "customButtonVipSpeak", SHOW_AS_ACTION_ALWAYS);
+        setupButton(preferences, R.id.action_undo, "customButtonUndo", MENU_DISABLED);
         setupButton(preferences, R.id.action_schedule, "customButtonScheduleCard", SHOW_AS_ACTION_NEVER);
         setupButton(preferences, R.id.action_flag, "customButtonFlag", SHOW_AS_ACTION_ALWAYS);
         setupButton(preferences, R.id.action_tag, "customButtonTags", SHOW_AS_ACTION_NEVER);
@@ -106,6 +107,10 @@ public class ActionButtonStatus {
 
     public boolean hideWhiteboardIsDisabled() {
         return mCustomButtons.get(R.id.action_hide_whiteboard) == MENU_DISABLED;
+    }
+
+    public boolean vipSpeakIsDisabled() {
+        return mCustomButtons.get(R.id.action_speak) == MENU_DISABLED;
     }
 
     public boolean clearWhiteboardIsDisabled() {

@@ -1,0 +1,345 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/root_layout"
+    android:fitsSystemWindows="true"
+    android:background="?attr/backgroundColor"
+    android:orientation="vertical"
+
+    >
+    <include layout="@layout/toolbar"/>
+    <ScrollView
+        android:layout_below="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="11dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_marginTop="13dp"
+                android:text="学习量"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:id="@+id/rl_max_learn_card"
+                android:background="?attr/settingItemBackgroundTop"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_max_learn_card"
+                    style="@style/StudySettingNumStyle"
+                    android:text="29"
+                     />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="每天新卡上限(张)"
+                      />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_max_review_card"
+                android:background="?attr/settingItemBackgroundBottom"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_max_review_card"
+                    style="@style/StudySettingNumStyle"
+                    android:text="29"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="每天复习上限(张)"
+                    />
+            </RelativeLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_marginTop="21dp"
+                android:text="学习偏好"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+            <RelativeLayout
+                android:layout_marginTop="9dp"
+                android:id="@+id/rl_new_card_sequence"
+                android:background="?attr/settingItemBackgroundTop"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_new_card_sequence"
+                    style="@style/StudySettingNumStyle"
+                    android:text="按添加顺序学习新卡片"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="新卡顺序"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_learn_sequence"
+                android:background="?attr/settingItemBackgroundBottom"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_learn_sequence"
+                    style="@style/StudySettingNumStyle"
+                    android:text="新卡和复习卡混合出现"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="学习顺序"
+                    />
+            </RelativeLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:layout_marginTop="21dp"
+                android:text="记忆算法"
+                android:textColor="?attr/primaryForthTextColor333333"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/ll_algorithm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="11dp"
+                android:background="?attr/settingItemBackgroundTop"
+                android:orientation="vertical"
+                android:paddingTop="15dp"
+                android:paddingBottom="10dp"
+                android:paddingEnd="18dp"
+                android:paddingStart="13dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <include layout="@layout/arrow_icon"/>
+                    <TextView
+                        android:id="@+id/tx_algorithm"
+                        style="@style/StudySettingNumStyle"
+                        android:text="长记模式"
+                        />
+                    <TextView
+                        style="@style/StudySettingContentStyle"
+                        android:text="记忆模式"
+                          />
+                </RelativeLayout>
+                <TextView
+                    style="@style/StudySettingNumStyle"
+                    android:layout_marginTop="4dp"
+                    android:text="不懂算法原理，使用记忆模式可以快速完成设置"
+                    />
+            </LinearLayout>
+            <include layout="@layout/divider"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/settingItemBackground"
+                android:paddingStart="16dp"
+                android:paddingTop="18dp"
+                android:gravity="start|bottom"
+                android:textSize="13sp"
+                android:text="新卡"
+                android:textColor="?attr/primary_text_third_color999999"
+                />
+            <RelativeLayout
+                android:id="@+id/rl_interval_step"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_interval_step"
+                    style="@style/StudySettingNumStyle"
+                    android:text="1 10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="间隔步伐(分)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_interval_graduate"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_interval_graduate"
+                    style="@style/StudySettingNumStyle"
+                    android:text="1 10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="毕业间隔(天)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_interval_simple"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_interval_simple"
+                    style="@style/StudySettingNumStyle"
+                    android:text="1 10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="简单间隔(天)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_init_level"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_init_level"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="初始难度(%)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/settingItemBackground"
+                android:paddingStart="16dp"
+                android:paddingTop="18dp"
+                android:gravity="start|bottom"
+                android:textSize="13sp"
+                android:text="复习"
+                android:textColor="?attr/primary_text_third_color999999"
+                />
+            <RelativeLayout
+                android:id="@+id/rl_deck_conf_max_ivl"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_deck_conf_max_ivl"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="最大时间间隔(天)"
+                    />
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_medal_simple"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_medal_simple"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="简单奖励(%)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_interval_decoration"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_interval_decoration"
+                    style="@style/StudySettingNumStyle"
+                    android:text="100"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="时间间隔因子(%)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/settingItemBackground"
+                android:paddingStart="16dp"
+                android:paddingTop="18dp"
+                android:gravity="start|bottom"
+                android:textSize="13sp"
+                android:text="失误"
+                android:textColor="?attr/primary_text_third_color999999"
+                />
+            <RelativeLayout
+                android:id="@+id/rl_error_interval_step"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_error_interval_step"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="间隔步伐（分）"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_error_new_interval"
+                android:background="?attr/settingItemBackground"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_error_new_interval"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="新的间隔(%)"
+                    />
+                <include layout="@layout/divider"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/rl_error_min_interval"
+                android:background="?attr/settingItemBackgroundBottom"
+                android:layout_marginBottom="32dp"
+                style="@style/StudySettingLayout">
+                <include layout="@layout/arrow_icon"/>
+                <TextView
+                    android:id="@+id/tx_error_min_interval"
+                    style="@style/StudySettingNumStyle"
+                    android:text="10"
+                    />
+                <TextView
+                    style="@style/StudySettingContentStyle"
+                    android:text="最小间隔(天)"
+                    />
+            </RelativeLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>
+

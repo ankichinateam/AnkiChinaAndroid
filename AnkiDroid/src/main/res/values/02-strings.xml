@@ -133,7 +133,7 @@
     <plurals name="in_minutes">
         <item quantity="other">%1$d 分钟</item>
     </plurals>
-    <string name="studyoptions_welcome_title">欢迎进入 Anki志愿版</string>
+    <string name="studyoptions_welcome_title">欢迎进入 Anki记忆卡</string>
     <string name="fact_adder_intent_title">Anki卡片</string>
     <string name="note_editor_add_note">添加笔记</string>
     <string name="note_editor_copy_note">复制笔记</string>
@@ -176,7 +176,7 @@
     <string name="import_error_exception">无法导入软件包\n\n%s</string>
     <string name="import_error_not_apkg_extension">\"%s\" 并不是具有 .apkg 或 .colpkg 扩展名的文件</string>
     <string name="import_error_load_imported_database">尚不支持替换 Anki 数据库（.anki2）。请参阅手册以获取替换说明。</string>
-    <string name="import_error_content_provider">Anki志愿版 不能导入所选择的文件。请参阅用户手册以查看如何导入Anki记忆库：\n%s</string>
+    <string name="import_error_content_provider">Anki记忆卡 不能导入所选择的文件。请参阅用户手册以查看如何导入Anki记忆库：\n%s</string>
     <string name="import_error_copy_file_to_cache">copyFileToCache() 失败（可能存储空间不足）</string>
     <string name="import_error_unhandled_scheme">未处理的导入来自：“%s”</string>
     <string name="import_replacing">正在导入记忆库集合&#8230;</string>
@@ -193,16 +193,17 @@
     <string name="export_save_apkg_successful">已成功保存 Anki 包</string>
     <string name="export_save_apkg_unsuccessful">保存 Anki 包失败</string>
     <string name="export_successful">文件 “%s” 导出完毕，您想用其他 app 发送它吗？</string>
-    <string name="export_email_subject">Anki志愿版 导出卡片： %s</string>
+    <string name="export_email_subject">Anki记忆卡 导出卡片： %s</string>
     <string name="export_email_text"><![CDATA[        嗨！
         <br/><br/>
-        这是从 <a href="https://Anki志愿版.org/docs/manual.html">Anki志愿版</a> 分享的 Anki 记忆记忆库。
+        这是从 <a href="https://Anki记忆卡.org/docs/manual.html">Anki记忆卡</a> 分享的 Anki 记忆记忆库。
         使用任一 <a href="http://ankisrs.net/#download">Anki 客户端</a>打开它，享受轻松高效的学习吧！
         ]]></string>
     <string name="export_unsuccessful">导出apkg文件时出错</string>
     <string name="import_hint">请把apkg文件放在%s目录中，然后按确定。</string>
     <string name="upgrade_import_no_file_found">没有找到可导入的 %1$s 文件</string>
     <string name="study_options">选项</string>
+    <string name="top_button_config">顶部按钮</string>
     <string name="select_tts">设置 TTS 语言</string>
     <string name="custom_study">自定义学习</string>
     <string name="add_today_study_amount">增加今日学习量</string>
@@ -240,6 +241,7 @@
          languages which apparently use the other symbol to mean less
          than. -->
     <string name="less_than_time">&lt; %s</string>
+    <string name="more_than_time">%s后</string>
     <string name="decks_rename_exists">该记忆库已存在</string>
     <string name="decks_rename_filtered_nosubdecks">筛选记忆库不能有子记忆库</string>
     <string name="filtered_deck_name">筛选记忆库</string>
@@ -283,7 +285,7 @@
     <string name="note_importer_error_empty_notes">一个或多个笔记未被导入，因为它们没有生成任何卡片。 当您有空字段或您未将文本文件中的内容映射到正确字段时，可能发生此情况</string>
     <string name="csv_importer_error_invalid_field_count">“%1$s”有 %2$d 个字段，而期望 %3$d 个字段</string>
     <string name="csv_importer_error_exception">已中止：%s</string>
-    <string name="user_is_a_robot">检测到自动测试。如果您是真人，请联系 Anki志愿版 支持</string>
+    <string name="user_is_a_robot">检测到自动测试。如果您是真人，请联系 Anki记忆卡 支持</string>
     <plurals name="note_importer_notes_added">
         <item quantity="other">%d 条笔记已添加</item>
     </plurals>
@@ -294,13 +296,13 @@
         <item quantity="other">%d 条笔记未变更</item>
     </plurals>
     <!-- JS api -->
-    <string name="api_version_developer_contact">此卡片使用不受支持的 Anki志愿版 功能。请联系开发者 %1$s，或查看维基。%2$s</string>
+    <string name="api_version_developer_contact">此卡片使用不受支持的 Anki记忆卡 功能。请联系开发者 %1$s，或查看维基。%2$s</string>
     <string name="invalid_json_data">卡片提供了无效数据。%s</string>
-    <string name="valid_js_api_version">无效的 Anki志愿版 JS API 版本。请联系开发者 %s，或查看维基</string>
-    <string name="update_js_api_version">Anki志愿版 JS API 更新可用。请联系开发者 %s，或查看维基</string>
+    <string name="valid_js_api_version">无效的 Anki记忆卡 JS API 版本。请联系开发者 %s，或查看维基</string>
+    <string name="update_js_api_version">Anki记忆卡 JS API 更新可用。请联系开发者 %s，或查看维基</string>
     <string name="reviewer_invalid_api_version_visit_documentation">查看</string>
     <string name="anki_js_error_code">（错误代码：%d）</string>
-    <!-- About Anki志愿版 screen -->
+    <!-- About Anki记忆卡 screen -->
     <string name="about_ankidroid_successfully_copied_debug">已复制调试信息到剪贴板</string>
     <string name="about_ankidroid_error_copy_debug_info">复制调试信息到剪贴板时出错</string>
     <!-- Card Viewer -->

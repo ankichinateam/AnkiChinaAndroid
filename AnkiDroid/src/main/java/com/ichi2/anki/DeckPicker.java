@@ -2,11 +2,9 @@ package com.ichi2.anki;
 
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -15,26 +13,23 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.ParcelFileDescriptor;
-import android.provider.Settings;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.UnderlineSpan;
 import android.util.DisplayMetrics;
-import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -48,28 +43,23 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.material.bottomnavigation.BottomNavigationItemView;
+
 import com.google.android.material.bottomnavigation.BottomNavigationMenuView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.analytics.UsageAnalytics;
 import com.ichi2.anki.dialogs.AsyncDialogFragment;
 import com.ichi2.anki.dialogs.ConfirmationDialog;
-import com.ichi2.anki.dialogs.CustomStudyDialog;
 import com.ichi2.anki.dialogs.DatabaseErrorDialog;
 import com.ichi2.anki.dialogs.DeckPickerAnalyticsOptInDialog;
 import com.ichi2.anki.dialogs.DeckPickerBackupNoSpaceLeftDialog;
-import com.ichi2.anki.dialogs.DeckPickerConfirmDeleteDeckDialog;
 import com.ichi2.anki.dialogs.DeckPickerExportCompleteDialog;
 import com.ichi2.anki.dialogs.DeckPickerNoSpaceLeftDialog;
 import com.ichi2.anki.dialogs.DialogHandler;
 import com.ichi2.anki.dialogs.ExportDialog;
-import com.ichi2.anki.dialogs.ImportDialog;
-
 import com.ichi2.anki.dialogs.MediaCheckDialog;
 import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.exception.ConfirmModSchemaException;
-import com.ichi2.anki.exception.DeckRenameException;
 import com.ichi2.anki.receiver.SdCardReceiver;
 import com.ichi2.anki.web.HostNumFactory;
 import com.ichi2.anki.widgets.SmartFragmentStatePagerAdapter;
@@ -78,66 +68,60 @@ import com.ichi2.async.Connection;
 import com.ichi2.async.TaskData;
 import com.ichi2.async.TaskListener;
 import com.ichi2.async.TaskListenerWithContext;
-import com.ichi2.compat.CompatHelper;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Consts;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.DeviceID;
 import com.ichi2.libanki.Model;
 import com.ichi2.libanki.Models;
-import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.importer.AnkiPackageImporter;
 import com.ichi2.libanki.sync.CustomSyncServerUrlException;
-import com.ichi2.libanki.utils.TimeUtils;
 import com.ichi2.themes.StyledProgressDialog;
-import com.ichi2.utils.ImportUtils;
+import com.ichi2.ui.CustomStyleDialog;
 import com.ichi2.utils.JSONException;
+import com.ichi2.utils.OKHttpUtil;
 import com.ichi2.utils.Permissions;
 import com.ichi2.utils.SyncStatus;
 import com.ichi2.utils.VersionUtils;
 import com.ichi2.widget.NoScrollViewPager;
 import com.ichi2.widget.WidgetStatus;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
-import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
+import com.tencent.bugly.Bugly;
 import com.tencent.bugly.beta.Beta;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.commonsdk.UMConfigure;
 
 
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.TreeMap;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.VisibleForTesting;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import okhttp3.Call;
+import okhttp3.Response;
 import timber.log.Timber;
 
-import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT;
 import static com.ichi2.anki.MyAccount.NOT_LOGIN_ANKI_CHINA;
-import static com.ichi2.anki.MyAccount.NO_WRITEABLE_PERMISSION;
-import static com.ichi2.anki.MyAccount.TOKEN_IS_EXPIRED;
+import static com.ichi2.anki.SelfStudyActivity.ALL_DECKS_ID;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.CHECK_DATABASE;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.CHECK_MEDIA;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.FIND_EMPTY_CARDS;
-import static com.ichi2.async.CollectionTask.TASK_TYPE.IMPORT;
-import static com.ichi2.async.CollectionTask.TASK_TYPE.IMPORT_REPLACE;
+import static com.ichi2.async.CollectionTask.TASK_TYPE.LOAD_COLLECTION_COMPLETE;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.LOAD_DECK_COUNTS;
-import static com.ichi2.async.CollectionTask.TASK_TYPE.REBUILD_CRAM;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.REPAIR_COLLECTION;
 
 import static com.ichi2.libanki.Consts.URL_PRIVATE;
@@ -153,13 +137,13 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     BottomNavigationView bottomNavigationView;
     private MenuItem menuItem;
     public static final int REQUEST_BROWSE_CARDS = 101;
-    private final DeckPickerFragment mDeckPickerFragment = new DeckPickerFragment();
-    private final Statistics mStatisticsFragment = new Statistics();
-    private final SettingFragment mSettingFragment = new SettingFragment();
+    private DeckPickerFragment mDeckPickerFragment;
+    private Statistics mStatisticsFragment;
+    private SettingFragment mSettingFragment;
     public static final int RESULT_MEDIA_EJECTED = 202;
     public static final int RESULT_DB_ERROR = 203;
     public static final int RESULT_UPDATE_REST_SPACE = 204;
-    private final AnkiFragment[] mFragments = new AnkiFragment[] {mDeckPickerFragment, mStatisticsFragment, mSettingFragment};
+//    private final AnkiFragment[] mFragments = new AnkiFragment[] {mDeckPickerFragment, mStatisticsFragment, mSettingFragment};
 
     public static final int INDEX_DECK_PICKER = 0;
     public static final int INDEX_STATISTICS = 1;
@@ -171,6 +155,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     public static final int REPORT_ERROR = 10;
     public static final int SHOW_STUDYOPTIONS = 11;
     public static final int ADD_NOTE = 12;
+    public static final int BE_VIP = 997;
+    public static final int REFRESH_LOGIN_STATE = 998;
+    public static final int REFRESH_VOICE_INFO = 999;
+
+    public static final int CHANGE_ACCOUNT = 14;
 
 
     public static final int REQUEST_PATH_UPDATE = 1;
@@ -180,7 +169,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 //    }
 
 
-    View mBottomAddMenuIcon;
+    private View mBottomAddMenuIcon;
     private MaterialDialog mProgressDialog;
 
 
@@ -188,20 +177,20 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.navigation_activity);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-        }
+//        Toolbar toolbar = findViewById(R.id.toolbar);
+//        if (toolbar != null) {
+//            setSupportActionBar(toolbar);
+//        }
         viewPager = findViewById(R.id.viewpager);
-        bottomNavigationView = (BottomNavigationView) findViewById(R.id.navigation);
-        bottomNavigationView.setOnNavigationItemSelectedListener(this);
+//        viewPager.setScrolledListener(new CustomScrollViewPager.ScrolledListener() {
+//            @Override
+//            public void onScroll() {
+//                openCardBrowser();
+//            }
+//        });
+        bottomNavigationView = findViewById(R.id.navigation);
         bottomNavigationView.setItemIconTintList(null);
-        viewPager.addOnPageChangeListener(this);
-        bottomNavigationView.setSelectedItemId(R.id.tab_one);
-
         BottomNavigationMenuView menuView = (BottomNavigationMenuView) bottomNavigationView.getChildAt(0);
-
-
         mBottomAddMenuIcon = menuView.getChildAt(2).findViewById(com.google.android.material.R.id.icon);
 
         final ViewGroup.LayoutParams layoutParams = mBottomAddMenuIcon.getLayoutParams();
@@ -210,7 +199,6 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         layoutParams.width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 37, displayMetrics);
         mBottomAddMenuIcon.setLayoutParams(layoutParams);
 
-        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
         restoreWelcomeMessage(savedInstanceState);
         registerExternalStorageListener();
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(this);
@@ -220,8 +208,8 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                     .title(R.string.collection_load_welcome_request_permissions_title)
                     .titleGravity(GravityEnum.CENTER)
                     .content(getClickableSpan(this))
-                    .negativeText(R.string.dialog_cancel)
-                    .positiveText(R.string.dialog_ok)
+                    .negativeText(R.string.dialog_disagree)
+                    .positiveText(R.string.dialog_agree)
                     .onPositive((innerDialog, innerWhich) -> {
                         preferences.edit().putBoolean(CONFIRM_PRIVATE_STRATEGY, true).apply();
                         mShowingPrivateStrategyDialog = false;
@@ -239,6 +227,42 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
         } else {
             continueActivity(preferences);
+        }
+        int count = preferences.getInt(START_APP_COUNT, 0);
+        count++;
+        if (count == 5) {
+            CustomStyleDialog customDialog = new CustomStyleDialog.Builder(this)
+                    .setTitle("给个好评，鼓励一下吧！")
+                    .setMessage("每一份好评对我们都是极大的鼓励，也是我们持续优化的动力")
+                    .setPositiveButton("好评鼓励", (dialog, which) -> {
+                        dialog.dismiss();
+                        goAppShop(DeckPicker.this, BuildConfig.APPLICATION_ID, "");
+                    })
+                    .setNegativeButton("残忍拒绝", (dialog, which) -> dialog.dismiss())
+                    .create();
+            customDialog.show();
+        }
+        preferences.edit().putInt(START_APP_COUNT, count).apply();
+
+    }
+
+
+    public static void goAppShop(Context context, String myAppPkg, String shopPkg) {
+        if (TextUtils.isEmpty(myAppPkg)) {
+            return;
+        }
+
+        try {
+            Uri uri = Uri.parse("market://details?id=" + myAppPkg);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            if (!TextUtils.isEmpty(shopPkg)) {
+                intent.setPackage(shopPkg);
+            }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            // 如果没有该应用商店，则显示系统弹出的应用商店列表供用户选择
+            goAppShop(context, myAppPkg, "");
         }
     }
 
@@ -295,8 +319,10 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         boolean colOpen = firstCollectionOpen();
         Timber.i("colOpen: %b", colOpen);
         if (colOpen) {
+            startLoadingCollection();
             // Show any necessary dialogs (e.g. changelog, special messages, etc)
             showStartupScreensAndDialogs(preferences, 0);
+
         } else {
             // Show error dialogs
             if (Permissions.hasStorageAccessPermission(this)) {
@@ -317,24 +343,84 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
             }
         }
+        mVipExpireAt=AnkiDroidApp.getSharedPrefs( this).getString(Consts.KEY_VIP_EXPIRED,"");
+        mVip=AnkiDroidApp.getSharedPrefs( this).getBoolean(Consts.KEY_IS_VIP,false);
+        if (mVipExpireAt.isEmpty()) {
+            mVip=false;
+        }else {
+            long now = getCol(this).getTime().intTimeMS();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            try {
+                Date date = sdf.parse(mVipExpireAt);
+                Calendar calendar = getCol(this).getTime().calendar();
+                calendar.setTime(date);
+                if (calendar.getTimeInMillis() < now) {
+                    mVip=false;
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+                mVip=false;
+            }
+        }
+        AnkiDroidApp.getSharedPrefs( this).edit().putBoolean(Consts.KEY_IS_VIP,mVip).apply();
+
+        Bugly.init(getApplicationContext(), "8793e55d11", false);
+        UMConfigure.setLogEnabled(BuildConfig.DEBUG);
+        UMConfigure.init(this, "5f71f96680455950e49ab67c", "channel1", UMConfigure.DEVICE_TYPE_PHONE, "ankichina");
+        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
         Beta.checkUpgrade(false, true);
-        new Handler().postDelayed(() -> getAccount().getToken(getBaseContext(), new MyAccount.TokenCallback() {
-            @Override
-            public void onSuccess(String token) {
-                Timber.i("get saved token on resume:%s", token);
-                Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing", HostNumFactory.getInstance(DeckPicker.this)));
-            }
-
-
-            @Override
-            public void onFail(String message) {
-                handleGetTokenFailed(message);
-            }
-        }), 500);//1秒后执行
-
     }
 
 
+    private final OKHttpUtil.MyCallBack checkRestServerSpaceListener = new OKHttpUtil.MyCallBack() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+
+        @Override
+        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+//            Timber.i("http get result:%s,body:%s", response.toString() ,response.body()==null?"":response.body().string());
+            if (response.isSuccessful()) {
+//                            Timber.i("fetch server space successfully:%s", response.body().string());
+                try {
+                    JSONObject result = (new JSONObject(response.body().string())).getJSONObject("data");
+                    Timber.i("fetch server space result:%s ", result.toString());
+                    long total = result.getLong("origin_size");
+                    long used = result.getLong("origin_used_size");
+                    String totalStr = result.getString("size");
+                    String usedStr = result.getString("used_size");
+                    String hint = String.format("%s/%s", usedStr, totalStr);
+                    String hintStr = String.format(getString(R.string.upgrade_cloud_space), hint);
+                    long rest = total - used;
+                    Timber.i("fetch server space result:%d,%d,%d", total, used, rest);
+//                    getNavigationView().getMenu().findItem(R.id.nav_cloud_space).setTitle(hintStr);
+                    saveServerRestSpace(rest);
+                    if ("nothing".equals(String.valueOf(arg1))) {
+                        return;
+                    }
+                    if (rest <= 0) {
+                        showSyncErrorDialog(SyncErrorDialog.DIALOG_NO_ENOUGH_SERVER_SPACE);
+                        return;
+                    }
+                    //获取剩余空间
+                    runOnUiThread(() -> syncInternal((String) arg1));
+
+                } catch (org.json.JSONException e) {
+                    e.printStackTrace();
+                    UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.sync_generic_error, true);
+                }
+            } else {
+                Timber.e("fetch server space failed, error code %d", response.code());
+                String hintStr = String.format(getString(R.string.upgrade_cloud_space), "请登录/刷新");
+                if ("nothing".equals(String.valueOf(arg1))) {
+                    return;
+                }
+                UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.network_error, true);
+            }
+        }
+    };
     /**
      * Flag to indicate whether the activity will perform a sync in its onResume.
      * Since syncing closes the database, this flag allows us to avoid doing any
@@ -342,6 +428,116 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
      */
 
     protected boolean mSyncOnResume = false;
+    protected boolean mRefreshVipStateOnResume = true;
+
+    private String mVipUrl;
+    private boolean mVip = false;
+    private int mVipDay;
+    private String mVipExpireAt;
+
+
+    //VIP页面地址在登录和非登录态是不一样的，如有APP登录或者登出操作请重新调此接口更新URL
+    private void refreshVipState(boolean isConnected) {
+        runOnUiThread(() -> {
+            mVip = mVip && isConnected;//联网失败默认无vip
+            for (int i = 0; i < mFragments.size(); i++) {
+                mFragments.get(i).onRefreshVipState(mVip, mVipUrl, mVipDay, mVipExpireAt);
+            }
+        });
+    }
+
+
+    //设置字体颜色,参数如getResources().getColor(R.color.colorBlue)
+    public static SpannableStringBuilder ForeGroundColorSpan(String content, int start, int end, int colorId) {
+        if (end > content.length()) {
+            end = content.length();
+        }
+        SpannableStringBuilder ssb = new SpannableStringBuilder(content);
+        ssb.setSpan(new ForegroundColorSpan(colorId), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return ssb;
+    }
+
+
+
+    public void getVipInfo() {
+        mRefreshVipStateOnResume = false;
+        getAccount().getToken(this, new MyAccount.TokenCallback() {
+            @Override
+            public void onSuccess(String token) {
+                //获取vip状态
+                OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/vipInfo", token, "", new OKHttpUtil.MyCallBack() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        refreshVipState(false);
+                    }
+
+
+                    @Override
+                    public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+                        if (response.isSuccessful()) {
+//                            Timber.i("init vip info successfully!:%s", response.body());
+                            try {
+                                final JSONObject object = new JSONObject(response.body().string());
+                                final JSONObject item = object.getJSONObject("data");
+                                mVipUrl = item.getString("vip_url");
+                                Timber.i("get vip url ：%s", mVipUrl);
+                                if (!mVip && mTurnToVipHtml) {
+                                    mTurnToVipHtml = false;
+                                    WebViewActivity.openUrlInApp(DeckPicker.this, String.format(mVipUrl, token, BuildConfig.VERSION_NAME), token, BE_VIP);
+                                }
+                                mVip = item.getBoolean("is_vip");
+                                mVipDay = item.getInt("vip_day");
+                                mVipExpireAt = item.getString("vip_end_at");
+                                AnkiDroidApp.getSharedPrefs(DeckPicker.this).edit().putBoolean(Consts.KEY_IS_VIP, mVip).apply();
+                                AnkiDroidApp.getSharedPrefs(DeckPicker.this).edit().putString(Consts.KEY_VIP_EXPIRED, mVipExpireAt).apply();
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            Timber.e("init vip info failed, error code %d", response.code());
+                        }
+                        refreshVipState(true);
+                    }
+                });
+            }
+
+
+            @Override
+            public void onFail(String message) {
+                OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/vipInfo", "", "", new OKHttpUtil.MyCallBack() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        refreshVipState(false);
+                    }
+
+
+                    @Override
+                    public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            Timber.i("init vip info successfully!:%s", response.body());
+                            try {
+                                final JSONObject object = new JSONObject(response.body().string());
+                                final JSONObject item = object.getJSONObject("data");
+                                mVipUrl = item.getString("vip_url");
+                                mVip = item.getBoolean("is_vip");
+                                mVipDay = item.getInt("vip_day");
+                                mVipExpireAt = item.getString("vip_end_at");
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            Timber.e("init vip info failed, error code %d", response.code());
+
+                        }
+                        refreshVipState(false);
+                    }
+                });
+
+
+            }
+        });
+    }
 
 
     @Override
@@ -349,6 +545,48 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(this);
         Consts.LOGIN_SERVER = preferences.getInt(Consts.KEY_ANKI_ACCOUNT_SERVER, 0);
         super.onResume();
+        //以下三种情况需要刷新vip状态
+        //1、从查看权益页面出来
+        //2、登录页出来
+        //3、刚打开app
+        Timber.i("refresh vip state on resume:%s", mRefreshVipStateOnResume);
+        if (mRefreshVipStateOnResume) {
+            getVipInfo();
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, "nothing", checkRestServerSpaceListener);
+                }
+
+
+                @Override
+                public void onFail(String message) {
+                    handleGetTokenFailed(message);
+                }
+            });
+        }
+        Timber.i("on resume and state check,mSyncOnResume:"+mSyncOnResume+","+colIsOpen()+","+viewPager+","+viewPager.getCurrentItem()+","+mFragments.size());
+        if (mSyncOnResume) {
+            Timber.i("Performing Sync on Resume");
+            sync();
+            mSyncOnResume = false;
+        } else if (colIsOpen()) {
+//            selectNavigationItem(R.id.nav_decks);
+            if (viewPager != null && viewPager.getCurrentItem() == 0 && mFragments.size() > 0&& mFragments.get(0).getAnkiActivity()!=null) {
+                if (((DeckPickerFragment) mFragments.get(0)).mDueTree == null) {
+                    Timber.i("Performing updateDeckList on Resume quick");
+                    ((DeckPickerFragment) mFragments.get(0)).updateDeckList(true);
+                } else {
+                    Timber.i("Performing updateDeckList on Resume");
+                    ((DeckPickerFragment) mFragments.get(0)).updateDeckList();
+                }
+            }
+
+        }
+        /** Complete task and enqueue fetching nonessential data for
+         * startup. */
+        CollectionTask.launchCollectionTask(LOAD_COLLECTION_COMPLETE);
+
         mActivityPaused = false;
 
     }
@@ -422,9 +660,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                     JSONObject result = ((JSONObject) data.result).getJSONObject("data");
                     boolean show = result.getBoolean("show");
                     String title = result.getString("title");
-//                    String title = "欢迎来到ANKI志愿版！";
+//                    String title = "欢迎来到ANKI记忆卡！";
                     String content = result.getString("content");
-//                    String content = "ANKI志愿版 需要存储权限，我们只用来存储你的ANKI志愿版 集合、记忆卡片媒体和备份。我们的代码是开源的，由志愿者撰写，并且受到数百万人的信任。\n\n如果有任何疑问，请访问我们的应用内手册或访问我们的支持论坛。\n\n感谢你尝试ANKI志愿版\n— ANKI志愿者开发团队";
+//                    String content = "ANKI记忆卡 需要存储权限，我们只用来存储你的ANKI记忆卡 集合、记忆卡片媒体和备份。我们的代码是开源的，由探索者撰写，并且受到数百万人的信任。\n\n如果有任何疑问，请访问我们的应用内手册或访问我们的支持论坛。\n\n感谢你尝试ANKI记忆卡\n— ANKI探索者开发团队";
                     if (show) {
                         showCloudCustomDialog(title, content);
                     }
@@ -505,13 +743,13 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                         })
                         .negativeText(R.string.dialog_cancel)
                         .onNegative((dialog, which) -> {
-                            String deckName = mDialogEditText.getText().toString();
-                            if (Decks.isValidDeckName(deckName)) {
-                                createNewDeck(deckName);
-                            } else {
-                                Timber.i("configureFloatingActionsMenu::addDeckButton::onPositiveListener - Not creating invalid deck name '%s'", deckName);
-                                UIUtils.showThemedToast(this, getString(R.string.invalid_deck_name), false);
-                            }
+//                            String deckName = mDialogEditText.getText().toString();
+//                            if (Decks.isValidDeckName(deckName)) {
+//                                createNewDeck(deckName);
+//                            } else {
+//                                Timber.i("configureFloatingActionsMenu::addDeckButton::onPositiveListener - Not creating invalid deck name '%s'", deckName);
+//                                UIUtils.showThemedToast(this, getString(R.string.invalid_deck_name), false);
+//                            }
                         })
                         .show();
 
@@ -555,35 +793,46 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     }
 
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Timber.d("onCreateOptionsMenu in activity");
+        Timber.d("onCreateOptionsMenu in activity:"+menu);
 
         return super.onCreateOptionsMenu(menu);
     }
 
 
-    List<AnkiFragment> mNeedCollectionResultList;
+//    List<AnkiFragment> mNeedCollectionResultList;
 
 
-    public void startLoadingCollection(int index) {
-        if (mNeedCollectionResultList == null) {
-            mNeedCollectionResultList = new ArrayList<>();
-        }
-        mNeedCollectionResultList.add(mFragments[index]);
-        startLoadingCollection();
-    }
+//    public void startLoadingCollection(int index) {
+//        if (mNeedCollectionResultList == null) {
+//            mNeedCollectionResultList = new ArrayList<>();
+//        }
+//        mNeedCollectionResultList.add(mFragments[index]);
+//        startLoadingCollection();
+//    }
+
+    List<AnkiFragment> mFragments = new ArrayList<>();
 
 
     @Override
     public void onCollectionLoaded(Collection col) {
-        for (int i = 0; i < mFragments.length; i++) {
-            if (mNeedCollectionResultList.contains(mFragments[i])) {
-                mFragments[i].onCollectionLoaded(col);
-                mNeedCollectionResultList.remove(mFragments[i]);
-            }
+        if (mFragments.isEmpty()) {
+            mDeckPickerFragment = new DeckPickerFragment();
+            mStatisticsFragment = new Statistics();
+            mSettingFragment = new SettingFragment();
+            mFragments.add(mDeckPickerFragment);
+            mFragments.add(mStatisticsFragment);
+            mFragments.add(mSettingFragment);
         }
+
+
+        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager(), mFragments));
+         viewPager.addOnPageChangeListener(this);
+        bottomNavigationView.setOnNavigationItemSelectedListener(this);
+        bottomNavigationView.setSelectedItemId(R.id.tab_one);
+
+
     }
 
 
@@ -591,14 +840,14 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         getAccount().getToken(this, new MyAccount.TokenCallback() {
             @Override
             public void onSuccess(String token) {
-                WebViewActivity.openUrlInApp(DeckPicker.this,String.format(getResources().getString(R.string.shared_decks_url ), token),token);
+                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), token, BuildConfig.VERSION_NAME), token);
 //                openUrl(Uri.parse(getResources().getString(R.string.shared_decks_url, token)));
             }
 
 
             @Override
             public void onFail(String message) {
-                WebViewActivity.openUrlInApp(DeckPicker.this,String.format(getResources().getString(R.string.shared_decks_url ), ""),"");
+                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), "", BuildConfig.VERSION_NAME), "");
             }
         });
 
@@ -628,15 +877,14 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         return false;
     }
 
+
     public void restoreFromBackup(String path) {
         importReplace(path);
     }
 
 
-
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
     }
 
 
@@ -647,7 +895,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         }
         menuItem = bottomNavigationView.getMenu().getItem(position);
         menuItem.setChecked(true);
-        supportInvalidateOptionsMenu();
+        invalidateOptionsMenu();
     }
 
 
@@ -658,22 +906,24 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
 
     class ViewPagerAdapter extends SmartFragmentStatePagerAdapter {
+        List<AnkiFragment> fragments;
 
 
-        public ViewPagerAdapter(FragmentManager fm) {
-            super( fm);
+        public ViewPagerAdapter(FragmentManager fm, List<AnkiFragment> fragments) {
+            super(fm);
+            this.fragments = fragments;
         }
 
 
         @Override
         public Fragment getItem(int position) {
-            return mFragments[position];
+            return fragments.get(position);
         }
 
 
         @Override
         public int getCount() {
-            return mFragments.length;
+            return fragments.size();
         }
     }
 
@@ -687,6 +937,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     private boolean mShowingStorageRequestDialog;
     private static final int REQUEST_STORAGE_PERMISSION = 0;
     protected static final String CONFIRM_PRIVATE_STRATEGY = "CONFIRM_PRIVATE_STRATEGY";
+    protected static final String START_APP_COUNT = "START_APP_COUNT";
 
 
     public synchronized boolean firstCollectionOpen() {
@@ -1182,8 +1433,8 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             Connection.sendCommonGet(fetchCustomDialogListener, new Connection.Payload("common/dialog", "?unionid=" + DeviceID.getDeviceId(this), Connection.Payload.REST_TYPE_GET, "", "nothing", HostNumFactory.getInstance(this)));
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 rejectCount = 0;
-                this.invalidateOptionsMenu();
-                startLoadingCollection(DeckPicker.INDEX_STATISTICS);
+//                this.invalidateOptionsMenu();
+                startLoadingCollection();
                 showStartupScreensAndDialogs(AnkiDroidApp.getSharedPrefs(this), 0);
 
             }
@@ -1224,8 +1475,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         }
     }
 
+
     @Override
-    protected TaskListener importAddListener( )  {
+    protected TaskListener importAddListener() {
         return new ImportAddListener(this);
     }
 
@@ -1243,7 +1495,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             }
             // If boolean and string are both set, we are signalling an error message
             // instead of a successful result.
-            if (result.getBoolean() && result.getString() != null) {
+            if (result!=null&&result.getBoolean() && result.getString() != null) {
                 Timber.w("Import: Add Failed: %s", result.getString());
                 deckPicker.showSimpleMessageDialog(result.getString());
             } else {
@@ -1269,6 +1521,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             deckPicker.mProgressDialog.setContent(value.getString());
         }
     }
+
 
     @Override
     protected final ImportReplaceListener importReplaceListener() {
@@ -1587,12 +1840,10 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             showSyncErrorDialog(SyncErrorDialog.DIALOG_USER_NOT_LOGGED_IN_SYNC);
         } else {
             if (getServerRestSpace() <= 0) {
-                getAccount().getToken(this, new MyAccount.TokenCallback() {
+                getAccount().getToken(getBaseContext(), new MyAccount.TokenCallback() {
                     @Override
                     public void onSuccess(String token) {
-                        Timber.i("get saved token on click: %s ", token);
-                        Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, syncConflictResolution, HostNumFactory.getInstance(DeckPicker.this)));
-
+                        OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, syncConflictResolution, checkRestServerSpaceListener);
                     }
 
 
@@ -1605,6 +1856,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                         }
                     }
                 });
+
             } else {
                 Connection.sync(mSyncListener,
                         new Connection.Payload(new Object[] {hkey,
@@ -1625,7 +1877,8 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         getAccount().getToken(this, new MyAccount.TokenCallback() {
             @Override
             public void onSuccess(String token) {
-                Connection.sendCommonPUT(notifyServerSyncCompletedListener, new Connection.Payload("users/current", "", Connection.Payload.REST_TYPE_PUT, token, null, HostNumFactory.getInstance(DeckPicker.this)));
+                OKHttpUtil.put(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/current", token, "", notifyServerSyncCompletedListener);
+//                Connection.sendCommonPUT(notifyServerSyncCompletedListener, new Connection.Payload("users/current", "", Connection.Payload.REST_TYPE_PUT, token, null, HostNumFactory.getInstance(DeckPicker.this)));
             }
 
 
@@ -1652,104 +1905,21 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
 
     //通知sync结束；onresume；sync之前
-    Connection.TaskListener checkRestServerSpaceListener = new Connection.TaskListener() {
-
+    private OKHttpUtil.MyCallBack notifyServerSyncCompletedListener = new OKHttpUtil.MyCallBack() {
         @Override
-        public void onProgressUpdate(Object... values) {
-            // Pass
-        }
-
-
-        @Override
-        public void onPreExecute() {
-            Timber.d("checkRestServerSpaceListener.onPreExecute()");
-            if (mProgressDialog == null || !mProgressDialog.isShowing()) {
-                mProgressDialog = StyledProgressDialog.show(DeckPicker.this, "",
-                        getResources().getString(R.string.alert_checking_rest_area), false);
-            }
-        }
-
-
-        @Override
-        public void onPostExecute(Connection.Payload data) {
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
-
-            if (data.success) {
-                Timber.i("fetch server space successfully:%s", data.syncConflictResolution);
-                try {
-                    JSONObject result = ((JSONObject) data.result).getJSONObject("data");
-                    long total = result.getLong("origin_size");
-                    long used = result.getLong("origin_used_size");
-                    String totalStr = result.getString("size");
-                    String usedStr = result.getString("used_size");
-                    String hint = String.format("%s/%s", usedStr, totalStr);
-                    String hintStr = String.format(getString(R.string.upgrade_cloud_space), hint);
-                    long rest = total - used;
-                    Timber.i("fetch server space result:%d,%d,%d", total, used, rest);
-//                    getNavigationView().getMenu().findItem(R.id.nav_cloud_space).setTitle(hintStr);
-                    saveServerRestSpace(rest);
-                    if ("nothing".equals(data.syncConflictResolution)) {
-                        return;
-                    }
-                    if (rest <= 0) {
-                        showSyncErrorDialog(SyncErrorDialog.DIALOG_NO_ENOUGH_SERVER_SPACE);
-                        return;
-                    }
-                    //获取剩余空间
-                    syncInternal(data.syncConflictResolution);
-                } catch (org.json.JSONException e) {
-                    e.printStackTrace();
-                    UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.sync_generic_error, true);
-                }
-            } else {
-                Timber.e("fetch server space failed, error code %d", data.statusCode);
-                String hintStr = String.format(getString(R.string.upgrade_cloud_space), "请登录/刷新");
-//                getNavigationView().getMenu().findItem(R.id.nav_cloud_space).setTitle(hintStr);
-                if ("nothing".equals(data.syncConflictResolution)) {
-                    return;
-                }
-                UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.network_error, true);
-            }
-        }
-
-
-        @Override
-        public void onDisconnected() {
-            UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.youre_offline, true);
-        }
-    };
-    Connection.TaskListener notifyServerSyncCompletedListener = new Connection.TaskListener() {
-
-        @Override
-        public void onProgressUpdate(Object... values) {
-            // Pass
-        }
-
-
-        @Override
-        public void onPreExecute() {
-            Timber.d("notifyServerSyncCompletedListener.onPreExecute()");
+        public void onFailure(Call call, IOException e) {
 
         }
 
 
         @Override
-        public void onPostExecute(Connection.Payload data) {
-            if (mProgressDialog != null) {
-                mProgressDialog.dismiss();
-            }
-
-            if (data.success) {
-                Timber.i("notify server space successfully:%s", data.syncConflictResolution);
-                getAccount().getToken(DeckPicker.this, new MyAccount.TokenCallback() {
+        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+            if (response.isSuccessful()) {
+                Timber.i("notify server space successfully ");
+                getAccount().getToken(getBaseContext(), new MyAccount.TokenCallback() {
                     @Override
                     public void onSuccess(String token) {
-                        Timber.i("get saved token on click: %s ", token);
-                        Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing"
-                                , HostNumFactory.getInstance(DeckPicker.this)));
-
+                        OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, "nothing", checkRestServerSpaceListener);
                     }
 
 
@@ -1760,21 +1930,13 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                 });
             } else {
                 Timber.i("notify server space failed ");
-                new Handler(getMainLooper()).postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        notifyServerSyncCompleted();//5秒后重新通知一次
-                    }
+                new Handler(getMainLooper()).postDelayed(() -> {
+                    notifyServerSyncCompleted();//5秒后重新通知一次
                 }, 5000);
             }
         }
-
-
-        @Override
-        public void onDisconnected() {
-            UIUtils.showSimpleSnackbar(DeckPicker.this, R.string.youre_offline, true);
-        }
     };
+
 
     private final Connection.TaskListener mSyncListener = new Connection.CancellableTaskListener() {
         private String currentMessage;
@@ -1900,6 +2062,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         @SuppressWarnings("unchecked")
         @Override
         public void onPostExecute(Connection.Payload data) {
+            if(mDeckPickerFragment!=null)
             mDeckPickerFragment.updatePullToSyncWrapper(false);
             String dialogMessage = "";
             String syncMessage = "";
@@ -2064,7 +2227,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                 SyncStatus.markSyncCompleted();
 
 //                initMenu(mToolbar.getMenu());
-                supportInvalidateOptionsMenu();
+//                invalidateOptionsMenu();
                 onRequireDeckListUpdate();
                 WidgetStatus.update(DeckPicker.this);
                 if (mDeckPickerFragment.mFragmented) {
@@ -2086,6 +2249,13 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             //在这里同步通知服务端刷新云存储空间
         }
     };
+
+
+    @Override
+    public void invalidateOptionsMenu() {
+        super.invalidateOptionsMenu();
+        Timber.i("invalidate options menu ");
+    }
 
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -2147,11 +2317,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
 
     public void goToUpgradeSpace() {
-
         getAccount().getToken(this, new MyAccount.TokenCallback() {
             @Override
             public void onSuccess(String token) {
-                WebViewActivity.openUrlInApp(DeckPicker.this, URL_UPGRADE_CLOUD_SPACE, token, RESULT_UPDATE_REST_SPACE);
+//                WebViewActivity.openUrlInApp(DeckPicker.this, URL_UPGRADE_CLOUD_SPACE, token, RESULT_UPDATE_REST_SPACE);
+                WebViewActivity.openUrlInApp(DeckPicker.this, mVipUrl, token, BE_VIP);
             }
 
 
@@ -2163,17 +2333,8 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     }
 
 
-    protected void handleGetTokenFailed(String message) {
-        if (message.equals(NO_WRITEABLE_PERMISSION)) {
-            onNoWriteablePermission();
-        } else if (message.equals(TOKEN_IS_EXPIRED)) {
-            onTokenExpired();
-        }
-    }
-
-
-    private void onTokenExpired() {
-//        super.onTokenExpired();
+    protected void onTokenExpired() {
+        super.onTokenExpired();
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(this);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("username", "");
@@ -2186,16 +2347,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     }
 
 
-    private void onNoWriteablePermission() {
+    protected void onNoWriteablePermission() {
+        super.onNoWriteablePermission();
         Timber.e("onNoWriteablePermission!");
         firstCollectionOpen();
     }
-
-
-
-
-
-
 
 
     protected void startStudyOption(boolean withDeckOptions) {
@@ -2205,9 +2361,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         startActivityForResultWithAnimation(intent, SHOW_STUDYOPTIONS, ActivityTransitionAnimation.LEFT);
     }
 
+    protected boolean mTurnToVipHtml = false;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
+        Timber.i("on activity result:%s", requestCode);
         if (requestCode == REQUEST_PATH_UPDATE) {
             // The collection path was inaccessible on startup so just close the activity and let user restart
             finishWithoutAnimation();
@@ -2218,18 +2376,15 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             handleDbError();
             return;
         } else if (resultCode == RESULT_UPDATE_REST_SPACE) {
-            this.getAccount().getToken(this, new MyAccount.TokenCallback() {
+            getAccount().getToken(getBaseContext(), new MyAccount.TokenCallback() {
                 @Override
                 public void onSuccess(String token) {
-                    Timber.i("get saved token on resume:%s", token);
-                    Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing", HostNumFactory.getInstance(DeckPicker.this)));
-
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, "nothing", checkRestServerSpaceListener);
                 }
 
 
                 @Override
                 public void onFail(String message) {
-                    String hintStr = String.format(getString(R.string.upgrade_cloud_space), "");
                     handleGetTokenFailed(message);
                 }
             });
@@ -2246,7 +2401,10 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                 finishWithAnimation(ActivityTransitionAnimation.DOWN);
             }
         } else if (requestCode == LOG_IN_FOR_SYNC && resultCode == RESULT_OK) {
+            mRefreshVipStateOnResume = true;
             mSyncOnResume = true;
+        } else if (requestCode == LOG_IN_FOR_SYNC) {
+            mRefreshVipStateOnResume = true;
         } else if ((requestCode == REQUEST_REVIEW || requestCode == SHOW_STUDYOPTIONS)
                 && resultCode == Reviewer.RESULT_NO_MORE_CARDS) {
             // Show a message when reviewing has finished
@@ -2255,6 +2413,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
             } else {
                 UIUtils.showSimpleSnackbar(this, R.string.studyoptions_no_cards_due, false);
             }
+            refreshDeckListUI(false);
         } else if (requestCode == REQUEST_BROWSE_CARDS) {
             // Store the selected deck after opening browser
             if (intent != null && intent.getBooleanExtra("allDecksSelected", false)) {
@@ -2263,7 +2422,12 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
                 long selectedDeck = getCol().getDecks().selected();
                 AnkiDroidApp.getSharedPrefs(this).edit().putLong("browserDeckIdFromDeckPicker", selectedDeck).apply();
             }
-        }  else {
+        }  if (requestCode == BE_VIP || requestCode == REFRESH_LOGIN_STATE|| requestCode == SHOW_STUDYOPTIONS) {
+            mRefreshVipStateOnResume = true;
+            mTurnToVipHtml = requestCode == REFRESH_LOGIN_STATE;
+        } else if (requestCode == CHANGE_ACCOUNT) {
+            mRefreshVipStateOnResume = true;
+        } else {
             getSupportFragmentManager().getFragments();
             if (getSupportFragmentManager().getFragments().size() > 0) {
                 List<Fragment> fragments = getSupportFragmentManager().getFragments();
@@ -2308,7 +2472,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
             case KeyEvent.KEYCODE_B:
                 Timber.i("Open Browser from keypress");
-                openCardBrowser();
+                openCardBrowser(ALL_DECKS_ID);
                 break;
 
             default:
@@ -2319,14 +2483,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
     }
 
 
-    protected void openCardBrowser() {
-        Intent intent = new Intent(this, CardBrowser.class);
-        startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
-    }
-
 
     protected void openInstructions() {
-        WebViewActivity.openUrlInApp(DeckPicker.this, Consts.URL_INSTRUCTION,  "");
+        WebViewActivity.openUrlInApp(DeckPicker.this, Consts.URL_INSTRUCTION, "");
     }
 
 
@@ -2353,19 +2512,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
     @Override
     public void onRequireDeckListUpdate() {
-        onRequireDeckListUpdate(false);
-    }
-
-
-    private void onRequireDeckListUpdate(boolean quick) {
-        if (mDeckPickerFragment.getContext() != null) {
-            mDeckPickerFragment.updateDeckList(quick);
+        Timber.i("onRequireDeckListUpdate,fragment:"+mDeckPickerFragment+",context:"+mDeckPickerFragment.getContext());
+        if (mDeckPickerFragment!=null&&mDeckPickerFragment.getContext() != null) {
+            mDeckPickerFragment.updateDeckList(false);
         }
     }
-
-
-
-
 
 
 
@@ -2398,12 +2549,6 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
 
     public void confirmDeckDeletion() {
         confirmDeckDeletion(mContextMenuDid);
-    }
-
-
-    // Callback to delete currently selected deck
-    public void deleteContextMenuDeck() {
-        deleteDeck(mContextMenuDid);
     }
 
 
@@ -2513,5 +2658,33 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnN
         savedInstanceState.putBoolean("mClosedWelcomeMessage", mClosedWelcomeMessage);
     }
 
+    private static final int MOVE_LIMITATION = 100;// 触发移动的像素距离
+    private float mLastMotionX; // 手指触碰屏幕的最后一次x坐标
+    private float mLastMotionY; // 手指触碰屏幕的最后一次y坐标
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+//        Timber.i("dispatchTouchEvent:"+event );
+        if(viewPager==null||viewPager.getCurrentItem()!=0)
+            return super.dispatchTouchEvent(event);
+        final float x = event.getX();
+        final float y = event.getY();
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mLastMotionX =  event.getX();
+                mLastMotionY =  event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                if ( Math.abs(mLastMotionY-y)<MOVE_LIMITATION&&mLastMotionX-x  > MOVE_LIMITATION) {
+                    // snapToDestination(); // 跳到指定页
+                    openCardBrowser(ALL_DECKS_ID);
+                    return true;
+                }
+                break;
+        }
+        return super.dispatchTouchEvent(event);
+    }
 
 }

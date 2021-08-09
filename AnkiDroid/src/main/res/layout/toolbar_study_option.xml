@@ -14,23 +14,36 @@
         app:contentInsetStartWithNavigation="0dp"
         app:navigationContentDescription="@string/abc_action_bar_up_description"
         app:navigationIcon="?attr/navBarBackRef">
-        <LinearLayout
-            android:background="@drawable/deckpicker_search_background"
-            android:gravity="center"
-            android:layout_width="203dp"
-            android:layout_height="36dp">
-            <TextView
-                android:id="@+id/toolbar_title"
-                android:layout_width="wrap_content"
-                android:gravity="center"
-                android:layout_height="wrap_content"
-                android:textColor="@color/new_primary_text_third_color"
-                android:background="@drawable/deckpicker_search_background"
-                android:textSize="15sp"
-                app:drawableStartCompat="@mipmap/home_search_pressed" />
-        </LinearLayout>
+<!--        <LinearLayout-->
+<!--            android:background="@drawable/deckpicker_search_background"-->
+<!--            android:gravity="center"-->
+<!--            android:layout_width="203dp"-->
+<!--            android:layout_height="36dp">-->
+<!--            <TextView-->
+<!--                android:id="@+id/toolbar_title"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:textColor="@color/new_primary_text_third_color"-->
+<!--                android:background="@drawable/deckpicker_search_background"-->
+<!--                android:textSize="15sp"-->
+<!--                app:drawableStartCompat="@mipmap/home_search_pressed" />-->
+<!--        </LinearLayout>-->
 
-
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
+            app:tabIndicatorHeight="0dp"
+            app:tabPaddingStart="0dp"
+            app:tabPaddingEnd="19dp"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"/>
+<!--        <com.google.android.material.tabs.TabLayout-->
+<!--            android:id="@+id/tab_layout"-->
+<!--            app:tabIndicatorHeight="0dp"-->
+<!--            android:padding="0dp"-->
+<!--            app:tabGravity="fill"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="48dp"/>-->
         <Spinner
             android:id="@+id/toolbar_spinner"
             android:layout_width="match_parent"

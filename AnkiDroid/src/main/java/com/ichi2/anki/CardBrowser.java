@@ -32,12 +32,14 @@ import android.os.SystemClock;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.SearchView;
+
 import android.text.TextUtils;
 import android.util.Pair;
 import android.util.TypedValue;
@@ -76,6 +78,7 @@ import com.ichi2.libanki.Card;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Consts;
 import com.ichi2.libanki.Decks;
+import com.ichi2.libanki.Media;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.Deck;
 import com.ichi2.themes.Themes;
@@ -104,7 +107,9 @@ import java.util.regex.Pattern;
 
 import androidx.appcompat.widget.Toolbar;
 import timber.log.Timber;
+
 import static com.ichi2.async.CollectionTask.TASK_TYPE.*;
+
 import com.ichi2.async.TaskData;
 
 import static com.ichi2.anki.CardBrowser.Column.*;
@@ -113,18 +118,20 @@ import static com.ichi2.libanki.stats.Stats.SECONDS_PER_DAY;
 public class CardBrowser extends AnkiActivity implements
         DeckDropDownAdapter.SubtitleListener {
 
-    enum Column {
+    public enum Column {
         QUESTION,
         ANSWER,
         FLAGS,
         SUSPENDED,
         MARKED,
         SFLD,
+        MEDIA_NAME,
         DECK,
         TAGS,
         ID,
         CARD,
         DUE,
+        DUE2,
         EASE,
         CHANGED,
         CREATED,
@@ -135,8 +142,12 @@ public class CardBrowser extends AnkiActivity implements
         REVIEWS
     }
 
-    /** List of cards in the browser.
-    * When the list is changed, the position member of its elements should get changed.*/
+
+
+    /**
+     * List of cards in the browser.
+     * When the list is changed, the position member of its elements should get changed.
+     */
     @NonNull
     private List<CardCache> mCards = new ArrayList<>();
     private ArrayList<Deck> mDropDownDecks;
@@ -174,34 +185,34 @@ public class CardBrowser extends AnkiActivity implements
     // Should match order of R.array.card_browser_order_labels
     public static final int CARD_ORDER_NONE = 0;
     private static final String[] fSortTypes = new String[] {
-        "",
-        "noteFld",
-        "noteCrt",
-        "noteMod",
-        "cardMod",
-        "cardDue",
-        "cardIvl",
-        "cardEase",
-        "cardReps",
-        "cardLapses"};
+            "",
+            "noteFld",
+            "noteCrt",
+            "noteMod",
+            "cardMod",
+            "cardDue",
+            "cardIvl",
+            "cardEase",
+            "cardReps",
+            "cardLapses"};
     private static final Column[] COLUMN1_KEYS = {QUESTION, SFLD};
 
     // list of available keys in mCards corresponding to the column names in R.array.browser_column2_headings.
     // Note: the last 6 are currently hidden
     private static final Column[] COLUMN2_KEYS = {ANSWER,
-        CARD,
-        DECK,
-        NOTE_TYPE,
-        QUESTION,
-        TAGS,
-        LAPSES,
-        REVIEWS,
-        INTERVAL,
-        EASE,
-        DUE,
-        CHANGED,
-        CREATED,
-        EDITED,
+            CARD,
+            DECK,
+            NOTE_TYPE,
+            QUESTION,
+            TAGS,
+            LAPSES,
+            REVIEWS,
+            INTERVAL,
+            EASE,
+            DUE,
+            CHANGED,
+            CREATED,
+            EDITED,
     };
     private long mLastRenderStart = 0;
     private DeckDropDownAdapter mDropDownAdapter;
@@ -230,44 +241,46 @@ public class CardBrowser extends AnkiActivity implements
 
     private MaterialDialog.ListCallbackSingleChoice mOrderDialogListener =
             new MaterialDialog.ListCallbackSingleChoice() {
-        @Override
-        public boolean onSelection(MaterialDialog materialDialog, View view, int which,
-                CharSequence charSequence) {
-            if (which != mOrder) {
-                mOrder = which;
-                mOrderAsc = false;
-                if (mOrder == 0) {
-                    getCol().getConf().put("sortType", fSortTypes[1]);
-                    AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
-                            .putBoolean("cardBrowserNoSorting", true)
-                            .commit();
-                } else {
-                    getCol().getConf().put("sortType", fSortTypes[mOrder]);
-                    AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
-                            .putBoolean("cardBrowserNoSorting", false)
-                            .commit();
+                @Override
+                public boolean onSelection(MaterialDialog materialDialog, View view, int which,
+                                           CharSequence charSequence) {
+                    if (which != mOrder) {
+                        mOrder = which;
+                        mOrderAsc = false;
+                        if (mOrder == 0) {
+                            getCol().getConf().put("sortType", fSortTypes[1]);
+                            AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
+                                    .putBoolean("cardBrowserNoSorting", true)
+                                    .commit();
+                        } else {
+                            getCol().getConf().put("sortType", fSortTypes[mOrder]);
+                            AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
+                                    .putBoolean("cardBrowserNoSorting", false)
+                                    .commit();
+                        }
+                        getCol().getConf().put("sortBackwards", mOrderAsc);
+                        searchCards();
+                    } else if (which != CARD_ORDER_NONE) {
+                        mOrderAsc = !mOrderAsc;
+                        getCol().getConf().put("sortBackwards", mOrderAsc);
+                        Collections.reverse(mCards);
+                        updateList();
+                    }
+                    return true;
                 }
-                getCol().getConf().put("sortBackwards", mOrderAsc);
-                searchCards();
-            } else if (which != CARD_ORDER_NONE) {
-                mOrderAsc = !mOrderAsc;
-                getCol().getConf().put("sortBackwards", mOrderAsc);
-                Collections.reverse(mCards);
-                updateList();
-            }
-            return true;
-        }
-    };
+            };
 
 
     private RepositionCardHandler repositionCardHandler() {
         return new RepositionCardHandler(this);
     }
 
+
     private static class RepositionCardHandler extends TaskListenerWithContext<CardBrowser> {
         public RepositionCardHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPreExecute(@NonNull CardBrowser browser) {
@@ -285,13 +298,17 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     private ResetProgressCardHandler resetProgressCardHandler() {
         return new ResetProgressCardHandler(this);
     }
-    private static class ResetProgressCardHandler extends TaskListenerWithContext<CardBrowser>{
+
+
+    private static class ResetProgressCardHandler extends TaskListenerWithContext<CardBrowser> {
         public ResetProgressCardHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPreExecute(@NonNull CardBrowser browser) {
@@ -309,13 +326,17 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     private RescheduleCardHandler rescheduleCardHandler() {
         return new RescheduleCardHandler(this);
     }
-    private static class RescheduleCardHandler extends TaskListenerWithContext<CardBrowser>{
-        public RescheduleCardHandler (CardBrowser browser) {
+
+
+    private static class RescheduleCardHandler extends TaskListenerWithContext<CardBrowser> {
+        public RescheduleCardHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPreExecute(@NonNull CardBrowser browser) {
@@ -333,65 +354,69 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
+
     private CardBrowserMySearchesDialog.MySearchesDialogListener mMySearchesDialogListener =
             new CardBrowserMySearchesDialog.MySearchesDialogListener() {
-        @Override
-        public void onSelection(String searchName) {
-            Timber.d("OnSelection using search named: %s", searchName);
-            JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
-            Timber.d("SavedFilters are %s", savedFiltersObj.toString());
-            if (savedFiltersObj != null) {
-                mSearchTerms = savedFiltersObj.optString(searchName);
-                Timber.d("OnSelection using search terms: %s", mSearchTerms);
-                mSearchView.setQuery(mSearchTerms, false);
-                mSearchItem.expandActionView();
-                searchCards();
-            }
-        }
-
-        @Override
-        public void onRemoveSearch(String searchName) {
-            Timber.d("OnRemoveSelection using search named: %s", searchName);
-            JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
-            if (savedFiltersObj != null && savedFiltersObj.has(searchName)) {
-                savedFiltersObj.remove(searchName);
-                getCol().getConf().put("savedFilters", savedFiltersObj);
-                getCol().flush();
-                if (savedFiltersObj.length() == 0) {
-                    mMySearchesItem.setVisible(false);
+                @Override
+                public void onSelection(String searchName) {
+                    Timber.d("OnSelection using search named: %s", searchName);
+                    JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
+                    Timber.d("SavedFilters are %s", savedFiltersObj.toString());
+                    if (savedFiltersObj != null) {
+                        mSearchTerms = savedFiltersObj.optString(searchName);
+                        Timber.d("OnSelection using search terms: %s", mSearchTerms);
+                        mSearchView.setQuery(mSearchTerms, false);
+                        mSearchItem.expandActionView();
+                        searchCards();
+                    }
                 }
-            }
 
-        }
 
-        @Override
-        public void onSaveSearch(String searchName, String searchTerms) {
-            if (TextUtils.isEmpty(searchName)) {
-                UIUtils.showThemedToast(CardBrowser.this,
-                        getString(R.string.card_browser_list_my_searches_new_search_error_empty_name), true);
-                return;
-            }
-            JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
-            boolean should_save = false;
-            if (savedFiltersObj == null) {
-                savedFiltersObj = new JSONObject();
-                savedFiltersObj.put(searchName, searchTerms);
-                should_save = true;
-            } else if (!savedFiltersObj.has(searchName)) {
-                savedFiltersObj.put(searchName, searchTerms);
-                should_save = true;
-            } else {
-                UIUtils.showThemedToast(CardBrowser.this,
-                                        getString(R.string.card_browser_list_my_searches_new_search_error_dup), true);
-            }
-            if (should_save) {
-                getCol().getConf().put("savedFilters", savedFiltersObj);
-                getCol().flush();
-                mSearchView.setQuery("", false);
-                mMySearchesItem.setVisible(true);
-            }
-        }
-    };
+                @Override
+                public void onRemoveSearch(String searchName) {
+                    Timber.d("OnRemoveSelection using search named: %s", searchName);
+                    JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
+                    if (savedFiltersObj != null && savedFiltersObj.has(searchName)) {
+                        savedFiltersObj.remove(searchName);
+                        getCol().getConf().put("savedFilters", savedFiltersObj);
+                        getCol().flush();
+                        if (savedFiltersObj.length() == 0) {
+                            mMySearchesItem.setVisible(false);
+                        }
+                    }
+
+                }
+
+
+                @Override
+                public void onSaveSearch(String searchName, String searchTerms) {
+                    if (TextUtils.isEmpty(searchName)) {
+                        UIUtils.showThemedToast(CardBrowser.this,
+                                getString(R.string.card_browser_list_my_searches_new_search_error_empty_name), true);
+                        return;
+                    }
+                    JSONObject savedFiltersObj = getCol().getConf().optJSONObject("savedFilters");
+                    boolean should_save = false;
+                    if (savedFiltersObj == null) {
+                        savedFiltersObj = new JSONObject();
+                        savedFiltersObj.put(searchName, searchTerms);
+                        should_save = true;
+                    } else if (!savedFiltersObj.has(searchName)) {
+                        savedFiltersObj.put(searchName, searchTerms);
+                        should_save = true;
+                    } else {
+                        UIUtils.showThemedToast(CardBrowser.this,
+                                getString(R.string.card_browser_list_my_searches_new_search_error_dup), true);
+                    }
+                    if (should_save) {
+                        getCol().getConf().put("savedFilters", savedFiltersObj);
+                        getCol().flush();
+                        mSearchView.setQuery("", false);
+                        mMySearchesItem.setVisible(true);
+                    }
+                }
+            };
 
 
     private void onSearch() {
@@ -402,6 +427,7 @@ public class CardBrowser extends AnkiActivity implements
         searchCards();
     }
 
+
     private long[] getSelectedCardIds() {
         long[] ids = new long[mCheckedCards.size()];
         int count = 0;
@@ -411,10 +437,12 @@ public class CardBrowser extends AnkiActivity implements
         return ids;
     }
 
+
     private boolean canPerformMultiSelectEditNote() {
         //The noteId is not currently available. Only allow if a single card is selected for now.
         return checkedCardCount() == 1;
     }
+
 
     @VisibleForTesting
     void changeDeck(int deckPosition) {
@@ -459,17 +487,19 @@ public class CardBrowser extends AnkiActivity implements
 
 
     private Long getLastDeckId() {
-        SharedPreferences state = getSharedPreferences(PERSISTENT_STATE_FILE,0);
+        SharedPreferences state = getSharedPreferences(PERSISTENT_STATE_FILE, 0);
         if (!state.contains(LAST_DECK_ID_KEY)) {
             return null;
         }
         return state.getLong(LAST_DECK_ID_KEY, -1);
     }
 
+
     public static void clearLastDeckId() {
         Context context = AnkiDroidApp.getInstance();
-        context.getSharedPreferences(PERSISTENT_STATE_FILE,0).edit().remove(LAST_DECK_ID_KEY).apply();
+        context.getSharedPreferences(PERSISTENT_STATE_FILE, 0).edit().remove(LAST_DECK_ID_KEY).apply();
     }
+
 
     private void saveLastDeckId(Long id) {
         if (id == null) {
@@ -478,6 +508,7 @@ public class CardBrowser extends AnkiActivity implements
         }
         getSharedPreferences(PERSISTENT_STATE_FILE, 0).edit().putLong(LAST_DECK_ID_KEY, id).apply();
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -509,7 +540,7 @@ public class CardBrowser extends AnkiActivity implements
 
         // Add drop-down menu to select deck to action bar.
         mDropDownDecks = getCol().getDecks().allSorted();
-        mDropDownAdapter = new DeckDropDownAdapter(this, mDropDownDecks,R.layout.dropdown_deck_selected_item,this);
+        mDropDownAdapter = new DeckDropDownAdapter(this, mDropDownDecks, R.layout.dropdown_deck_selected_item, this);
         Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
@@ -518,7 +549,7 @@ public class CardBrowser extends AnkiActivity implements
             getSupportActionBar().setHomeButtonEnabled(true);
 
             // Decide which action to take when the navigation button is tapped.
-            toolbar.setNavigationOnClickListener(v -> finishActivityWithFade(this,ActivityTransitionAnimation.RIGHT));
+            toolbar.setNavigationOnClickListener(v -> finishActivityWithFade(this, ActivityTransitionAnimation.RIGHT));
         }
         ActionBar mActionBar = getSupportActionBar();
         if (mActionBar != null) {
@@ -531,6 +562,7 @@ public class CardBrowser extends AnkiActivity implements
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 deckDropDownItemChanged(position);
             }
+
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
@@ -579,6 +611,7 @@ public class CardBrowser extends AnkiActivity implements
                 }
             }
 
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do Nothing
@@ -606,6 +639,7 @@ public class CardBrowser extends AnkiActivity implements
                     mCardsAdapter.setFromMapping(fromMap);
                 }
             }
+
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
@@ -669,7 +703,7 @@ public class CardBrowser extends AnkiActivity implements
         // If a valid value for last deck exists then use it, otherwise use libanki selected deck
         if (getLastDeckId() != null && getLastDeckId() == ALL_DECKS_ID) {
             selectAllDecks();
-        } else  if (getLastDeckId() != null && getCol().getDecks().get(getLastDeckId(), false) != null) {
+        } else if (getLastDeckId() != null && getCol().getDecks().get(getLastDeckId(), false) != null) {
             selectDeckById(getLastDeckId());
         } else {
             selectDeckById(getCol().getDecks().selected());
@@ -682,8 +716,10 @@ public class CardBrowser extends AnkiActivity implements
     }
 
 
-    /** Opens the note editor for a card.
-     * We use the Card ID to specify the preview target */
+    /**
+     * Opens the note editor for a card.
+     * We use the Card ID to specify the preview target
+     */
     public void openNoteEditorForCard(long cardId) {
         mCurrentCardId = cardId;
         sCardBrowserCard = getCol().getCard(mCurrentCardId);
@@ -695,6 +731,7 @@ public class CardBrowser extends AnkiActivity implements
         //#6432 - FIXME - onCreateOptionsMenu crashes if receiving an activity result from edit card when in multiselect
         endMultiSelectMode();
     }
+
 
     private void openNoteEditorForCurrentlySelectedNote() {
         try {
@@ -735,7 +772,7 @@ public class CardBrowser extends AnkiActivity implements
 //        if (isDrawerOpen()) {
 //            super.onBackPressed();
 //        } else
-            if (mInMultiSelectMode) {
+        if (mInMultiSelectMode) {
             endMultiSelectMode();
         } else {
             Timber.i("Back key pressed");
@@ -747,6 +784,7 @@ public class CardBrowser extends AnkiActivity implements
             closeCardBrowser(RESULT_OK, data);
         }
     }
+
 
     @Override
     protected void onResume() {
@@ -776,6 +814,7 @@ public class CardBrowser extends AnkiActivity implements
                     return true;
                 }
 
+
                 @Override
                 public boolean onMenuItemActionCollapse(MenuItem item) {
                     // SearchView doesn't support empty queries so we always reset the search when collapsing
@@ -794,6 +833,7 @@ public class CardBrowser extends AnkiActivity implements
                     mSaveSearchItem.setVisible(!TextUtils.isEmpty(newText));
                     return true;
                 }
+
 
                 @Override
                 public boolean onQueryTextSubmit(String query) {
@@ -821,7 +861,7 @@ public class CardBrowser extends AnkiActivity implements
         }
 
         if (mActionBarMenu != null && mActionBarMenu.findItem(R.id.action_undo) != null) {
-            MenuItem undo =  mActionBarMenu.findItem(R.id.action_undo);
+            MenuItem undo = mActionBarMenu.findItem(R.id.action_undo);
             undo.setVisible(getCol().undoAvailable());
             undo.setTitle(getResources().getString(R.string.studyoptions_congrats_undo, getCol().undoName(getResources())));
         }
@@ -877,6 +917,7 @@ public class CardBrowser extends AnkiActivity implements
         return "android.intent.action.PROCESS_TEXT".equalsIgnoreCase(intent.getAction());
     }
 
+
     private void updatePreviewMenuItem() {
         if (mPreviewItem == null) {
             return;
@@ -884,7 +925,10 @@ public class CardBrowser extends AnkiActivity implements
         mPreviewItem.setVisible(getCardCount() > 0);
     }
 
-    /** Returns the number of cards that are visible on the screen */
+
+    /**
+     * Returns the number of cards that are visible on the screen
+     */
     public int getCardCount() {
         return getCards().size();
     }
@@ -900,7 +944,7 @@ public class CardBrowser extends AnkiActivity implements
             CollectionTask.cancelAllTasks(CHECK_CARD_SELECTION);
             CollectionTask.launchCollectionTask(CHECK_CARD_SELECTION,
                     mCheckSelectedCardsHandler,
-                    new TaskData(new Object[]{mCheckedCards, getCards()}));
+                    new TaskData(new Object[] {mCheckedCards, getCards()}));
         }
 
         mActionBarMenu.findItem(R.id.action_select_all).setVisible(!hasSelectedAllCards());
@@ -914,16 +958,18 @@ public class CardBrowser extends AnkiActivity implements
         return !mCheckedCards.isEmpty();
     }
 
+
     private boolean hasSelectedAllCards() {
         return checkedCardCount() >= getCardCount(); //must handle 0.
     }
 
 
-    private void flagTask (int flag) {
+    private void flagTask(int flag) {
         CollectionTask.launchCollectionTask(DISMISS_MULTI,
-                                flagCardHandler(),
-                                new TaskData(new Object[]{getSelectedCardIds(), Collection.DismissType.FLAG, new Integer (flag)}));
+                flagCardHandler(),
+                new TaskData(new Object[] {getSelectedCardIds(), Collection.DismissType.FLAG, new Integer(flag)}));
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -933,8 +979,9 @@ public class CardBrowser extends AnkiActivity implements
 
         // dismiss undo-snackbar if shown to avoid race condition
         // (when another operation will be performed on the model, it will undo the latest operation)
-        if (mUndoSnackbar != null && mUndoSnackbar.isShown())
+        if (mUndoSnackbar != null && mUndoSnackbar.isShown()) {
             mUndoSnackbar.dismiss();
+        }
 
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -1016,7 +1063,7 @@ public class CardBrowser extends AnkiActivity implements
                 if (mInMultiSelectMode) {
                     CollectionTask.launchCollectionTask(DISMISS_MULTI,
                             mDeleteNoteHandler,
-                            new TaskData(new Object[]{getSelectedCardIds(), Collection.DismissType.DELETE_NOTE_MULTI}));
+                            new TaskData(new Object[] {getSelectedCardIds(), Collection.DismissType.DELETE_NOTE_MULTI}));
 
                     mCheckedCards.clear();
                     endMultiSelectMode();
@@ -1027,7 +1074,7 @@ public class CardBrowser extends AnkiActivity implements
             case R.id.action_mark_card:
                 CollectionTask.launchCollectionTask(DISMISS_MULTI,
                         markCardHandler(),
-                        new TaskData(new Object[]{getSelectedCardIds(), Collection.DismissType.MARK_NOTE_MULTI}));
+                        new TaskData(new Object[] {getSelectedCardIds(), Collection.DismissType.MARK_NOTE_MULTI}));
 
                 return true;
 
@@ -1035,7 +1082,7 @@ public class CardBrowser extends AnkiActivity implements
             case R.id.action_suspend_card:
                 CollectionTask.launchCollectionTask(DISMISS_MULTI,
                         suspendCardHandler(),
-                        new TaskData(new Object[]{getSelectedCardIds(), Collection.DismissType.SUSPEND_CARD_MULTI}));
+                        new TaskData(new Object[] {getSelectedCardIds(), Collection.DismissType.SUSPEND_CARD_MULTI}));
 
                 return true;
 
@@ -1109,7 +1156,7 @@ public class CardBrowser extends AnkiActivity implements
                 Runnable confirm = () -> {
                     Timber.i("CardBrowser:: ResetProgress button pressed");
                     CollectionTask.launchCollectionTask(DISMISS_MULTI, resetProgressCardHandler(),
-                            new TaskData(new Object[]{getSelectedCardIds(), Collection.DismissType.RESET_CARDS}));
+                            new TaskData(new Object[] {getSelectedCardIds(), Collection.DismissType.RESET_CARDS}));
                 };
                 dialog.setConfirm(confirm);
                 showDialogFragment(dialog);
@@ -1120,9 +1167,9 @@ public class CardBrowser extends AnkiActivity implements
 
                 long[] selectedCardIds = getSelectedCardIds();
                 FunctionalInterfaces.Consumer<Integer> consumer = newDays ->
-                    CollectionTask.launchCollectionTask(DISMISS_MULTI,
-                        rescheduleCardHandler(),
-                        new TaskData(new Object[]{selectedCardIds, Collection.DismissType.RESCHEDULE_CARDS, newDays}));
+                        CollectionTask.launchCollectionTask(DISMISS_MULTI,
+                                rescheduleCardHandler(),
+                                new TaskData(new Object[] {selectedCardIds, Collection.DismissType.RESCHEDULE_CARDS, newDays}));
 
                 RescheduleDialog rescheduleDialog;
                 if (selectedCardIds.length == 1) {
@@ -1159,8 +1206,8 @@ public class CardBrowser extends AnkiActivity implements
                         getString(R.string.reposition_card_dialog_message),
                         5);
                 repositionDialog.setCallbackRunnable(days ->
-                    CollectionTask.launchCollectionTask(DISMISS_MULTI, repositionCardHandler(),
-                        new TaskData(new Object[] {cardIds, Collection.DismissType.REPOSITION_CARDS, days}))
+                        CollectionTask.launchCollectionTask(DISMISS_MULTI, repositionCardHandler(),
+                                new TaskData(new Object[] {cardIds, Collection.DismissType.REPOSITION_CARDS, days}))
                 );
                 showDialogFragment(repositionDialog);
                 return true;
@@ -1208,7 +1255,7 @@ public class CardBrowser extends AnkiActivity implements
             }
         }
 
-        if (requestCode == EDIT_CARD &&  data != null &&
+        if (requestCode == EDIT_CARD && data != null &&
                 (data.getBooleanExtra("reloadRequired", false) ||
                         data.getBooleanExtra("noteChanged", false))) {
             // if reloadRequired or noteChanged flag was sent from note editor then reload card list
@@ -1230,6 +1277,7 @@ public class CardBrowser extends AnkiActivity implements
         CollectionTask.cancelCurrentlyExecutingTask();
     }
 
+
     private long getReviewerCardId() {
         if (getIntent().hasExtra("currentCard")) {
             return getIntent().getExtras().getLong("currentCard");
@@ -1238,6 +1286,7 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     private void showTagsDialog() {
         TagsDialog dialog = TagsDialog.newInstance(
                 TagsDialog.TYPE_FILTER_BY_TAG, new ArrayList<String>(), new ArrayList<>(getCol().getTags().all()));
@@ -1245,11 +1294,15 @@ public class CardBrowser extends AnkiActivity implements
         showDialogFragment(dialog);
     }
 
-    /** Selects the given position in the deck list */
+
+    /**
+     * Selects the given position in the deck list
+     */
     public void selectDropDownItem(int position) {
         mActionBarSpinner.setSelection(position);
         deckDropDownItemChanged(position);
     }
+
 
     /**
      * Performs changes relating to the Deck DropDown Item changing
@@ -1267,12 +1320,14 @@ public class CardBrowser extends AnkiActivity implements
         searchCards();
     }
 
+
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         // Save current search terms
         savedInstanceState.putString("mSearchTerms", mSearchTerms);
         super.onSaveInstanceState(savedInstanceState);
     }
+
 
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -1281,6 +1336,7 @@ public class CardBrowser extends AnkiActivity implements
         searchCards();
     }
 
+
     private void invalidate() {
         CollectionTask.cancelAllTasks(SEARCH_CARDS);
         CollectionTask.cancelAllTasks(RENDER_BROWSER_QA);
@@ -1288,6 +1344,7 @@ public class CardBrowser extends AnkiActivity implements
         mCards.clear();
         mCheckedCards.clear();
     }
+
 
     private void searchCards() {
         // cancel the previous search & render tasks if still running
@@ -1305,24 +1362,24 @@ public class CardBrowser extends AnkiActivity implements
         } else {
             searchText = mRestrictOnDeck + mSearchTerms;
         }
-        if (colIsOpen() && mCardsAdapter!= null) {
+        if (colIsOpen() && mCardsAdapter != null) {
             // clear the existing card list
             mCards = new ArrayList<>();
             mCardsAdapter.notifyDataSetChanged();
             //  estimate maximum number of cards that could be visible (assuming worst-case minimum row height of 20dp)
-            int numCardsToRender = (int) Math.ceil(mCardsListView.getHeight()/
+            int numCardsToRender = (int) Math.ceil(mCardsListView.getHeight() /
                     TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics())) + 5;
             // Perform database query to get all card ids
             CollectionTask.launchCollectionTask(SEARCH_CARDS,
-                                                mSearchCardsHandler,
-                                                new TaskData(new Object[] {
-                                                        searchText,
-                                                        ((mOrder != CARD_ORDER_NONE)),
-                                                        numCardsToRender,
-                                                        mColumn1Index,
-                                                        mColumn2Index
-                                                    })
-                                                );
+                    mSearchCardsHandler,
+                    new TaskData(new Object[] {
+                            searchText,
+                            ((mOrder != CARD_ORDER_NONE)),
+                            numCardsToRender,
+                            mColumn1Index,
+                            mColumn2Index
+                    })
+            );
         }
     }
 
@@ -1333,6 +1390,7 @@ public class CardBrowser extends AnkiActivity implements
         onSelectionChanged();
         updatePreviewMenuItem();
     }
+
 
     /**
      * @return text to be used in the subtitle of the drop-down deck selector
@@ -1351,6 +1409,7 @@ public class CardBrowser extends AnkiActivity implements
         return positions;
     }
 
+
     // Iterates the drop down decks, and selects the one matching the given id
     private boolean selectDeckById(@NonNull Long deckId) {
         for (int dropDownDeckIdx = 0; dropDownDeckIdx < mDropDownDecks.size(); dropDownDeckIdx++) {
@@ -1362,8 +1421,9 @@ public class CardBrowser extends AnkiActivity implements
         return false;
     }
 
+
     // convenience method for updateCardsInList(...)
-    private void updateCardInList(Card card, String updatedCardTags){
+    private void updateCardInList(Card card, String updatedCardTags) {
         List<Card> cards = new ArrayList<>();
         cards.add(card);
         if (updatedCardTags != null) {
@@ -1375,7 +1435,10 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
-    /** Returns the decks which are valid targets for "Change Deck" */
+
+    /**
+     * Returns the decks which are valid targets for "Change Deck"
+     */
     @VisibleForTesting
     List<Deck> getValidDecksForChangeDeck() {
         List<Deck> nonDynamicDecks = new ArrayList<>();
@@ -1426,10 +1489,11 @@ public class CardBrowser extends AnkiActivity implements
     }
 
 
-    private static abstract class ListenerWithProgressBar extends TaskListenerWithContext<CardBrowser>{
+    private static abstract class ListenerWithProgressBar extends TaskListenerWithContext<CardBrowser> {
         public ListenerWithProgressBar(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPreExecute(@NonNull CardBrowser browser) {
@@ -1437,17 +1501,25 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
-    /** Does not leak Card Browser. */
+
+
+    /**
+     * Does not leak Card Browser.
+     */
     private static abstract class ListenerWithProgressBarCloseOnFalse extends ListenerWithProgressBar {
         private final String mTimber;
+
+
         public ListenerWithProgressBarCloseOnFalse(String timber, CardBrowser browser) {
             super(browser);
             mTimber = timber;
         }
 
+
         public ListenerWithProgressBarCloseOnFalse(CardBrowser browser) {
             this(null, browser);
-		}
+        }
+
 
         public void actualOnPostExecute(@NonNull CardBrowser browser, TaskData result) {
             if (mTimber != null) {
@@ -1460,11 +1532,13 @@ public class CardBrowser extends AnkiActivity implements
             }
         }
 
+
         protected abstract void actualOnValidPostExecute(CardBrowser browser, TaskData result);
     }
 
+
     /**
-     * @param cards Cards that were changed
+     * @param cards           Cards that were changed
      * @param updatedCardTags Mapping note id -> updated tags
      */
     private void updateCardsInList(List<Card> cards, Map<Long, String> updatedCardTags) {
@@ -1483,33 +1557,45 @@ public class CardBrowser extends AnkiActivity implements
         updateList();
     }
 
+
     private UpdateCardHandler updateCardHandler() {
         return new UpdateCardHandler(this);
     }
+
 
     private static class UpdateCardHandler extends ListenerWithProgressBarCloseOnFalse {
         public UpdateCardHandler(CardBrowser browser) {
             super("Card Browser - UpdateCardHandler.actualOnPostExecute(CardBrowser browser)", browser);
         }
 
+
         @Override
         public void actualOnProgressUpdate(@NonNull CardBrowser browser, TaskData value) {
             browser.updateCardInList(value.getCard(), value.getString());
         }
 
+
         @Override
         protected void actualOnValidPostExecute(CardBrowser browser, TaskData result) {
             browser.hideProgressBar();
         }
-    };
+    }
+
+
+
+    ;
+
 
     private ChangeDeckHandler changeDeckHandler() {
         return new ChangeDeckHandler(this);
     }
+
+
     private static class ChangeDeckHandler extends ListenerWithProgressBarCloseOnFalse {
         public ChangeDeckHandler(CardBrowser browser) {
             super("Card Browser - changeDeckHandler.actualOnPostExecute(CardBrowser browser)", browser);
         }
+
 
         @Override
         protected void actualOnValidPostExecute(CardBrowser browser, TaskData result) {
@@ -1534,7 +1620,12 @@ public class CardBrowser extends AnkiActivity implements
                 }
             }, browser.mCardsListView, null);
         }
-    };
+    }
+
+
+
+    ;
+
 
     @CheckResult
     private static String formatQA(String text, Context context) {
@@ -1544,7 +1635,7 @@ public class CardBrowser extends AnkiActivity implements
 
 
     /**
-     * @param txt The text to strip HTML, comments, tags and media from
+     * @param txt           The text to strip HTML, comments, tags and media from
      * @param showFileNames Whether [sound:foo.mp3] should be rendered as " foo.mp3 " or  " "
      * @return The formatted string
      */
@@ -1565,6 +1656,7 @@ public class CardBrowser extends AnkiActivity implements
         return s;
     }
 
+
     /**
      * Removes cards from view. Doesn't delete them in model (database).
      */
@@ -1576,8 +1668,10 @@ public class CardBrowser extends AnkiActivity implements
         removeNotesView(cardIds, reorderCards);
     }
 
+
     /**
      * Removes cards from view. Doesn't delete them in model (database).
+     *
      * @param reorderCards Whether to rearrange the positions of checked items (DEFECT: Currently deselects all)
      */
     private void removeNotesView(java.util.Collection<Long> cardsIds, boolean reorderCards) {
@@ -1596,7 +1690,7 @@ public class CardBrowser extends AnkiActivity implements
 
         List<CardCache> newMCards = new ArrayList<>();
         int pos = 0;
-        for (CardCache card: oldMCards) {
+        for (CardCache card : oldMCards) {
             if (!idToRemove.contains(card.getId())) {
                 newMCards.add(new CardCache(card, pos++));
             }
@@ -1614,13 +1708,17 @@ public class CardBrowser extends AnkiActivity implements
         updateList();
     }
 
+
     private SuspendCardHandler suspendCardHandler() {
         return new SuspendCardHandler(this);
     }
+
+
     private static class SuspendCardHandler extends ListenerWithProgressBarCloseOnFalse {
         public SuspendCardHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         protected void actualOnValidPostExecute(CardBrowser browser, TaskData result) {
@@ -1629,20 +1727,39 @@ public class CardBrowser extends AnkiActivity implements
             browser.hideProgressBar();
             browser.invalidateOptionsMenu();    // maybe the availability of undo changed
         }
-    };
+    }
 
-    private FlagCardHandler flagCardHandler(){
+
+
+    ;
+
+
+    private FlagCardHandler flagCardHandler() {
         return new FlagCardHandler(this);
     }
-    private static class FlagCardHandler extends SuspendCardHandler{public FlagCardHandler(CardBrowser browser) {super(browser);}};
+
+
+    private static class FlagCardHandler extends SuspendCardHandler {
+        public FlagCardHandler(CardBrowser browser) {
+            super(browser);
+        }
+    }
+
+
+
+    ;
+
 
     private MarkCardHandler markCardHandler() {
         return new MarkCardHandler(this);
     }
+
+
     private static class MarkCardHandler extends ListenerWithProgressBarCloseOnFalse {
         public MarkCardHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         protected void actualOnValidPostExecute(CardBrowser browser, TaskData result) {
@@ -1651,19 +1768,28 @@ public class CardBrowser extends AnkiActivity implements
             browser.hideProgressBar();
             browser.invalidateOptionsMenu();    // maybe the availability of undo changed
         }
-    };
+    }
+
+
+
+    ;
 
     private DeleteNoteHandler mDeleteNoteHandler = new DeleteNoteHandler(this);
+
+
+
     private static class DeleteNoteHandler extends ListenerWithProgressBarCloseOnFalse {
         public DeleteNoteHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPreExecute(@NonNull CardBrowser browser) {
             super.actualOnPreExecute(browser);
             browser.invalidate();
         }
+
 
         @Override
         public void actualOnProgressUpdate(@NonNull CardBrowser browser, TaskData value) {
@@ -1687,13 +1813,21 @@ public class CardBrowser extends AnkiActivity implements
             }, browser.mCardsListView, null);
             browser.searchCards();
         }
-    };
+    }
+
+
+
+    ;
 
     private final UndoHandler mUndoHandler = new UndoHandler(this);
+
+
+
     private static class UndoHandler extends ListenerWithProgressBarCloseOnFalse {
         public UndoHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnValidPostExecute(CardBrowser browser, TaskData result) {
@@ -1706,13 +1840,21 @@ public class CardBrowser extends AnkiActivity implements
             browser.updatePreviewMenuItem();
             browser.invalidateOptionsMenu();    // maybe the availability of undo changed
         }
-    };
+    }
+
+
+
+    ;
 
     private final SearchCardsHandler mSearchCardsHandler = new SearchCardsHandler(this);
+
+
+
     private class SearchCardsHandler extends ListenerWithProgressBar {
         public SearchCardsHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPostExecute(@NonNull CardBrowser browser, TaskData result) {
@@ -1729,7 +1871,7 @@ public class CardBrowser extends AnkiActivity implements
         private void handleSearchResult() {
             Timber.i("CardBrowser:: Completed doInBackgroundSearchCards Successfully");
             updateList();
-            
+
             if ((mSearchView == null) || mSearchView.isIconified()) {
                 return;
             }
@@ -1757,12 +1899,18 @@ public class CardBrowser extends AnkiActivity implements
 
         }
 
+
         @Override
         public void actualOnCancelled(@NonNull CardBrowser browser) {
             super.actualOnCancelled(browser);
             hideProgressBar();
         }
-    };
+    }
+
+
+
+    ;
+
 
     public boolean hasSelectedAllDecks() {
         Long lastDeckId = getLastDeckId();
@@ -1774,6 +1922,7 @@ public class CardBrowser extends AnkiActivity implements
         //all we need to do is select all decks
         selectAllDecks();
     }
+
 
     /**
      * Returns the current deck name, "All Decks" if all decks are selected, or "Unknown"
@@ -1796,11 +1945,16 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     private final RenderQAHandler mRenderQAHandler = new RenderQAHandler(this);
-    private static class RenderQAHandler extends TaskListenerWithContext<CardBrowser>{
+
+
+
+    private static class RenderQAHandler extends TaskListenerWithContext<CardBrowser> {
         public RenderQAHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnProgressUpdate(@NonNull CardBrowser browser, TaskData value) {
@@ -1845,13 +1999,21 @@ public class CardBrowser extends AnkiActivity implements
         public void actualOnCancelled(@NonNull CardBrowser browser) {
             browser.hideProgressBar();
         }
-    };
+    }
+
+
+
+    ;
 
     private final CheckSelectedCardsHandler mCheckSelectedCardsHandler = new CheckSelectedCardsHandler(this);
+
+
+
     private static class CheckSelectedCardsHandler extends ListenerWithProgressBar {
         public CheckSelectedCardsHandler(CardBrowser browser) {
             super(browser);
         }
+
 
         @Override
         public void actualOnPostExecute(@NonNull CardBrowser browser, TaskData result) {
@@ -1902,11 +2064,13 @@ public class CardBrowser extends AnkiActivity implements
         closeCardBrowser(result, null);
     }
 
+
     private void closeCardBrowser(int result, Intent data) {
         // Set result and finish
         setResult(result, data);
         finishWithAnimation(ActivityTransitionAnimation.RIGHT);
     }
+
 
     /**
      * Render the second column whenever the user stops scrolling
@@ -1918,24 +2082,25 @@ public class CardBrowser extends AnkiActivity implements
             int lastVisibleItem = firstVisibleItem + visibleItemCount;
             List<CardCache> cards = getCards();
             // List is never cleared, only reset to a new list. So it's safe here.
-            int size = cards.size();
-            if ((size > 0) && (firstVisibleItem < size) && ((lastVisibleItem - 1) < size)) {
+            int size = cards.size();//100
+            if ((size > 0) && (firstVisibleItem < size) && ((lastVisibleItem - 1) < size)) {//30,60
                 boolean firstLoaded = cards.get(firstVisibleItem).isLoaded();
                 // Note: max value of lastVisibleItem is totalItemCount, so need to subtract 1
                 boolean lastLoaded = cards.get(lastVisibleItem - 1).isLoaded();
                 if (!firstLoaded || !lastLoaded) {
                     showProgressBar();
                     // Also start rendering the items on the screen every 300ms while scrolling
-                    long currentTime = SystemClock.elapsedRealtime ();
+                    long currentTime = SystemClock.elapsedRealtime();
                     if ((currentTime - mLastRenderStart > 300 || lastVisibleItem >= totalItemCount)) {
                         mLastRenderStart = currentTime;
                         CollectionTask.cancelAllTasks(RENDER_BROWSER_QA);
                         CollectionTask.launchCollectionTask(RENDER_BROWSER_QA, mRenderQAHandler,
-                                new TaskData(new Object[]{cards, firstVisibleItem, visibleItemCount, mColumn1Index, mColumn2Index}));
+                                new TaskData(new Object[] {cards, firstVisibleItem, visibleItemCount, mColumn1Index, mColumn2Index}));
                     }
                 }
             }
         }
+
 
         @Override
         public void onScrollStateChanged(AbsListView listView, int scrollState) {
@@ -1945,10 +2110,12 @@ public class CardBrowser extends AnkiActivity implements
                 int startIdx = listView.getFirstVisiblePosition();
                 int numVisible = listView.getLastVisiblePosition() - startIdx;
                 CollectionTask.launchCollectionTask(RENDER_BROWSER_QA, mRenderQAHandler,
-                        new TaskData(new Object[]{getCards(), startIdx - 5, 2 * numVisible + 5, mColumn1Index, mColumn2Index}));
+                        new TaskData(new Object[] {getCards(), startIdx - 5, 2 * numVisible + 5, mColumn1Index, mColumn2Index}));
             }
         }
     }
+
+
 
     private final class MultiColumnListAdapter extends BaseAdapter {
         private final int mResource;
@@ -1958,6 +2125,7 @@ public class CardBrowser extends AnkiActivity implements
         private final int mFontSizeScalePcent;
         private Typeface mCustomTypeface = null;
         private LayoutInflater mInflater;
+
 
         public MultiColumnListAdapter(Context context, int resource, Column[] from, int[] to,
                                       int fontSizeScalePcent, String customFont) {
@@ -2008,7 +2176,7 @@ public class CardBrowser extends AnkiActivity implements
             // setup checkbox to change color in multi-select mode
             final CheckBox checkBox = (CheckBox) v.findViewById(R.id.card_checkbox);
             // if in multi-select mode, be sure to show the checkboxes
-            if(mInMultiSelectMode) {
+            if (mInMultiSelectMode) {
                 checkBox.setVisibility(View.VISIBLE);
                 if (mCheckedCards.contains(card)) {
                     checkBox.setChecked(true);
@@ -2031,6 +2199,7 @@ public class CardBrowser extends AnkiActivity implements
             });
         }
 
+
         private void setFont(TextView v) {
             // Set the font and font size for a TextView v
             float currentSize = v.getTextSize();
@@ -2047,6 +2216,7 @@ public class CardBrowser extends AnkiActivity implements
                 v.setTypeface(mCustomTypeface);
             }
         }
+
 
         public void setFromMapping(Column[] from) {
             mFromKeys = from;
@@ -2089,18 +2259,21 @@ public class CardBrowser extends AnkiActivity implements
             mCheckedCards.remove(card);
         }
 
-       onSelectionChanged();
+        onSelectionChanged();
     }
+
 
     private void onSelectAll() {
         mCheckedCards.addAll(mCards);
         onSelectionChanged();
     }
 
+
     private void onSelectNone() {
         mCheckedCards.clear();
         onSelectionChanged();
     }
+
 
     private void onSelectionChanged() {
         Timber.d("onSelectionChanged()");
@@ -2130,12 +2303,14 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     private List<CardCache> getCards() {
         if (mCards == null) {
             mCards = new ArrayList<>();
         }
         return mCards;
     }
+
 
     private long[] getAllCardIds() {
         long[] l = new long[mCards.size()];
@@ -2145,15 +2320,18 @@ public class CardBrowser extends AnkiActivity implements
         return l;
     }
 
+
     public static class CardCache extends Card.Cache {
         private boolean mLoaded = false;
         private Pair<String, String> mQa = null;
         private int mPosition;
 
+
         public CardCache(long id, Collection col, int position) {
             super(col, id);
             mPosition = position;
         }
+
 
         protected CardCache(CardCache cache, int position) {
             super(cache);
@@ -2162,22 +2340,28 @@ public class CardBrowser extends AnkiActivity implements
             mPosition = position;
         }
 
+
         public int getPosition() {
             return mPosition;
         }
 
-        /** clear all values except ID.*/
+
+        /**
+         * clear all values except ID.
+         */
         public void reload() {
             super.reload();
             mLoaded = false;
             mQa = null;
         }
 
+
         /**
          * Get the background color of items in the card list based on the Card
+         *
          * @return index into TypedArray specifying the background color
          */
-        private int getColor() {
+        public int getColor() {
             int flag = getCard().userFlag();
             switch (flag) {
                 case 1:
@@ -2201,90 +2385,108 @@ public class CardBrowser extends AnkiActivity implements
             }
         }
 
+
         public String getColumnHeaderText(Column key) {
             switch (key) {
-            case FLAGS:
-                return (new Integer(getCard().userFlag())).toString();
-            case SUSPENDED:
-                return getCard().getQueue() == Consts.QUEUE_TYPE_SUSPENDED ? "True": "False";
-            case MARKED:
-                return getCard().note().hasTag("marked") ? "marked" : null;
-            case SFLD:
-                return getCard().note().getSFld();
-            case DECK:
-                return getCol().getDecks().name(getCard().getDid());
-            case TAGS:
-                return getCard().note().stringTags();
-            case CARD:
-                return getCard().template().optString("name");
-            case DUE:
-                return getCard().getDueString();
-            case EASE:
-                if (getCard().getType() == Consts.CARD_TYPE_NEW) {
-                    return AnkiDroidApp.getInstance().getString(R.string.card_browser_ease_new_card);
-                } else {
-                    return (getCard().getFactor()/10)+"%";
-                }
-            case CHANGED:
-                return LanguageUtil.getShortDateFormatFromS(getCard().getMod());
-            case CREATED:
-                return LanguageUtil.getShortDateFormatFromMs(getCard().note().getId());
-            case EDITED:
-                return LanguageUtil.getShortDateFormatFromS(getCard().note().getMod());
-            case INTERVAL:
-                switch (getCard().getType()) {
-                case Consts.CARD_TYPE_NEW:
-                    return AnkiDroidApp.getInstance().getString(R.string.card_browser_interval_new_card);
-                case Consts.CARD_TYPE_LRN :
-                    return AnkiDroidApp.getInstance().getString(R.string.card_browser_interval_learning_card);
+                case FLAGS:
+                    return (new Integer(getCard().userFlag())).toString();
+                case SUSPENDED:
+                    return getCard().getQueue() == Consts.QUEUE_TYPE_SUSPENDED ? "True" : "False";
+                case MARKED:
+                    return getCard().note().hasTag("marked") ? "marked" : null;
+                case SFLD:
+                    return getCard().note().getSFld();
+                case MEDIA_NAME:
+                    updateSearchItemQA();
+                    String[] names = getCard().note().getFields();
+                    if (names.length > 0) {
+                        List<String> nameList = Media.filesInStr(getCol(), getCard().note().getMid(), names[0], false);
+                        if (nameList.size() > 0) {
+                            return nameList.get(0);
+                        }
+                    }
+                    return "";
+                case DECK:
+                    return getCol().getDecks().name(getCard().getDid());
+                case TAGS:
+                    return getCard().note().stringTags();
+                case CARD:
+                    return getCard().template().optString("name");
+                case DUE:
+                    return getCard().getDueString();
+                case DUE2:
+                    return getCard().getDueString2();
+                case EASE:
+                    if (getCard().getType() == Consts.CARD_TYPE_NEW) {
+                        return AnkiDroidApp.getInstance().getString(R.string.card_browser_ease_new_card);
+                    } else {
+                        return (getCard().getFactor() / 10) + "%";
+                    }
+                case CHANGED:
+                    return LanguageUtil.getShortDateFormatFromS(getCard().getMod());
+                case CREATED:
+                    return LanguageUtil.getShortDateFormatFromMs(getCard().note().getId());
+                case EDITED:
+                    return LanguageUtil.getShortDateFormatFromS(getCard().note().getMod());
+                case INTERVAL:
+                    switch (getCard().getType()) {
+                        case Consts.CARD_TYPE_NEW:
+                            return AnkiDroidApp.getInstance().getString(R.string.card_browser_interval_new_card);
+                        case Consts.CARD_TYPE_LRN:
+                            return AnkiDroidApp.getInstance().getString(R.string.card_browser_interval_learning_card);
+                        default:
+                            return Utils.roundedTimeSpanUnformatted(AnkiDroidApp.getInstance(), getCard().getIvl() * SECONDS_PER_DAY);
+                    }
+                case LAPSES:
+                    return Integer.toString(getCard().getLapses());
+                case NOTE_TYPE:
+                    return getCard().model().optString("name");
+                case REVIEWS:
+                    return Integer.toString(getCard().getReps());
+                case QUESTION:
+                    updateSearchItemQA();
+                    return mQa.first;
+                case ANSWER:
+                    updateSearchItemQA();
+                    return mQa.second;
                 default:
-                    return Utils.roundedTimeSpanUnformatted(AnkiDroidApp.getInstance(), getCard().getIvl()*SECONDS_PER_DAY);
-                }
-            case LAPSES:
-                return Integer.toString(getCard().getLapses());
-            case NOTE_TYPE:
-                return getCard().model().optString("name");
-            case REVIEWS:
-                return Integer.toString(getCard().getReps());
-            case QUESTION:
-                updateSearchItemQA();
-                return mQa.first;
-            case ANSWER:
-                updateSearchItemQA();
-                return mQa.second;
-            default:
-                return null;
+                    return null;
             }
         }
 
-        /** pre compute the note and question/answer.  It can safely
-            be called twice without doing extra work. */
+
+        /**
+         * pre compute the note and question/answer.  It can safely
+         * be called twice without doing extra work.
+         */
         public void load(boolean reload, int column1Index, int column2Index) {
             if (reload) {
                 reload();
             }
             getCard().note();
             if (
-                COLUMN1_KEYS[column1Index] == QUESTION ||
-                COLUMN2_KEYS[column2Index] == QUESTION ||
-                COLUMN2_KEYS[column2Index] == ANSWER
+                    COLUMN1_KEYS[column1Index] == QUESTION ||
+                            COLUMN2_KEYS[column2Index] == QUESTION ||
+                            COLUMN2_KEYS[column2Index] == ANSWER
                 // First column can not be the answer. If it were to
                 // change, this code should also be changed.
-                ) {
+            ) {
                 updateSearchItemQA();
             }
             mLoaded = true;
         }
 
+
         public boolean isLoaded() {
             return mLoaded;
         }
 
+
         /**
-           Reload question and answer. Use browser format. If it's empty
-           uses non-browser format. If answer starts by question, remove
-           question.
-        */
+         * Reload question and answer. Use browser format. If it's empty
+         * uses non-browser format. If answer starts by question, remove
+         * question.
+         */
         public void updateSearchItemQA() {
             if (mQa != null) {
                 return;
@@ -2313,6 +2515,7 @@ public class CardBrowser extends AnkiActivity implements
             mQa = new Pair<>(q, a);
         }
 
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -2327,11 +2530,13 @@ public class CardBrowser extends AnkiActivity implements
             return getId() == ((CardCache) obj).getId();
         }
 
+
         @Override
         public int hashCode() {
             return new Long(getId()).hashCode();
         }
     }
+
 
     /**
      * Show/dismiss dialog when sd card is ejected/remounted (collection is saved by SdCardReceiver)
@@ -2352,6 +2557,7 @@ public class CardBrowser extends AnkiActivity implements
         }
     }
 
+
     /**
      * The views expand / contract when switching between multi-select mode so we manually
      * adjust so that the vertical position of the given view is maintained
@@ -2371,6 +2577,7 @@ public class CardBrowser extends AnkiActivity implements
         }, 10);
     }
 
+
     /**
      * Turn on Multi-Select Mode so that the user can select multiple cards at once.
      */
@@ -2388,6 +2595,7 @@ public class CardBrowser extends AnkiActivity implements
         // reload the actionbar using the multi-select mode actionbar
         supportInvalidateOptionsMenu();
     }
+
 
     /**
      * Turn off Multi-Select Mode and return to normal state
@@ -2409,25 +2617,30 @@ public class CardBrowser extends AnkiActivity implements
         mActionBarTitle.setVisibility(View.GONE);
     }
 
+
     @VisibleForTesting
     public int checkedCardCount() {
         return mCheckedCards.size();
     }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     boolean isInMultiSelectMode() {
         return mInMultiSelectMode;
     }
 
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     long cardCount() {
         return mCards.size();
     }
 
+
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-     boolean isShowingSelectAll() {
+    boolean isShowingSelectAll() {
         return mActionBarMenu != null && mActionBarMenu.findItem(R.id.action_select_all).isVisible();
     }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     boolean isShowingSelectNone() {
@@ -2436,16 +2649,19 @@ public class CardBrowser extends AnkiActivity implements
                 mActionBarMenu.findItem(R.id.action_select_none).isVisible();
     }
 
+
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     void clearCardData(int position) {
         mCards.get(position).reload();
     }
 
+
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     void rerenderAllCards() {
         CollectionTask.launchCollectionTask(RENDER_BROWSER_QA, mRenderQAHandler,
-                new TaskData(new Object[]{getCards(), 0, mCards.size()-1, mColumn1Index, mColumn2Index}));
+                new TaskData(new Object[] {getCards(), 0, mCards.size() - 1, mColumn1Index, mColumn2Index}));
     }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     long[] getCardIds() {
@@ -2457,6 +2673,7 @@ public class CardBrowser extends AnkiActivity implements
         }
         return ret;
     }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     void checkedCardsAtPositions(int[] positions) {
@@ -2471,10 +2688,12 @@ public class CardBrowser extends AnkiActivity implements
         onSelectionChanged();
     }
 
+
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     boolean hasCheckedCardAtPosition(int i) {
         return mCheckedCards.contains(getCards().get(i));
     }
+
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     public int getChangeDeckPositionFromId(long deckId) {
@@ -2499,11 +2718,13 @@ public class CardBrowser extends AnkiActivity implements
         return cardIds;
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE) //should only be called from changeDeck()
+
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+        //should only be called from changeDeck()
     void executeChangeCollectionTask(long[] ids, long newDid) {
         mNewDid = newDid; //line required for unit tests, not necessary, but a noop in regular call.
         CollectionTask.launchCollectionTask(DISMISS_MULTI, new ChangeDeckHandler(this),
-                new TaskData(new Object[]{ids, Collection.DismissType.CHANGE_DECK_MULTI, newDid}));
+                new TaskData(new Object[] {ids, Collection.DismissType.CHANGE_DECK_MULTI, newDid}));
     }
 
 

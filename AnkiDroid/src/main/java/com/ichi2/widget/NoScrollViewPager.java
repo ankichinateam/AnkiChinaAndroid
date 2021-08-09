@@ -66,6 +66,10 @@ public class NoScrollViewPager extends ViewPager {
         else
             return super.onInterceptTouchEvent(arg0);
     }
+//    @Override
+//    public boolean dispatchTouchEvent(MotionEvent ev) {
+//        return false;
+//    }
 
     @Override
     public void setCurrentItem(int item, boolean smoothScroll) {
@@ -74,7 +78,7 @@ public class NoScrollViewPager extends ViewPager {
 
     @Override
     public void setCurrentItem(int item) {
-        super.setCurrentItem(item);
+        super.setCurrentItem(item,false);
     }
 
 }

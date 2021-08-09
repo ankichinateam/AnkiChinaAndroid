@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="6dp"
+    android:background="@drawable/warp_item"
+    tools:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/dropdown_deck_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:textSize="15sp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:layout_centerVertical="true"
+        android:textColor="@color/new_primary_text_forth_color"
+        style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+        tools:text="@string/deck_summary_all_decks" />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginEnd="11dp"
+        android:layout_alignParentEnd="true"
+        android:src="@mipmap/home_card_group_arrow_rotate"/>
+</RelativeLayout>

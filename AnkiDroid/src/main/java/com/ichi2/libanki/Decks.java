@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
@@ -878,7 +879,7 @@ public class Decks {
 
         for (Deck deck: decks) {
             String deckName = deck.getString("name");
-            Timber.i("check fo all deck:%s", deckName);
+//            Timber.i("check fo all deck:%s", deckName);
             /** With 2.1.28, anki started strips whitespace of deck name.  This method paragraph is here for
              * compatibility while we wait for rust.  It should be executed before other changes, because both "FOO "
              * and "FOO" will be renamed to the same name, and so this will need to be renamed again in case of
@@ -981,7 +982,7 @@ public class Decks {
      * Select a new branch.
      */
     public void select(long did) {
-        String name = mDecks.get(did).getString("name");
+        String name = Objects.requireNonNull(mDecks.get(did)).getString("name");
 
         // current deck
         mCol.getConf().put("curDeck", Long.toString(did));

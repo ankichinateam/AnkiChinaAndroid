@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/editor"
+            android:theme="@style/MyEditText"
+            android:textSize="15sp"
+            android:layout_width="match_parent"
+            android:inputType="number"
+            android:layout_centerVertical="true"
+            android:layout_height="43dp"/>
+        <TextView
+            android:id="@+id/edit_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="每天新卡上限"
+            android:textColor="?attr/primaryTextColor"
+            android:textSize="13sp" />
+    </RelativeLayout>
+    <TextView
+        android:id="@+id/hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="未来每天学习量=新卡数x6，设置了每天新卡30张，一段时间后每天新卡+复习180张，大概需要30张"
+        android:textColor="?attr/primary_text_third_color999999"
+        android:textSize="11sp" />
+</LinearLayout>

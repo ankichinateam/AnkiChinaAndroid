@@ -27,10 +27,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,11 +57,14 @@ import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Consts;
 import com.ichi2.themes.Themes;
 import com.ichi2.ui.SettingItem;
+import com.ichi2.utils.OKHttpUtil;
 import com.umeng.analytics.MobclickAgent;
 
+import org.acra.data.StringFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.URL;
@@ -66,15 +75,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.TaskStackBuilder;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 import timber.log.Timber;
 
-import static com.ichi2.anki.MyAccount.NOT_LOGIN_ANKI_CHINA;
-import static com.ichi2.anki.MyAccount.NO_TOKEN_RECORD;
-import static com.ichi2.anki.MyAccount.TOKEN_IS_EXPIRED;
+import static com.ichi2.anki.DeckPicker.CHANGE_ACCOUNT;
+import static com.ichi2.anki.DeckPicker.ForeGroundColorSpan;
+
+import static com.ichi2.anki.DeckPicker.goAppShop;
 import static com.ichi2.libanki.Consts.URL_ANKI_COURSE;
 import static com.ichi2.libanki.Consts.URL_FEEDBACK;
 import static com.ichi2.libanki.Consts.URL_PRIVATE;
-import static com.ichi2.libanki.Consts.URL_UPGRADE_CLOUD_SPACE;
+
 import static com.ichi2.libanki.Consts.URL_USER_PROTOCOL;
 import static com.ichi2.libanki.Consts.URL_VOLUNTEER;
 import static com.ichi2.libanki.Consts.URL_VERSION;
@@ -111,6 +124,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Timber.i("on create view in setting fragment");
         if (mRoot == null) {
             final SharedPreferences preferences = getPreferences();
             mRoot = inflater.inflate(R.layout.fragment_setting, container, false);
@@ -125,7 +139,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             mTv_server_name = mRoot.findViewById(R.id.server_name);
             mTv_switch_server = mRoot.findViewById(R.id.tv_switch_server);
 
-            rl_login.setOnClickListener(v -> getAnkiActivity().loginToSyncServer());
+            rl_login.setOnClickListener(v -> ((DeckPicker) getAnkiActivity()).loginToSyncServer());
             mRoot.findViewById(R.id.rl_personal_setting).setOnClickListener(v -> {
                 Timber.i("Navigating to settings");
                 mOldColPath = CollectionHelper.getCurrentAnkiDroidDirectory(getAnkiActivity());
@@ -147,50 +161,35 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                 Timber.i("Toggling Night Mode");
                 mNightModeSwitch.performClick();
             });
-            mRoot.findViewById(R.id.rl_cloud_space).setOnClickListener(this);
+            mRoot.findViewById(R.id.vip_power).setOnClickListener(this);
             mRoot.findViewById(R.id.rl_anki_course).setOnClickListener(this);
             mRoot.findViewById(R.id.rl_team).setOnClickListener(this);
             mRoot.findViewById(R.id.rl_version).setOnClickListener(this);
             mRoot.findViewById(R.id.rl_feedback).setOnClickListener(this);
             mRoot.findViewById(R.id.user_protocol).setOnClickListener(this);
             mRoot.findViewById(R.id.user_private).setOnClickListener(this);
+            mRoot.findViewById(R.id.rl_market_like).setOnClickListener(this);
             mLl_switch_server.setOnClickListener(this);
-            new Handler().postDelayed(this::syncServerSettingItem, 500);//1秒后执行
+            mVipText = mRoot.findViewById(R.id.vip_text);
+            mVipPower = mRoot.findViewById(R.id.vip_power);
+            mVipText.setText(mVip ? getVipString(mVipDay) : getNotVipString());
+            mVipPower.setText(mVip ? "查看权益" : "立即开通");
+            OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "configs/1", "", "", new OKHttpUtil.MyCallBack() {
+                @Override
+                public void onFailure(Call call, IOException e) {
 
-        }
-        return mRoot;
-    }
-
-
-    private void syncServerSettingItem() {
-        Connection.sendCommonGet(initMoreDrawerMenuItemListener, new Connection.Payload("configs/1", "", Connection.Payload.REST_TYPE_GET, HostNumFactory.getInstance(getContext())));
-    }
-
-
-    Connection.TaskListener initMoreDrawerMenuItemListener = new Connection.TaskListener() {
-
-        @Override
-        public void onProgressUpdate(Object... values) {
-            // Pass
-        }
+                }
 
 
-        @Override
-        public void onPreExecute() {
-
-        }
-
-
-        @Override
-        public void onPostExecute(Connection.Payload data) {
-            if (data.success) {
-                Timber.i("initMoreDrawerMenuItem successfully!:%s", data.result);
-                try {
-                    final JSONArray items = ((JSONObject) data.result).getJSONArray("data");
-                    Timber.i("initMoreDrawerMenuItem %d ", items.length());
-                    mLl_defaultLink.removeAllViews();
-                    new Thread(() -> {
+                @Override
+                public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        Timber.i("initMoreDrawerMenuItem successfully!:%s", response.body());
                         try {
+                            final JSONObject object = new JSONObject(response.body().string());
+                            final JSONArray items = object.getJSONArray("data");
+                            Timber.i("initMoreDrawerMenuItem %d ", items.length());
+
                             List<DynamicItem> dynamicItems = new ArrayList<>();
                             for (int i = 0; i < items.length(); i++) {
                                 JSONObject jsonObject = items.getJSONObject(i);
@@ -208,14 +207,15 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                                 dynamicItems.add(new DynamicItem(title, link, drawable));
                                 Timber.i("load drawable result %s,%s ,%s  ", title, image, link);
                             }
-
+                            getAnkiActivity().runOnUiThread(() -> {
+                                mLl_defaultLink.removeAllViews();
                             for (int i = 0; i < dynamicItems.size(); i++) {
                                 int finalI = i;
                                 int[] attrs = new int[] {R.attr.settingItemBackgroundTop, R.attr.settingItemBackground, R.attr.settingItemBackgroundBottom, R.attr.settingItemBackgroundRound};
                                 TypedArray ta = getAnkiActivity().obtainStyledAttributes(attrs);
                                 Drawable background;
                                 background = ta.getDrawable(dynamicItems.size() == 1 ? 3 : finalI == 0 ? 0 : finalI == dynamicItems.size() - 1 ? 2 : 1);
-                                getAnkiActivity().runOnUiThread(() -> {
+
                                     DynamicItem dynamicItem = dynamicItems.get(finalI);
                                     SettingItem item = new SettingItem(getContext(), dynamicItem.title, dynamicItem.drawable);
                                     item.findViewById(R.id.rl_root).setBackground(background);
@@ -223,37 +223,56 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                                         WebViewActivity.openUrlInApp(getAnkiActivity(), dynamicItem.link, "", -1);
                                     });
                                     mLl_defaultLink.addView(item);
-                                });
+
                             }
+                            });
 
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    }).start();
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-//                    UIUtils.showSimpleSnackbar(getAnkiActivity(), R.string.sync_menu_error, true);
+                    } else {
+                        Timber.e("initMoreDrawerMenuItem failed, error code %d", response.code());
+                    }
                 }
-            } else {
-                Timber.e("initMoreDrawerMenuItem failed, error code %d", data.statusCode);
-//                UIUtils.showSimpleSnackbar(getAnkiActivity(), R.string.sync_menu_error, true);
-//                if (data.returnType == 403) {
-//                    UIUtils.showSimpleSnackbar(MyAccount.this, R.string.invalid_username_password, true);
-//                } else {
-//                    UIUtils.showSimpleSnackbar(MyAccount.this, R.string.connection_error_message, true);
-//                }
-            }
+            });
         }
 
+        return mRoot;
+    }
 
-        @Override
-        public void onDisconnected() {
-            UIUtils.showSimpleSnackbar(getAnkiActivity(), R.string.youre_offline, true);
+
+    private String mVipUrl;
+    private boolean mVip;
+    private int mVipDay;
+    private String mVipExpireAt;
+    private TextView mVipText;
+    private TextView mVipPower;
+
+
+
+    public SpannableStringBuilder getVipString(int vipDay) {
+        return ForeGroundColorSpan(String.format("你已经成为超级学霸%d天", vipDay), 4, 9, Color.parseColor("#ffffdda2"));
+    }
+
+
+    public SpannableStringBuilder getNotVipString() {
+        return ForeGroundColorSpan("开通超级学霸，尊享全部超能力", 2, 7, Color.parseColor("#ffffdda2"));
+    }
+
+
+    //VIP页面地址在登录和非登录态是不一样的，如有APP登录或者登出操作请重新调此接口更新URL
+    protected void onRefreshVipState(boolean isVip, String vipUrl, int vipDay, String vipExpireAt) {
+        mVip = isVip;
+        mVipUrl = vipUrl;
+        mVipDay = vipDay;
+        mVipExpireAt = vipExpireAt;
+        if (mVipText != null) {
+            mVipText.setText(mVip ? getVipString(mVipDay) : getNotVipString());
         }
-    };
-
+        if (mVipPower != null) {
+            mVipPower.setText(isVip ? "查看权益" : "立即开通");
+        }
+    }
 
 
     class DynamicItem {
@@ -275,7 +294,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
         super.onResume();
         Timber.i("onResume");
         updateSwitchServerLayout();
-        new Handler().postDelayed(this:: checkRestServerSpace, 1000);//1秒后执行
+        new Handler().postDelayed(this::checkRestServerSpace, 1000);//1秒后执行
 
 
     }
@@ -296,7 +315,12 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                     mIv_entrance.setVisibility(View.GONE);
                 }
                 if (Consts.loginAnkiChina()) {
-                    Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing", HostNumFactory.getInstance(getContext())));
+                    mRl_cloud_space.setVisibility(View.VISIBLE);
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, "nothing", checkRestServerSpaceListener);
+
+//                    Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing", HostNumFactory.getInstance(getContext())));
+                }else {
+                    mRl_cloud_space.setVisibility(View.GONE);
                 }
 
             }
@@ -313,13 +337,12 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                     mTv_logout.setVisibility(View.VISIBLE);
                     mIv_entrance.setVisibility(View.GONE);
                 }
-                String hintStr = String.format(getString(R.string.upgrade_cloud_space), "");
+                String hintStr = "";
                 mRl_cloud_space.setText(hintStr);
+                mRl_cloud_space.setVisibility(View.GONE);
 //                if (message.equals(TOKEN_IS_EXPIRED)) {
-                getAnkiActivity().handleGetTokenFailed(message);
+                ((DeckPicker) getAnkiActivity()).handleGetTokenFailed(message);
 //                }
-
-
             }
         });
     }
@@ -328,40 +351,35 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     //刷新设置-获取剩余空间-未登录-登录-获取剩余空间-获取用户名
     private String getUserName() {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getContext());
-        return   preferences.getString("username", "");
+        return preferences.getString("username", "");
     }
 
 
-    Connection.TaskListener checkRestServerSpaceListener = new Connection.TaskListener() {
-
+    private final OKHttpUtil.MyCallBack checkRestServerSpaceListener = new OKHttpUtil.MyCallBack() {
         @Override
-        public void onProgressUpdate(Object... values) {
-            // Pass
+        public void onFailure(Call call, IOException e) {
+            e.printStackTrace();
         }
 
 
         @Override
-        public void onPreExecute() {
-            Timber.d("checkRestServerSpaceListener.onPreExecute()");
-
-        }
-
-
-        @Override
-        public void onPostExecute(Connection.Payload data) {
-            if (data.success) {
-                Timber.i("fetch server space successfully:%s", data.syncConflictResolution);
+        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+            if (response.isSuccessful()) {
+                Timber.i("fetch server space successfully ");
                 try {
-                    JSONObject result = ((JSONObject) data.result).getJSONObject("data");
+                    JSONObject result = (new JSONObject(response.body().string())).getJSONObject("data");
                     long total = result.getLong("origin_size");
                     long used = result.getLong("origin_used_size");
                     String totalStr = result.getString("size");
                     String usedStr = result.getString("used_size");
                     String hint = String.format("%s/%s", usedStr, totalStr);
-                    String hintStr = String.format(getString(R.string.upgrade_cloud_space), hint);
                     long rest = total - used;
                     Timber.i("fetch server space result:%d,%d,%d", total, used, rest);
-                    mRl_cloud_space.setText(hintStr);
+                    getAnkiActivity().runOnUiThread(() -> {
+                        mRl_cloud_space.setText(hint);
+                        mRl_cloud_space.setVisibility(View.VISIBLE);
+                    });
+
 //                    getAnkiActivity().getNavigationView().getMenu().findItem(R.id.nav_cloud_space).setTitle(hintStr);
                     getAnkiActivity().saveServerRestSpace(rest);
 
@@ -370,17 +388,13 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                     UIUtils.showSimpleSnackbar(getAnkiActivity(), R.string.sync_generic_error, true);
                 }
             } else {
-                Timber.e("fetch server space failed, error code %d", data.statusCode);
-                String hintStr = String.format(getString(R.string.upgrade_cloud_space), "");
+                Timber.e("fetch server space failed, error code %d", response.code());
+                String hintStr = "";
                 mRl_cloud_space.setText(hintStr);
+                mRl_cloud_space.setVisibility(View.GONE);
 
             }
-        }
 
-
-        @Override
-        public void onDisconnected() {
-            UIUtils.showSimpleSnackbar(getAnkiActivity(), R.string.youre_offline, true);
         }
     };
     private String mOldColPath;
@@ -445,6 +459,11 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     }
 
 
+    public DeckPicker getAnkiActivity() {
+        return (DeckPicker) super.getAnkiActivity();
+    }
+
+
     @Override
     public void onClick(View v) {
         int id = v.getId();
@@ -452,27 +471,10 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             WebViewActivity.openUrlInApp(getAnkiActivity(), URL_USER_PROTOCOL, "");
         } else if (id == R.id.user_private) {
             WebViewActivity.openUrlInApp(getAnkiActivity(), URL_PRIVATE, "");
-        } else if (id == R.id.rl_cloud_space) {
-            MyAccount myAccount = new MyAccount();
-            myAccount.getToken(getContext(), new MyAccount.TokenCallback() {
-                @Override
-                public void onSuccess(String token) {
-                    WebViewActivity.openUrlInApp(getAnkiActivity(), URL_UPGRADE_CLOUD_SPACE, token, DeckPicker.RESULT_UPDATE_REST_SPACE);
-                }
-
-
-                @Override
-                public void onFail(String message) {
-                    if (message.equals(NOT_LOGIN_ANKI_CHINA)) {
-                        Toast.makeText(getAnkiActivity(), "Anki Web账号登录，无需扩容", Toast.LENGTH_SHORT).show();
-//                            UIUtils.showSimpleSnackbar(getAnkiActivity(), "Anki Web账号登录，无需扩容", true);
-                        return;
-                    } else if (message.equals(NO_TOKEN_RECORD)) {
-                        getAnkiActivity().showSyncErrorDialog(SyncErrorDialog.DIALOG_USER_NOT_LOGGED_IN_SYNC);
-                    }
-                    getAnkiActivity().handleGetTokenFailed(message);
-                }
-            });
+        } else if (id == R.id.rl_market_like) {
+            goAppShop( getAnkiActivity(), BuildConfig.APPLICATION_ID, "");
+        } else if (id == R.id.vip_power) {
+            getAnkiActivity().openVipUrl(mVipUrl);
         } else if (id == R.id.rl_anki_course || id == R.id.rl_team || id == R.id.rl_version || id == R.id.rl_feedback) {
             if (id == R.id.rl_anki_course) {
                 WebViewActivity.openUrlInApp(getAnkiActivity(), URL_ANKI_COURSE, "");
@@ -560,28 +562,29 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     }
 
 
-    private void updateSwitchServerLayout(){
-        if(Consts.loginAnkiChina()){
+    private void updateSwitchServerLayout() {
+        if (Consts.loginAnkiChina()) {
             mLl_switch_server.setVisibility(View.VISIBLE);
             mTv_server_name.setText("国内服务器");
-        }else if(Consts.loginAnkiWeb()){
+        } else if (Consts.loginAnkiWeb()) {
             mLl_switch_server.setVisibility(View.VISIBLE);
             mTv_server_name.setText("海外服务器");
-        }else{
+        } else {
             mLl_switch_server.setVisibility(View.GONE);
         }
     }
 
+
     private void updateSwitchServerDialog(Dialog dialog) {
         String chinaAccount = AnkiDroidApp.getSharedPrefs(getAnkiActivity()).getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE, "未登录同步账号");
         String ankiAccount = AnkiDroidApp.getSharedPrefs(getAnkiActivity()).getString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT, "未登录同步账号");
-        if (chinaAccount.isEmpty()||chinaAccount.equals("未登录同步账号")) {
+        if (chinaAccount.isEmpty() || chinaAccount.equals("未登录同步账号")) {
             ((TextView) dialog.findViewById(R.id.quit_china_server)).setText("登陆");
             dialog.findViewById(R.id.quit_china_server).setSelected(false);
             dialog.findViewById(R.id.quit_china_server).setOnClickListener(view -> {
                 Intent myAccount = new Intent(getAnkiActivity(), MyAccount.class);
                 myAccount.putExtra("notLoggedIn", true);
-                getAnkiActivity().startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
                 dialog.dismiss();
             });
         } else {
@@ -590,17 +593,17 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             dialog.findViewById(R.id.quit_china_server).setOnClickListener(view -> {
                 Intent myAccount = new Intent(getAnkiActivity(), ChooseLoginServerActivity.class);
                 myAccount.putExtra("notLoggedIn", false);
-                getAnkiActivity().startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
                 dialog.dismiss();
             });
         }
-        if (ankiAccount.isEmpty()||ankiAccount.equals("未登录同步账号")) {
+        if (ankiAccount.isEmpty() || ankiAccount.equals("未登录同步账号")) {
             ((TextView) dialog.findViewById(R.id.quit_over_sea_server)).setText("登陆");
             dialog.findViewById(R.id.quit_over_sea_server).setSelected(false);
             dialog.findViewById(R.id.quit_over_sea_server).setOnClickListener(view -> {
                 Intent myAccount = new Intent(getAnkiActivity(), MyAccount2.class);
                 myAccount.putExtra("notLoggedIn", true);
-                getAnkiActivity().startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
                 dialog.dismiss();
             });
         } else {
@@ -609,7 +612,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             dialog.findViewById(R.id.quit_over_sea_server).setOnClickListener(view -> {
                 Intent myAccount = new Intent(getAnkiActivity(), ChooseLoginServerActivity.class);
                 myAccount.putExtra("notLoggedIn", false);
-                getAnkiActivity().startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
                 dialog.dismiss();
             });
         }

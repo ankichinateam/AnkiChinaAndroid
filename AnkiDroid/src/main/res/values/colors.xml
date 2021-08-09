@@ -86,6 +86,8 @@
     <color name="good_button_color_pressed">#8021AC77</color>
     <color name="easy_button_color">#3D77D3</color>
     <color name="easy_button_color_pressed">#803D77D3</color>
+    <color name="next_button_color">#E4E5E6</color>
+    <color name="next_button_color_pressed">#80E4E5E6</color>
 
 
     <color name="material_indigo_200">#9fa8da</color>

@@ -24,17 +24,31 @@
         android:icon="?attr/menuAddIcon"
         ankidroid:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/action_custom_study"
-        android:title="@string/custom_study"
-        android:icon="?attr/menuBuildIcon"
-        ankidroid:showAsAction="ifRoom"/>
+        android:id="@+id/create_deck"
+        android:title="创建子记忆库"
+        ankidroid:showAsAction="ifRoom"
+        android:icon="?attr/menuAddDeck"
+        android:visibility = "gone"
+        />
     <item
         android:id="@+id/action_rename"
         android:title="@string/rename_deck"
         android:visibility = "gone"/>
     <item
-        android:id="@+id/action_deck_options"
-        android:title="@string/study_options"/>
+        android:id="@+id/action_custom_study"
+        android:title="@string/custom_study"
+        android:icon="?attr/menuBuildIcon"
+         />
+
+    <item
+        android:id="@+id/action_suspend"
+        android:title="@string/menu_suspend"
+        android:visibility = "gone"
+        />
+    <item
+        android:id="@+id/action_reset_card_progress"
+        android:title="@string/card_editor_reset_card"
+        android:visibility = "gone"/>
     <item
         android:id="@+id/action_delete"
         android:title="@string/contextmenu_deckpicker_delete_deck"
@@ -44,7 +58,18 @@
         android:title="@string/export_deck"
         android:visibility = "gone"/>
     <item
+        android:id="@+id/action_setting"
+        android:title="学习设置"
+        android:visibility = "gone"/>
+    <item
+        android:id="@+id/action_deck_options"
+        android:title="@string/study_options"/>
+    <item
         android:id="@+id/action_unbury"
         android:title="@string/unbury"
         android:visibility = "gone"/>
+    <item
+        android:id="@+id/action_browser"
+        android:menuCategory="secondary"
+        android:title="旧版浏览器"/>
 </menu>

@@ -25,6 +25,7 @@ import com.ichi2.libanki.utils.Time;
 public class UIUtils {
 
     public static void showThemedToast(Context context, String text, boolean shortLength) {
+        if(context!=null)
         Toast.makeText(context, text, shortLength ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
     }
 

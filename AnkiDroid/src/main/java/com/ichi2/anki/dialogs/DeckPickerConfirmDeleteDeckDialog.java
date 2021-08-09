@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.ichi2.anki.AnkiActivity;
 import com.ichi2.anki.DeckPicker;
 import com.ichi2.anki.R;
 import com.ichi2.anki.analytics.AnalyticsDialogFragment;
@@ -32,10 +33,10 @@ public class DeckPickerConfirmDeleteDeckDialog extends AnalyticsDialogFragment {
                 .negativeText(res.getString(R.string.dialog_cancel))
                 .cancelable(true)
                 .onPositive((dialog, which) -> {
-                    ((DeckPicker) getActivity()).deleteContextMenuDeck();
-                    ((DeckPicker) getActivity()).dismissAllDialogFragments();
+                    ((AnkiActivity) getActivity()).deleteContextMenuDeck();
+                    ((AnkiActivity) getActivity()).dismissAllDialogFragments();
                 })
-                .onNegative((dialog, which) -> ((DeckPicker) getActivity()).dismissAllDialogFragments())
+                .onNegative((dialog, which) -> ((AnkiActivity) getActivity()).dismissAllDialogFragments())
                 .build();
 
     }

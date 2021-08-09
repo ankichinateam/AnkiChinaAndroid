@@ -78,22 +78,25 @@ public class DialogHandler extends Handler {
         Timber.i("Handling Message: %s", messageName);
         if (msg.what == MSG_SHOW_COLLECTION_LOADING_ERROR_DIALOG) {
             // Collection could not be opened
-            ((DeckPicker) mActivity.get()).showDatabaseErrorDialog(DatabaseErrorDialog.DIALOG_LOAD_FAILED);
+            mActivity.get().showDatabaseErrorDialog(DatabaseErrorDialog.DIALOG_LOAD_FAILED);
         } else if (msg.what == MSG_SHOW_COLLECTION_IMPORT_REPLACE_DIALOG) {
             // Handle import of collection package APKG
-            ((DeckPicker) mActivity.get()). showImportDialog(ImportDialog.DIALOG_IMPORT_REPLACE_CONFIRM, msgData.getString("importPath"));
+            mActivity.get(). showImportDialog(ImportDialog.DIALOG_IMPORT_REPLACE_CONFIRM, msgData.getString("importPath"));
         } else if (msg.what == MSG_SHOW_COLLECTION_IMPORT_ADD_DIALOG) {
             // Handle import of deck package APKG
-            ((DeckPicker) mActivity.get()). showImportDialog(ImportDialog.DIALOG_IMPORT_ADD_CONFIRM, msgData.getString("importPath"));
+            mActivity.get(). showImportDialog(ImportDialog.DIALOG_IMPORT_ADD_CONFIRM, msgData.getString("importPath"));
         } else if (msg.what == MSG_SHOW_SYNC_ERROR_DIALOG) {
-            int id = msgData.getInt("dialogType");
-            String message = msgData.getString("dialogMessage");
-            ((DeckPicker) mActivity.get()).showSyncErrorDialog(id, message);
+            if(mActivity.get() instanceof DeckPicker ){
+                int id = msgData.getInt("dialogType");
+                String message = msgData.getString("dialogMessage");
+                ((DeckPicker) mActivity.get()).showSyncErrorDialog(id, message);
+            }
         } else if (msg.what == MSG_SHOW_EXPORT_COMPLETE_DIALOG) {
             // Export complete
             AsyncDialogFragment f = DeckPickerExportCompleteDialog.newInstance(msgData.getString("exportPath"));
             mActivity.get(). showAsyncDialogFragment(f);
-        } else if (msg.what == MSG_SHOW_MEDIA_CHECK_COMPLETE_DIALOG) {            
+        } else if (msg.what == MSG_SHOW_MEDIA_CHECK_COMPLETE_DIALOG) {
+            if(mActivity.get() instanceof DeckPicker ){
             // Media check results
             int id = msgData.getInt("dialogType");
             if (id!=MediaCheckDialog.DIALOG_CONFIRM_MEDIA_CHECK) {
@@ -102,10 +105,10 @@ public class DialogHandler extends Handler {
                 checkList.add(msgData.getStringArrayList("unused"));
                 checkList.add(msgData.getStringArrayList("invalid"));
                 ((DeckPicker) mActivity.get()).showMediaCheckDialog(id, checkList);
-            }
+            }}
         } else if (msg.what == MSG_SHOW_DATABASE_ERROR_DIALOG) {
             // Database error dialog
-            ((AnkiActivity) mActivity.get()).showDatabaseErrorDialog(msgData.getInt("dialogType"));
+            mActivity.get().showDatabaseErrorDialog(msgData.getInt("dialogType"));
         } else if (msg.what == MSG_SHOW_FORCE_FULL_SYNC_DIALOG) {
             // Confirmation dialog for forcing full sync
             ConfirmationDialog dialog = new ConfirmationDialog ();
@@ -120,27 +123,30 @@ public class DialogHandler extends Handler {
             dialog.setArgs(msgData.getString("message"));
             (mActivity.get()).showDialogFragment(dialog);
         } else if (msg.what == MSG_DO_SYNC) {
-            SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(mActivity.get() );
-            Resources res = mActivity.get().getResources();
-            Collection col = mActivity.get().getCol();
-            String hkey = preferences.getString("hkey", "");
-            long millisecondsSinceLastSync = col.getTime().intTimeMS() - preferences.getLong("lastSyncTime", 0);
-            boolean limited = millisecondsSinceLastSync < INTENT_SYNC_MIN_INTERVAL;
-            if (!limited && hkey.length() > 0 && Connection.isOnline()) {
-                ((DeckPicker) mActivity.get()).sync();
-            } else {
-                String err = res.getString(R.string.sync_error);
-                if (limited) {
-                    long remainingTimeInSeconds = Math.max((INTENT_SYNC_MIN_INTERVAL - millisecondsSinceLastSync) / 1000, 1);
-                    // getQuantityString needs an int
-                    int remaining = (int) Math.min(Integer.MAX_VALUE, remainingTimeInSeconds);
-                    String message = res.getQuantityString(R.plurals.sync_automatic_sync_needs_more_time, remaining, remaining);
-                    mActivity.get() .showSimpleNotification(err, message, NotificationChannels.Channel.SYNC);
+            if(mActivity.get() instanceof DeckPicker ) {
+                SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(mActivity.get());
+                Resources res = mActivity.get().getResources();
+                Collection col = mActivity.get().getCol();
+                String hkey = preferences.getString("hkey", "");
+                long millisecondsSinceLastSync = col.getTime().intTimeMS() - preferences.getLong("lastSyncTime", 0);
+                boolean limited = millisecondsSinceLastSync < INTENT_SYNC_MIN_INTERVAL;
+                if (!limited && hkey.length() > 0 && Connection.isOnline()) {
+
+                    ((DeckPicker) mActivity.get()).sync();
                 } else {
-                    mActivity.get() .showSimpleNotification(err, res.getString(R.string.youre_offline), NotificationChannels.Channel.SYNC);
+                    String err = res.getString(R.string.sync_error);
+                    if (limited) {
+                        long remainingTimeInSeconds = Math.max((INTENT_SYNC_MIN_INTERVAL - millisecondsSinceLastSync) / 1000, 1);
+                        // getQuantityString needs an int
+                        int remaining = (int) Math.min(Integer.MAX_VALUE, remainingTimeInSeconds);
+                        String message = res.getQuantityString(R.plurals.sync_automatic_sync_needs_more_time, remaining, remaining);
+                        mActivity.get().showSimpleNotification(err, message, NotificationChannels.Channel.SYNC);
+                    } else {
+                        mActivity.get().showSimpleNotification(err, res.getString(R.string.youre_offline), NotificationChannels.Channel.SYNC);
+                    }
                 }
+                mActivity.get().finishWithoutAnimation();
             }
-            mActivity.get(). finishWithoutAnimation();
         }
     }
 

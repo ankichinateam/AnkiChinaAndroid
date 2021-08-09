@@ -55,17 +55,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@mipmap/profile_banner_bg_normal" />
+
                 <RelativeLayout
                     android:id="@+id/rl_login"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginTop="78dp">
+                    android:layout_marginTop="89dp">
 
                     <ImageView
                         android:id="@+id/logo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
                         android:src="@mipmap/profile_anki_logo_normal" />
 
                     <ImageView
@@ -77,53 +78,72 @@
 
                         android:src="?attr/loginArrowRef" />
 
-                    <RelativeLayout
-                        android:orientation="vertical"
-                        android:layout_centerVertical="true"
-                        android:layout_alignBottom="@id/logo"
-                        android:layout_toEndOf="@id/logo"
-                        android:paddingStart="14dp"
+                    <ImageView
+                        android:id="@+id/quit_icon"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@mipmap/set_login_arrow_normal" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toEndOf="@id/logo"
+                        android:orientation="vertical"
+                        android:paddingStart="14dp">
                         <TextView
                             android:id="@+id/tv_user_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="登录Anki志愿版"
+                            android:layout_marginBottom="5dp"
+                            android:text="登录"
                             android:textColor="?attr/toolbar2TextColor"
                             android:textSize="23sp" />
+                        <TextView
+                            android:id="@+id/tv_cloud_space"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:visibility="gone"
+                            android:textColor="?attr/toolbar2TextColor"
+                            android:textSize="11sp" />
+
                         <LinearLayout
                             android:id="@+id/ll_switch_server"
-                            android:layout_alignParentBottom="true"
                             android:layout_width="117dp"
                             android:layout_height="20dp"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="9dp"
+
+                            android:background="@drawable/switch_login_server_button"
                             android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="@drawable/switch_login_server_button">
+                            android:orientation="horizontal">
+
+
 
                             <TextView
                                 android:id="@+id/server_name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="海外服务器"
                                 android:layout_gravity="center_vertical"
                                 android:gravity="center_vertical"
+                                android:text="海外服务器"
                                 android:textColor="?attr/toolbar2TextColor"
                                 android:textSize="13sp" />
                             <ImageView
                                 android:layout_width="1dp"
-                                android:layout_marginStart="4dp"
                                 android:layout_height="9dp"
                                 android:layout_gravity="center_vertical"
+                                android:layout_marginStart="4dp"
                                 android:src="@color/white" />
                             <TextView
                                 android:id="@+id/tv_switch_server"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_vertical"
-                                android:gravity="center_vertical"
                                 android:layout_marginStart="4dp"
+                                android:gravity="center_vertical"
                                 android:text="切换"
                                 android:textColor="?attr/toolbar2TextColor"
                                 android:textSize="11sp" />
@@ -131,7 +151,10 @@
                         </LinearLayout>
 
 
-                    </RelativeLayout>
+
+
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tv_quit"
@@ -143,13 +166,6 @@
                         android:textColor="?attr/toolbar2TextColor"
                         android:textSize="13sp"
                         android:visibility="gone" />
-                    <ImageView
-                        android:id="@+id/quit_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentRight="true"
-                        android:layout_centerVertical="true"
-                        android:src="@mipmap/set_login_arrow_normal" />
 
                 </RelativeLayout>
 
@@ -226,7 +242,7 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="14dp"
                         android:layout_toEndOf="@id/icon6"
-                        android:text="加入志愿者团队"
+                        android:text="加入记忆卡团队"
                         android:textSize="16sp" />
                 </RelativeLayout>
 
@@ -258,7 +274,7 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="14dp"
                         android:layout_toEndOf="@id/icon7"
-                        android:text="ANKI志愿者版本"
+                        android:text="Anki记忆卡"
                         android:textSize="16sp" />
                 </RelativeLayout>
 
@@ -296,13 +312,13 @@
             </LinearLayout>
 
             <RelativeLayout
-                android:id="@+id/rl_cloud_space"
+                android:id="@+id/vip_layout"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_below="@id/ll_login"
                 android:layout_marginHorizontal="11dp"
                 android:layout_marginTop="11dp"
-                android:background="@drawable/setting_item_background_round"
+                android:background="@mipmap/supre_xueba_vip_bg_normal"
                 android:paddingEnd="18dp"
                 android:paddingStart="14dp">
 
@@ -311,37 +327,32 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:src="@mipmap/set_sync_normal" />
+                    android:src="@mipmap/supre_xueba_vip_normal" />
 
-                <ImageView
-                    android:id="@+id/end_icon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:src="@mipmap/profile_arrow_normal" />
 
                 <TextView
+                    android:id="@+id/vip_power"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:layout_marginEnd="4dp"
-                    android:layout_toStartOf="@id/end_icon"
-                    android:text="升级云空间"
-                    android:textColor="?attr/primaryBaseColor"
-                    android:textSize="13sp"
+                    android:background="@mipmap/supre_xueba_vip_button_bg_normal"
+                    android:layout_alignParentEnd="true"
+                    android:text="立即开通"
+                    android:gravity="center"
+                    android:textColor="@color/new_primary_text_forth_color"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/tv_cloud_space"
+                    android:id="@+id/vip_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="6dp"
                     android:layout_toEndOf="@id/cloud_icon"
-                    android:text="云存储："
-                    android:textColor="?attr/primaryBaseColor"
-                    android:textSize="15sp"
+                    android:text="开通超级学霸，尊享全部超能力"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
             </RelativeLayout>
 
@@ -417,12 +428,46 @@
                     android:layout_centerVertical="true"
                     android:theme="@style/SwitchCompat.Control" />
             </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/rl_market_like"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:layout_below="@id/rl_dark_mode"
+                android:layout_marginHorizontal="11dp"
+                android:background="?attr/settingItemBackground"
+                android:paddingEnd="18dp"
+                android:paddingStart="13dp"
 
+                >
+
+                <ImageView
+                    android:id="@+id/icon9"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/note_star_unselected" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon9"
+                    android:text="应用好评"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:src="@mipmap/icon_left_arrow_normal" />
+            </RelativeLayout>
             <RelativeLayout
                 android:id="@+id/rl_personal_setting"
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
-                android:layout_below="@id/rl_dark_mode"
+                android:layout_below="@id/rl_market_like"
                 android:layout_marginHorizontal="11dp"
                 android:background="?attr/settingItemBackgroundBottom"
                 android:paddingEnd="18dp"
@@ -456,7 +501,7 @@
                 android:id="@+id/common_setting_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/rl_cloud_space"
+                android:layout_below="@id/vip_layout"
                 android:layout_marginStart="23dp"
                 android:layout_marginTop="34dp"
                 android:text="常用设置"

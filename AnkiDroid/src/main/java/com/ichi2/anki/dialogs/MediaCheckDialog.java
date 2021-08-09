@@ -107,13 +107,15 @@ public class MediaCheckDialog extends AsyncDialogFragment {
 
                 // If we have unused files, show a dialog with a "delete" button. Otherwise, the user only
                 // needs to acknowledge the results, so show only an OK dialog.
-                if (unused.size() > 0) {
+                if (unused.size()+invalid.size() > 0) {
                     builder.positiveText(res().getString(R.string.dialog_ok))
                             .negativeText(res().getString(R.string.check_media_delete_unused))
                             .onPositive((dialog, which) ->mMediaCheckDialogListener
                                     .dismissAllDialogFragments())
                             .onNegative((dialog, which) -> {
-                               mMediaCheckDialogListener.deleteUnused(unused);
+                                ArrayList<String> needDelete=new ArrayList<>(unused);
+                                needDelete.addAll(invalid);
+                               mMediaCheckDialogListener.deleteUnused(needDelete);
                                 dismissAllDialogFragments();
                             });
                 } else {

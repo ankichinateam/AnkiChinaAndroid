@@ -44,10 +44,10 @@
     </plurals>
     <string name="card_browser_all_decks">所有记忆库</string>
     <string name="card_browser_delete_card">删除卡牌记录</string>
-    <string name="card_browser_suspend_card">搁置卡片</string>
+    <string name="card_browser_suspend_card">暂停卡片</string>
     <string name="card_browser_toggle_suspend_card">(取消) 搁置卡片</string>
     <string name="card_browser_change_deck">更换记忆库</string>
-    <string name="card_browser_unsuspend_card">取消擱置卡片</string>
+    <string name="card_browser_unsuspend_card">取消暂停卡片</string>
     <string name="card_browser_mark_card">标记笔记</string>
     <string name="card_browser_flag">标志</string>
     <string name="card_browser_toggle_mark_card">(未标)记的笔记</string>

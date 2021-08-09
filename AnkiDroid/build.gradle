@@ -1,5 +1,4 @@
 import com.android.ddmlib.DdmPreferences
-import com.android.build.OutputFile
 
 plugins {
  // Gradle plugin portal 
@@ -8,10 +7,15 @@ plugins {
 
 apply plugin: 'com.android.application'
 apply plugin: 'app.brant.amazonappstorepublisher'
+apply plugin: 'bugly'
+
+bugly {
+    appId = '' // 注册时分配的App ID
+    appKey = '' // 注册时分配的App Key
+}
 
 repositories {
     google()
-    jcenter()
     maven { url 'https://dl.bintray.com/umsdk/release' }
 
 }
@@ -42,8 +46,8 @@ android {
         //
         // This ensures the correct ordering between the various types of releases (dev < alpha < beta < release) which is
         // needed for upgrades to be offered correctly.
-        versionCode=30000000
-        versionName="3.00.0"
+        versionCode=30001301
+        versionName="3.00.13"
         minSdkVersion 16
         //noinspection OldTargetApi - also performed in api/build.fradle
         targetSdkVersion 28
@@ -210,6 +214,7 @@ apply from: "../lint.gradle"
 
 dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation project(path: ':RangeSeekBar')
 
     // Can possibly remove if upstream PR merges https://github.com/JakeWharton/timber/pull/398
     configurations.all {
@@ -245,7 +250,6 @@ dependencies {
     implementation 'org.apache.commons:commons-compress:1.12'
     implementation 'com.github.bumptech.glide:glide:4.12.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
-
     // May need a resolution strategy for support libs to our versions
     implementation'ch.acra:acra-http:5.5.1'
     implementation'ch.acra:acra-dialog:5.5.1'
@@ -287,9 +291,11 @@ dependencies {
     implementation 'com.oguzdev:CircularFloatingActionMenu:1.0.2'
     //For AnkiDroid JS API Versioning
     implementation "com.github.zafarkhaja:java-semver:0.9.0"
-    implementation  'com.umeng.umsdk:common:9.1.6' // (必选)版本号
-    implementation  'com.umeng.umsdk:asms:1.1.3' // asms包依赖(必选)
-    implementation 'com.umeng.umsdk:crash:0.0.5' // native crash包依赖(必选)
-    implementation  'com.umeng.umsdk:oaid_lenovo:1.0.0' // (可选)
-
+//    implementation  'com.umeng.umsdk:common:9.1.6' // (必选)版本号
+//    implementation  'com.umeng.umsdk:asms:1.1.3' // asms包依赖(必选)
+//    implementation 'com.umeng.umsdk:crash:0.0.5' // native crash包依赖(必选)
+//    implementation  'com.umeng.umsdk:oaid_lenovo:1.0.0' // (可选)
+    implementation  'com.umeng.umsdk:common:9.3.8'// 必选
+    implementation  'com.umeng.umsdk:asms:1.2.2'// 必选
+    implementation 'com.umeng.umsdk:apm:1.2.0' // 错误分析升级为独立产品U-APM可按需集成，可选
  }

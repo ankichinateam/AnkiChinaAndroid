@@ -54,10 +54,27 @@
     <attr name="fileBagRef" format="reference"/>
     <!-- Menu item list -->
     <attr name="syncIconRef" format="reference"/>
-    <attr name="menuIconRef" format="reference"/>
     <!-- Review Menu item list -->
     <attr name="reviewMenuUndoIconRef" format="reference"/>
+    <attr name="reviewMenuSpeakIconRef" format="reference"/>
     <attr name="reviewMenuFlagIconRef" format="reference"/>
+    <attr name="reviewMenuMarkIconRef" format="reference"/>
+    <attr name="reviewMenuClearIconRef" format="reference"/>
+    <attr name="reviewMenuGestureIconRef" format="reference"/>
+    <attr name="reviewMenuColorLensIconRef" format="reference"/>
+    <attr name="reviewMenuEditIconRef" format="reference"/>
+    <attr name="reviewMenuTagIconRef" format="reference"/>
+    <attr name="reviewMenuPlayIconRef" format="reference"/>
+    <attr name="reviewMenuMicIconRef" format="reference"/>
+    <attr name="reviewMenuFlipIconRef" format="reference"/>
+    <attr name="reviewMenuFlipDropDownIconRef" format="reference"/>
+    <attr name="reviewMenuSuspendIconRef" format="reference"/>
+    <attr name="reviewMenuSuspendDropDownIconRef" format="reference"/>
+    <attr name="reviewMenuUnSuspendIconRef" format="reference"/>
+    <attr name="reviewMenuDeleteIconRef" format="reference"/>
+    <attr name="reviewMenuRescheduleIconRef" format="reference"/>
+    <attr name="reviewMenuEraserIconRef" format="reference"/>
+
     <attr name="navBarBackRef" format="reference"/>
     <attr name="navBarBackRefDark" format="reference"/>
     <attr name="navBarTimeRef" format="reference"/>
@@ -81,6 +98,9 @@
     <attr name="settingItemBackgroundTop" format="reference"/>
     <attr name="settingItemBackgroundBottom" format="reference"/>
     <attr name="settingItemBackgroundRound" format="reference"/>
+    <attr name="menuIconEdit" format="reference"/>
+    <attr name="itemIconFlagEmpty" format="reference"/>
+    <attr name="itemIconMarkEmpty" format="reference"/>
     <attr name="settingDividerColor" format="color"/>
     <attr name="settingHeaderRef" format="color"/>
     <attr name="primaryTextColor" format="color"/>
@@ -99,6 +119,7 @@
     <!-- Navigation drawer -->
     <attr name="navDrawerItemColor" format="reference"/>
     <attr name="menuAddIcon" format="reference"/>
+    <attr name="menuAddDeck" format="reference"/>
     <attr name="menuBuildIcon" format="reference"/>
     <attr name="navDrawerItemBackgroundColor" format="reference"/>
     <!-- Card count colors -->
@@ -111,6 +132,7 @@
     <attr name="hardButtonRef" format="reference"/>
     <attr name="goodButtonRef" format="reference"/>
     <attr name="easyButtonRef" format="reference"/>
+    <attr name="nextButtonRef" format="reference"/>
     <!-- Same thing but with ripples -->
     <attr name="againButtonRippleRef" format="reference"/>
     <attr name="hardButtonRippleRef" format="reference"/>
@@ -162,4 +184,14 @@
     <attr name="fab_labelsTextColor" format="color"/>
     <attr name="fab_background" format="color"/>
     <attr name="fab_item_background" format="reference"/>
+    <declare-styleable name="WarpLinearLayout">
+        <attr name="gravity" format="enum"><!--对齐方式 !-->
+            <enum name="right" value="0"></enum>
+            <enum name="left" value="1"></enum>
+            <enum name="center" value="2"></enum>
+        </attr>
+        <attr name="horizontal_Space" format="dimension"></attr>
+        <attr name="vertical_Space" format="dimension"></attr>
+        <attr name="isFull" format="boolean"></attr>
+    </declare-styleable>
 </resources>

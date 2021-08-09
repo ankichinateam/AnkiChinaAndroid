@@ -44,6 +44,7 @@ public abstract class AbstractSched {
     /** Ensure that the question on the potential next card can be accessed quickly.
      */
     public abstract void preloadNextCard();
+    public abstract void  loadTodayCard();
     public abstract void resetCounts();
     /** Ensures that reset is executed before the next card is selected */
     public abstract void deferReset();
@@ -131,6 +132,7 @@ public abstract class AbstractSched {
     public abstract @NonNull List<DeckDueTreeNode> deckDueList();
     /** load the due tree, but halt if deck task is cancelled*/
     public abstract @Nullable List<DeckDueTreeNode> deckDueTree(CollectionTask collectionTask);
+    public abstract @Nullable List<DeckDueTreeNode> deckDueTree(CollectionTask collectionTask,long deckID);
     public abstract @NonNull List<DeckDueTreeNode> deckDueTree();
     public abstract @NonNull List<DeckTreeNode> quickDeckDueTree();
     /** New count for a single deck. */

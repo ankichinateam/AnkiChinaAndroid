@@ -25,17 +25,17 @@
         android:onClick="onQuit"
         android:src="?attr/navBarBackRef" />
     <LinearLayout
+        android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingVertical="130dp"
         android:orientation="vertical"
-        android:weightSum="2">
+         >
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:minHeight="274dp"
             android:layout_marginHorizontal="12dp"
             app:cardCornerRadius="17dp"
             app:cardElevation="4dp">
@@ -44,6 +44,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:layout_gravity="center"
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp">
                 <TextView
@@ -79,9 +80,9 @@
             android:layout_width="match_parent"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="10dp"
+            android:minHeight="274dp"
             android:layout_marginHorizontal="12dp"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             app:cardCornerRadius="17dp"
             app:cardElevation="4dp">
 
@@ -89,6 +90,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:layout_gravity="center"
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp">
                 <TextView
@@ -102,7 +104,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:layout_marginTop="13dp"
-                    android:text="同步快，超容量收费，需自己承担服务器空间和流量成本。合适卡牌有较多图片、音频的用户。电脑端需下载Anki志愿版"
+                    android:text="同步快，超容量收费，需自己承担服务器空间和流量成本。合适卡牌有较多图片、音频的用户。电脑端需下载Anki记忆卡"
                     android:textColor="@color/new_primary_text_third_color"
                     android:textSize="15sp"
                     android:textStyle="bold" />

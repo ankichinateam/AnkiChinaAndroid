@@ -58,7 +58,9 @@ public class Storage {
         try {
             // initialize
             int ver;
+            Timber.i("new collection:"+create);
             if (create) {
+
                 ver = _createDB(db, time);
             } else {
                 ver = _upgradeSchema(db, time);
@@ -87,6 +89,7 @@ public class Storage {
 
 
     private static int _upgradeSchema(DB db, @NonNull Time time) {
+        Timber.i("_upgradeSchema db");
         int ver = db.queryScalar("SELECT ver FROM col");
         if (ver == Consts.SCHEMA_VERSION) {
             return ver;

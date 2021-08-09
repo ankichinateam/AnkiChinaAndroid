@@ -21,8 +21,10 @@ package com.ichi2.libanki.sched;
 import android.app.Activity;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.os.SystemClock;
 import android.text.TextUtils;
 
+import com.ichi2.anki.R;
 import com.ichi2.async.CollectionTask;
 import com.ichi2.libanki.Card;
 import com.ichi2.libanki.Collection;
@@ -33,6 +35,7 @@ import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.DeckConfig;
 
+import com.ichi2.libanki.stats.Stats;
 import com.ichi2.libanki.utils.Time;
 import com.ichi2.utils.Assert;
 import com.ichi2.utils.JSONArray;
@@ -54,6 +57,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import timber.log.Timber;
 
+import static com.ichi2.libanki.stats.Stats.ALL_DECKS_ID;
 import static com.ichi2.libanki.stats.Stats.SECONDS_PER_DAY;
 
 @SuppressWarnings({"PMD.ExcessiveClassLength", "PMD.AvoidThrowingRawExceptionTypes","PMD.AvoidReassigningParameters",
@@ -201,18 +205,23 @@ public class Sched extends SchedV2 {
     /**
      * Deck list **************************************************************** *******************************
      */
-
+     public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask) {
+        return deckDueList(collectionTask,ALL_DECKS_ID);
+    }
 
     /**
      * Returns [deckname, did, rev, lrn, new]
      */
     @Override
-    public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask) {
+    public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask,long did) {
         _checkDay();
         mCol.getDecks().checkIntegrity();
-        ArrayList<Deck> decks = mCol.getDecks().allSorted();
+        ArrayList<Deck> decks = deckLimitWithParent(did,mCol);
+//        ArrayList<Deck> decks = mCol.getDecks().allSorted();
+        Timber.i("show decks"+did+" size:"+decks.size());
         HashMap<String, Integer[]> lims = new HashMap<>();
         ArrayList<DeckDueTreeNode> data = new ArrayList<>();
+        long time = SystemClock.elapsedRealtime();
         for (Deck deck : decks) {
             if (collectionTask != null && collectionTask.isCancelled()) {
                 return null;
@@ -230,17 +239,30 @@ public class Sched extends SchedV2 {
                 // review
                 rlim = Math.min(rlim, parentLims[1]);
             }
+//            long time = SystemClock.elapsedRealtime();
             int _new = _newForDeck(deck.getLong("id"), nlim);
+//            Timber.i("cost time for new:"+(SystemClock.elapsedRealtime()-time));
+
             // learning
             int lrn = _lrnForDeck(deck.getLong("id"));
+//            Timber.i("cost time for lrn:"+(SystemClock.elapsedRealtime()-time));
+
             // reviews
             int rev = _revForDeck(deck.getLong("id"), rlim);
+//            Timber.i("cost time for rev:"+(SystemClock.elapsedRealtime()-time));
+
             // save to list
-            Timber.i("add deck in tree:%s", deckName);
-            data.add(new DeckDueTreeNode(mCol, deck.getString("name"), deck.getLong("id"), rev, lrn, _new));
+
+            double[] datas= did==ALL_DECKS_ID?_getCardDataCount(deck.getLong("id")):new double[]{0,0,0};
+//            Timber.i("cost time for datas:"+(SystemClock.elapsedRealtime()-time));
+
+//            Timber.i("add deck in tree:%s", deckName);
+
+            data.add(new DeckDueTreeNode(mCol, deck.getString("name"), deck.getLong("id"), rev, lrn, _new,datas));
             // add deck as a parent
             lims.put(Decks.normalizeName(deck.getString("name")), new Integer[]{nlim, rlim});
         }
+        Timber.i("cost time for datas:"+(SystemClock.elapsedRealtime()-time));
         return data;
     }
 
@@ -641,6 +663,7 @@ public class Sched extends SchedV2 {
     	return mCol.getDb().queryScalar("SELECT count() FROM (SELECT 1 FROM cards WHERE did = ? AND queue = " + Consts.QUEUE_TYPE_REV + " AND due <= ? LIMIT ?)",
                                         did, mToday, lim);
     }
+
 
 
     @Override

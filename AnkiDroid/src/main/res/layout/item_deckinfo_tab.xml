@@ -1,0 +1,27 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:paddingTop="5dp"
+    android:paddingBottom="9dp"
+    android:gravity="center_vertical"
+     >
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="start"
+        android:textStyle="bold"
+        android:text="学习"
+        android:textColor="@drawable/selector_option_tab_color"
+        android:textSize="17sp"
+         />
+    <ImageView
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/tab_deckpicker_indicator_selector"
+        android:layout_centerHorizontal="true"
+        android:layout_width="13dp"
+        android:layout_height="3dp"/>
+</RelativeLayout>

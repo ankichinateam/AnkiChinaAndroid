@@ -30,6 +30,9 @@
         <!-- Navigation drawer -->
         <item name="navDrawerItemColor">@color/drawer_item_text_dark</item>
         <item name="navDrawerItemBackgroundColor">@drawable/drawer_item_background_dark</item>
+        <item name="menuIconEdit">@mipmap/nav_bar_edit_normal</item>
+        <item name="itemIconFlagEmpty">@mipmap/button_white_flag_normal</item>
+        <item name="itemIconMarkEmpty">@drawable/ic_star_outline_white_24dp</item>
         <!-- App buttons -->
         <item name="largeButtonBackgroundColor">@color/material_light_blue_700</item>
         <item name="largeButtonBackgroundColorFocused">@color/material_light_blue_600</item>
@@ -61,11 +64,28 @@
         <item name="collapseRef">@mipmap/home_card_group_arrow_rotate</item>
         <item name="fileBagRef">@mipmap/home_card_group_normal_dark</item>
         <!-- Menu item list -->
-        <item name="syncIconRef">@drawable/home_sync_icon_selector_dark</item>
-        <item name="menuIconRef">@drawable/home_menu_icon_selector_dark</item>
+        <item name="syncIconRef">@drawable/ic_sync_white_24dp</item>
         <!-- Review Menu item list -->
         <item name="reviewMenuUndoIconRef">@drawable/review_menu_undo_selector_dark</item>
+        <item name="reviewMenuSpeakIconRef">@mipmap/nav_bar_aloud_normal</item>
         <item name="reviewMenuFlagIconRef">@drawable/review_menu_flag_selector_dark</item>
+        <item name="reviewMenuMarkIconRef">@drawable/ic_star_outline_white_24dp</item>
+        <item name="reviewMenuClearIconRef">@drawable/ic_clear_white_24dp</item>
+        <item name="reviewMenuGestureIconRef">@drawable/ic_gesture_white_24dp</item>
+        <item name="reviewMenuColorLensIconRef">@drawable/ic_color_lens_white_24dp</item>
+        <item name="reviewMenuEditIconRef">@drawable/ic_mode_edit_white_24dp</item>
+        <item name="reviewMenuTagIconRef">@drawable/ic_tag</item>
+        <item name="reviewMenuPlayIconRef">@drawable/ic_play_circle_white</item>
+        <item name="reviewMenuMicIconRef">@drawable/ic_action_mic</item>
+        <item name="reviewMenuFlipIconRef">@drawable/ic_flip_to_back_white_24dp</item>
+        <item name="reviewMenuSuspendIconRef">@drawable/ic_action_suspend</item>
+        <item name="reviewMenuSuspendDropDownIconRef">@drawable/ic_action_suspend_dropdown</item>
+        <item name="reviewMenuDeleteIconRef">@drawable/ic_delete_white_24dp</item>
+        <item name="reviewMenuRescheduleIconRef">@drawable/ic_card_reschedule_white</item>
+        <item name="reviewMenuUnSuspendIconRef">@drawable/ic_action_unsuspend</item>
+        <item name="reviewMenuFlipDropDownIconRef">@drawable/ic_flip_to_back_white_24px_dropdown</item>
+        <item name="reviewMenuEraserIconRef">@drawable/ic_eraser_variant_white_24dp</item>
+
         <item name="navBarBackRef">@drawable/nav_bar_back_selector_dark</item>
         <item name="navBarBackRefDark">@drawable/nav_bar_back_selector</item>
         <item name="navBarTimeRef">@drawable/nav_bar_time_selector_dark</item>
@@ -115,6 +135,7 @@
         <item name="hardButtonRef">@drawable/footer_button_hard</item>
         <item name="goodButtonRef">@drawable/footer_button_good</item>
         <item name="easyButtonRef">@drawable/footer_button_easy</item>
+        <item name="nextButtonRef">@drawable/footer_button_next</item>
         <item name="againButtonRippleRef">@drawable/footer_button_again_ripple</item>
         <item name="hardButtonRippleRef">@drawable/footer_button_hard_ripple</item>
         <item name="goodButtonRippleRef">@drawable/footer_button_good_ripple</item>
@@ -145,8 +166,8 @@
         <!-- Note editor colors -->
         <item name="duplicateColor">#855</item>
         <!-- FAB -->
-        <item name="fab_normal">@color/material_light_blue_700</item>
-        <item name="fab_pressed">@color/material_light_blue_900</item>
+        <item name="fab_normal">@color/primary_color</item>
+        <item name="fab_pressed">@color/stats_young</item>
         <item name="fab_labelsTextColor">@color/white</item>
         <item name="fab_background">@color/material_grey_700</item>
         <item name="fab_item_background">@drawable/fab_label_background_pre21</item>
@@ -163,6 +184,7 @@
 
 
         <item name="menuAddIcon">@drawable/ic_add_white_24dp</item>
+        <item name="menuAddDeck">@mipmap/home_tab_bar_creat_jiyik_normal</item>
     </style>
 
     <!-- Preferences screens -->

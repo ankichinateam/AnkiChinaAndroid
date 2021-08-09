@@ -53,11 +53,11 @@
     <string name="initializing_tts">正在初始化TTS引擎...</string>
     <string name="tts_no_tts">不要朗读</string>
     <string-array name="about_content">
-        <item><![CDATA[<h2>%1$s:<br/>Android上的卡片记忆应用</h2>Anki志愿版是一个与<a href=\"%2$s\">Anki桌面客户端</a>完全兼容的卡片记忆应用。你可以在Anki桌面客户端或者Anki志愿版添加和下载学习资料，它们可以很方便的通过AnkiWeb进行同步。]]></item>
-        <item><![CDATA[为了帮助改进Anki志愿版，请把Bugs发送到<a href=\"%1$s\">问题跟踪系统</a>；也欢迎提出新功能建议。\n在<a href=\"%2$s\">Anki志愿版的Wiki页面</a>上您可以找到一些问题的答案，也可以加入<a href=\"%3$s\">论坛</a>参与讨论。]]></item>
-        <item><![CDATA[Anki志愿版 是一个<a href=\"%1$s\">开源软件<a/>，鼓励每个人都<a href=\"%2$s\">成为它的贡献者</a>。:-)]]></item>
-        <item><![CDATA[非开发者亦可帮助。例如，你可以<a href=\"%1$s\">帮助翻译</a>Anki志愿版、更新wiki、提供屏幕截图，或写关于Anki志愿版的博客。]]></item>
-        <item><![CDATA[Anki志愿版 在<a href=\"%1$s\"> GNU GPL v3 许可证</a>下发布。源代码在<a href=\"%2$s\">GitHub</a>上提供。]]></item>
+        <item><![CDATA[<h2>%1$s:<br/>Android上的卡片记忆应用</h2>Anki记忆卡是一个与<a href=\"%2$s\">Anki桌面客户端</a>完全兼容的卡片记忆应用。你可以在Anki桌面客户端或者Anki记忆卡添加和下载学习资料，它们可以很方便的通过AnkiWeb进行同步。]]></item>
+        <item><![CDATA[为了帮助改进Anki记忆卡，请把Bugs发送到<a href=\"%1$s\">问题跟踪系统</a>；也欢迎提出新功能建议。\n在<a href=\"%2$s\">Anki记忆卡的Wiki页面</a>上您可以找到一些问题的答案，也可以加入<a href=\"%3$s\">论坛</a>参与讨论。]]></item>
+        <item><![CDATA[Anki记忆卡 是一个<a href=\"%1$s\">开源软件<a/>，鼓励每个人都<a href=\"%2$s\">成为它的贡献者</a>。:-)]]></item>
+        <item><![CDATA[非开发者亦可帮助。例如，你可以<a href=\"%1$s\">帮助翻译</a>Anki记忆卡、更新wiki、提供屏幕截图，或写关于Anki记忆卡的博客。]]></item>
+        <item><![CDATA[Anki记忆卡 在<a href=\"%1$s\"> GNU GPL v3 许可证</a>下发布。源代码在<a href=\"%2$s\">GitHub</a>上提供。]]></item>
     </string-array>
     <string name="preview_title">预览</string>
     <string name="reposition_card_dialog_title">更改新卡位置</string>
@@ -87,13 +87,13 @@
     <string name="reschedule_card_dialog_warning_ease_reset">重新安排计划还将重置调度器将来如何处理卡片（难度系数将设置为 %d%%）</string>
     <string name="firefox_workaround_launched_reviewer_opening_deck">在您的文件管理器中选择记忆库，或访问关于：下载页面以便导入</string>
     <string name="answering_error_title">数据库错误</string>
-    <string name="answering_error_message">写入集合时出错。可能是数据库损坏，或者磁盘空间不足。\n\n如果频繁发生此错误，请检查数据库，修复集合或从备份中恢复。点击\"选项\"按钮以执行上述操作。\n\n当然，也可能只是 Anki志愿版 的 bug，请报告这个错误，我们会尽力解决。</string>
+    <string name="answering_error_message">写入集合时出错。可能是数据库损坏，或者磁盘空间不足。\n\n如果频繁发生此错误，请检查数据库，修复集合或从备份中恢复。点击\"选项\"按钮以执行上述操作。\n\n当然，也可能只是 Anki记忆卡 的 bug，请报告这个错误，我们会尽力解决。</string>
     <string name="answering_error_report">报告错误</string>
     <string name="repair_deck_dialog">确实要尝试修复数据库吗？\n\n在开始前，副本将保存在子目录“%s”里。</string>
     <string name="intent_add_saved_information">已保存的数据</string>
     <string name="intent_add_clear_all">全部清除</string>
     <string name="intent_aedict_empty">类别“默认”为空</string>
-    <string name="intent_aedict_category">向Anki志愿版中添加卡牌，需要删除所有NotePad类别，或者添加“默认(default)”类别。</string>
+    <string name="intent_aedict_category">向Anki记忆卡中添加卡牌，需要删除所有NotePad类别，或者添加“默认(default)”类别。</string>
     <string name="custom_study_new_total_new">记忆库中的新卡片数量：%d</string>
     <string name="custom_study_rev_total_rev">记忆库中到期的卡牌数量：%d</string>
     <string name="custom_study_new_extend">增加/减少（“-3”）今天的新卡片限制</string>
@@ -116,6 +116,8 @@
     <string name="restore_backup">你的记忆库集合将会被替换成一个旧的副本，任何未保存的进程都将丢失。</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_ok">确定</string>
+    <string name="dialog_agree">同意</string>
+    <string name="dialog_disagree">拒绝</string>
     <string name="dialog_no">否</string>
     <string name="dialog_continue">继续</string>
     <string name="dialog_continue_ok">同意继续</string>
@@ -141,7 +143,7 @@
     <string name="check_media_nohave">被用于一些卡牌，但不存在于媒体文件夹中的文件：%d</string>
     <string name="check_media_no_unused_missing">没有发现未使用或缺失的文件</string>
     <string name="check_media_db_updated">媒体数据库已重建</string>
-    <string name="check_media_delete_unused">删除未使用的文件</string>
+    <string name="check_media_delete_unused">删除未使用及错误的文件</string>
     <string name="check_media_deleted">已删除文件：%d</string>
     <!-- Tags Dialog Options -->
     <string name="tags_dialog_option_all_cards">所有卡片</string>
@@ -159,10 +161,10 @@
     <!-- Multimedia - Audio View -->
     <string name="multimedia_editor_audio_permission_denied">音频录制权限被拒绝</string>
     <!-- Initial collection load -->
-<!--    <string name="collection_load_welcome_request_permissions_title">欢迎来到 Anki志愿版！</string>-->
+<!--    <string name="collection_load_welcome_request_permissions_title">欢迎来到 Anki记忆卡！</string>-->
     <string name="collection_load_welcome_request_permissions_title">用户协议和隐私政策</string>
     <string name="collection_load_welcome_request_permissions_details">为了遵守国家法律规定及监督规定，也为了向你提供服务及提升服务质量，我们需要向你说明以下政策内容。请你阅读完整版的用户协议和隐私政策
-\n1、 本《anki志愿版隐私政策》适用范围、相关词语涵义
+\n1、 本《anki记忆卡隐私政策》适用范围、相关词语涵义
 \n2、 我们如何收集和使用您的个人信息
 \n3、 我们如何使用Cookie和同类技术
 \n4、 我们如何共享、转让、公开披露您的个人信息
@@ -170,8 +172,8 @@
 \n6、 我们如何存储和保护您的个人信息  </string>
     <string name="mutimedia_editor_assertion_failed">显示高级编辑器时发生未知错误</string>
     <!-- Database Integrity Check -->
-    <string name="integrity_check_startup_title">Anki志愿版 已升级</string>
-    <string name="integrity_check_startup_content">Anki志愿版 已升级。此升级包括可能出现数据库问题的修复，我们建议您现在开始检查数据库。</string>
+    <string name="integrity_check_startup_title">Anki记忆卡 已升级</string>
+    <string name="integrity_check_startup_content">Anki记忆卡 已升级。此升级包括可能出现数据库问题的修复，我们建议您现在开始检查数据库。</string>
     <string name="integrity_check_positive">检查数据库</string>
     <string name="integrity_check_continue_anyway">仍要继续</string>
     <string name="integrity_check_insufficient_space">检查数据库使用大量临时存储。\n\n强烈建议您在继续之前在设备上至少有 %s 可用空间。</string>
@@ -186,7 +188,7 @@
     <string name="deck_options_corrupt">处理记忆库选项失败：%s</string>
     <!-- Database Errors-->
     <string name="database_locked_title">数据库已锁定</string>
-    <string name="database_locked_summary">Anki志愿版 数据库正在被另一个应用程序使用。请关闭另一个应用程序然后重新打开 Anki志愿版。</string>
+    <string name="database_locked_summary">Anki记忆卡 数据库正在被另一个应用程序使用。请关闭另一个应用程序然后重新打开 Anki记忆卡。</string>
     <!-- Deck Picker Background-->
     <string name="background_image_applied">已应用背景图片</string>
     <string name="background_image_removed">已移除背景图片</string>
@@ -200,7 +202,7 @@
     <!-- Also used by Card Browser, not renaming to save translators effort -->
     <string name="intent_handler_failed_no_storage_permission">缺少所需的存储权限。请授予存储权限，然后重试您的操作。</string>
     <string name="need_storage_permission_title">请开启存储授权</string>
-    <string name="need_storage_permission_content">ANKI志愿版是基于存储授权，才能实现卡牌的导入和笔记的创建，拒绝授权后无法使用ANKI志愿版的核心功能，请务必开启授权。</string>
+    <string name="need_storage_permission_content">ANKI记忆卡是基于存储授权，才能实现卡牌的导入和笔记的创建，拒绝授权后无法使用ANKI记忆卡的核心功能，请务必开启授权。</string>
     <string name="need_storage_permission_confirm">允许</string>
     <string name="need_storage_permission_deny">拒绝</string>
     <!-- Browser Appearance -->

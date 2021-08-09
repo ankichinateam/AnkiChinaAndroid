@@ -264,9 +264,21 @@ public class Syncer {
 
                 publishProgress(con, R.string.sync_writing_db);
                 mCol.getDb().getDatabase().setTransactionSuccessful();
+            } catch (NoEnoughServerSpaceException e) {
+//                mCol.getDb().getDatabase().endTransaction();
+                throw new NoEnoughServerSpaceException(e.rest, e.need);
+//                e.printStackTrace();
+//                mCol.getDb().getDatabase().endTransaction();
+//                return new Object[] {"noServerSpace", e.rest, e.need};
             } finally {
                 mCol.getDb().getDatabase().endTransaction();
             }
+        } catch (NoEnoughServerSpaceException e) {
+            Timber.e("NoEnoughServerSpaceException ");
+            throw new NoEnoughServerSpaceException(e.rest, e.need);
+//                e.printStackTrace();
+//                mCol.getDb().getDatabase().endTransaction();
+//                return new Object[] {"noServerSpace", e.rest, e.need};
         } catch (IllegalStateException e) {
             throw new RuntimeException(e);
         } catch (OutOfMemoryError e) {
@@ -942,7 +954,8 @@ public class Syncer {
     private void throwExceptionIfCancelled(Connection con) {
         if (Connection.getIsCancelled()) {
             Timber.i("Sync was cancelled");
-            publishProgress(con, R.string.sync_cancelled);
+            publishProgress(con,  serverSpaceException?R.string.cloud_space_not_enough:R.string.sync_cancelled);
+            serverSpaceException=false;
             try {
                 mServer.abort();
             } catch (UnknownHttpResponseException e) {
@@ -953,12 +966,15 @@ public class Syncer {
     private static class UnexpectedSchemaChange extends Exception {
     }
 
+    boolean serverSpaceException;
     private void throwExceptionIfNoSpace(long needSpace, long restSpace) throws NoEnoughServerSpaceException {
-        Connection.cancel();
-        try {
-            mServer.abort();
-        } catch (UnknownHttpResponseException e) {
-        }
+        serverSpaceException=true;
+//        Connection.cancel();
+//        try {
+//            mServer.abort();
+//        } catch (UnknownHttpResponseException e) {
+//
+//        }
         throw new NoEnoughServerSpaceException(restSpace, needSpace  );
 
     }

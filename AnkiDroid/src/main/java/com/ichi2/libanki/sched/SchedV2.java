@@ -42,9 +42,11 @@ import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.DeckConfig;
 
+import com.ichi2.libanki.stats.Stats;
 import com.ichi2.libanki.utils.SystemTime;
 import com.ichi2.libanki.utils.Time;
 import com.ichi2.utils.Assert;
+import com.ichi2.utils.DeckComparator;
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONException;
 import com.ichi2.utils.JSONObject;
@@ -69,6 +71,7 @@ import androidx.annotation.VisibleForTesting;
 import timber.log.Timber;
 
 import static com.ichi2.libanki.sched.AbstractSched.UnburyType.*;
+import static com.ichi2.libanki.stats.Stats.ALL_DECKS_ID;
 import static com.ichi2.libanki.stats.Stats.SECONDS_PER_DAY;
 
 @SuppressWarnings({"PMD.ExcessiveClassLength", "PMD.AvoidThrowingRawExceptionTypes","PMD.AvoidReassigningParameters",
@@ -448,6 +451,7 @@ public class SchedV2 extends AbstractSched {
             // and add to running total
             tot += cnt;
         }
+        Timber.e("walking deck count:"+pcounts.size()+",today new  card count:"+tot);
         return tot;
     }
 
@@ -456,21 +460,60 @@ public class SchedV2 extends AbstractSched {
      * Deck list **************************************************************** *******************************
      */
 
-
+//    public static int ALL_DECK=-10086;
     /**
      * Returns [deckname, did, rev, lrn, new]
      *
      * Return nulls when deck task is cancelled.
      */
     public @NonNull List<DeckDueTreeNode> deckDueList() {
-        return deckDueList(null);
+        return deckDueList(null,ALL_DECKS_ID);
     }
+    public static ArrayList<Deck> deckLimit(Long deckId, Collection col) {
+        if (deckId == ALL_DECKS_ID) {
+            return col.getDecks().allSorted();
+        } else {
+            // The given deck id and its children
+            ArrayList<Deck> decks = new ArrayList<>();
+            ArrayList<Long> ids = new ArrayList<>();
+            ids.add(deckId);
+            ids.addAll(col.getDecks().children(deckId).values());
+            for(long id :ids){
+                decks.add(col.getDecks().get(id));
+            }
+            Collections.sort(decks, DeckComparator.instance);
+            return decks;
+        }
 
+    }
+    public static ArrayList<Deck> deckLimitWithParent(Long deckId, Collection col) {
+        if (deckId == ALL_DECKS_ID) {
+            return col.getDecks().allSorted();
+        } else {
+            // The given deck id and its children
+            ArrayList<Deck> decks = new ArrayList<>();
+            ArrayList<Long> ids = new ArrayList<>();
+            ids.add(deckId);
+            ids.addAll(col.getDecks().children(deckId).values());
+            for(Deck parent : col.getDecks().parents(deckId)){
+                ids.add(parent.optLong("id"));
+            }
+            for(long id :ids){
+                decks.add(col.getDecks().get(id));
+            }
+            Collections.sort(decks, DeckComparator.instance);
+            return decks;
+        }
+
+    }
     // Overridden
-    public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask) {
+    public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask,long did) {
         _checkDay();
         mCol.getDecks().checkIntegrity();
-        ArrayList<Deck> decks = mCol.getDecks().allSorted();
+
+//        ArrayList<Deck> decks = mCol.getDecks().allSorted();
+        ArrayList<Deck> decks = deckLimitWithParent(did,mCol);
+        Timber.i("show decks"+did+" size:"+decks.size());
         HashMap<String, Integer[]> lims = new HashMap<>();
         ArrayList<DeckDueTreeNode> data = new ArrayList<>();
         HashMap<Long, HashMap> childMap = mCol.getDecks().childMap();
@@ -497,15 +540,38 @@ public class SchedV2 extends AbstractSched {
             // reviews
             int rlim = _deckRevLimitSingle(deck, plim);
             int rev = _revForDeck(deck.getLong("id"), rlim, childMap);
+            double[] datas= did==ALL_DECKS_ID?_getCardDataCount(deck.getLong("id")):new double[]{0,0,0};
             // save to list
-            Timber.i("add deck in tree:%s", deckName);
-            data.add(new DeckDueTreeNode(mCol, deck.getString("name"), deck.getLong("id"), rev, lrn, _new));
+//            Timber.i("add deck in tree:%s", deckName);
+            data.add(new DeckDueTreeNode(mCol, deck.getString("name"), deck.getLong("id"), rev, lrn, _new,datas));
             // add deck as a parent
             lims.put(Decks.normalizeName(deck.getString("name")), new Integer[]{nlim, rlim});
         }
         return data;
     }
 
+    protected double[] _getCardDataCount(long did) {
+        double[] pieData;
+        Cursor cur = null;
+        String query = "select " +
+                "sum(case when queue=" + Consts.QUEUE_TYPE_REV + " and ivl >= 21 then 1 else 0 end), -- mtr\n" +
+                "sum(case when queue in (" + Consts.QUEUE_TYPE_LRN + "," + Consts.QUEUE_TYPE_DAY_LEARN_RELEARN + ") or (queue=" + Consts.QUEUE_TYPE_REV + " and ivl < 21) then 1 else 0 end), -- yng/lrn\n" +
+                "sum(case when queue=" + Consts.QUEUE_TYPE_NEW + " then 1 else 0 end) -- new\n" +
+                "from cards where did in " + Stats.deckLimit(did,mCol);
+//        Timber.d("CardsTypes query: %s", query);
+        try {
+            cur = mCol.getDb()
+                    .getDatabase()
+                    .query(query, null);
+            cur.moveToFirst();
+            pieData = new double[] {cur.getDouble(0), cur.getDouble(1), cur.getDouble(2) };
+        } finally {
+            if (cur != null && !cur.isClosed()) {
+                cur.close();
+            }
+        }
+        return pieData;
+    }
     /** Similar to deck due tree, but ignore the number of cards.
 
      It may takes a lot of time to compute the number of card, it
@@ -533,12 +599,21 @@ public class SchedV2 extends AbstractSched {
 
     @Nullable
     public List<DeckDueTreeNode> deckDueTree(@Nullable CollectionTask collectionTask) {
-        List<DeckDueTreeNode> deckDueTree = deckDueList(collectionTask);
+        return deckDueTree(collectionTask, ALL_DECKS_ID);
+    }
+
+
+    @Nullable
+    @org.jetbrains.annotations.Nullable
+    @Override
+    public List<DeckDueTreeNode> deckDueTree(CollectionTask collectionTask, long deckID) {
+        List<DeckDueTreeNode> deckDueTree = deckDueList(collectionTask,deckID);
         if (deckDueTree == null) {
             return null;
         }
         return _groupChildren(deckDueTree, true);
     }
+
 
     private @NonNull <T extends AbstractDeckTreeNode> List<T> _groupChildren(@NonNull List<T> grps, boolean checkDone) {
         // sort based on name's components
@@ -711,8 +786,15 @@ public class SchedV2 extends AbstractSched {
             resetQueues(false);
         }
         for (CardQueue<? extends Card.Cache> caches: _fillNextCard()) {
+            Timber.i("load next card:"+mNewQueue.size()+","+mLrnQueue.size()+","+mRevQueue.size()+","+mLrnDayQueue.size());
             caches.loadFirstCard();
         }
+    }
+
+
+    @Override
+    public void loadTodayCard() {
+
     }
 
 
@@ -820,12 +902,14 @@ public class SchedV2 extends AbstractSched {
                     // Note: libanki reverses mNewQueue and returns the last element in _getNewCard().
                     // AnkiDroid differs by leaving the queue intact and returning the *first* element
                     // in _getNewCard().
+                    Timber.i("final new queue size:"+mNewQueue.size()+",now new count:"+mNewCount+",now lim:"+lim);
                     return true;
                 }
             }
             // nothing left in the deck; move to next
             mNewDids.remove();
         }
+        Timber.i("final new queue size:"+mNewQueue.size()+",now new count:"+mNewCount);
         // if we didn't get a card, since the count is non-zero, we
         // need to check again for any cards that were removed
         // from the queue but not buried
@@ -1511,6 +1595,13 @@ public class SchedV2 extends AbstractSched {
                                         mToday, lim);
     }
 
+    protected int _handledForDeck(long did, int lim, @NonNull HashMap<Long, HashMap> childMap) {
+        List<Long> dids = mCol.getDecks().childDids(did, childMap);
+        dids.add(0, did);
+        lim = Math.min(lim, mReportLimit);
+        return mCol.getDb().queryScalar("SELECT count() FROM (SELECT 1 FROM cards WHERE did in " + Utils.ids2str(dids) + " AND queue = " + Consts.QUEUE_TYPE_REV + " ivl >= 21 LIMIT ?)",
+               lim);
+    }
     // Overriden: V1 uses _walkingCount
     protected void _resetRevCount() {
         int lim = _currentRevLimit();
@@ -2336,6 +2427,8 @@ public class SchedV2 extends AbstractSched {
         String s = Utils.timeQuantityNextIvl(context, ivl);
         if (ivl < mCol.getConf().getInt("collapseTime")) {
             s = context.getString(R.string.less_than_time, s);
+        }else {
+            s = context.getString(R.string.more_than_time, s);
         }
         return s;
     }

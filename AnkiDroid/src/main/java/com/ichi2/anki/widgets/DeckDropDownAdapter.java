@@ -70,8 +70,8 @@ public final class DeckDropDownAdapter extends BaseAdapter {
         TextView deckCountsView;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(layout, parent, false);
-            deckNameView = (TextView) convertView.findViewById(R.id.dropdown_deck_name);
-            deckCountsView = (TextView) convertView.findViewById(R.id.dropdown_deck_counts);
+            deckNameView = convertView.findViewById(R.id.dropdown_deck_name);
+            deckCountsView = convertView.findViewById(R.id.dropdown_deck_counts);
             viewHolder = new DeckDropDownViewHolder();
             viewHolder.deckNameView = deckNameView;
             viewHolder.deckCountsView = deckCountsView;
@@ -89,6 +89,7 @@ public final class DeckDropDownAdapter extends BaseAdapter {
             String deckName = deck.getString("name");
             deckNameView.setText(deckName);
         }
+        if(deckCountsView!=null)
         deckCountsView.setText(listener.getSubtitleText());
         return convertView;
     }

@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -33,6 +34,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.appcompat.widget.Toolbar;
 
+import android.os.Handler;
+import android.text.Editable;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -43,6 +46,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -50,7 +54,11 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.ichi2.anim.ActivityTransitionAnimation;
+import com.ichi2.anki.AbstractFlashcardViewer.NextCardHandler;
 import com.ichi2.anki.dialogs.CustomStudyDialog;
 import com.ichi2.anki.dialogs.DeckPickerContextMenu;
 import com.ichi2.anki.widgets.DeckInfoListAdapter;
@@ -59,6 +67,7 @@ import com.ichi2.async.TaskListener;
 import com.ichi2.async.TaskListenerWithContext;
 import com.ichi2.compat.CompatHelper;
 import com.ichi2.libanki.Collection;
+import com.ichi2.libanki.DeckConfig;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.Deck;
@@ -70,19 +79,31 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java8.util.Maps;
 import timber.log.Timber;
 
 import static com.ichi2.anki.DeckPicker.REQUEST_BROWSE_CARDS;
 import static com.ichi2.anki.DeckPicker.SHOW_STUDYOPTIONS;
 import static com.ichi2.anki.DeckPicker.fadeIn;
 import static com.ichi2.anki.DeckPicker.fadeOut;
+import static com.ichi2.anki.StudySettingActivity.KEY_MIND_MODE;
+import static com.ichi2.anki.StudySettingActivity.KEY_STOPPED;
+import static com.ichi2.anki.StudySettingActivity.STUDY_SETTING;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.*;
+import static com.ichi2.libanki.Consts.KEY_SHOW_TTS_ICON;
+import static com.ichi2.libanki.stats.Stats.ALL_DECKS_ID;
 import static com.ichi2.libanki.stats.Stats.AxisType.TYPE_LIFE;
+import static com.ichi2.preferences.StepsPreference.convertToJSON;
 
 import com.ichi2.async.TaskData;
+import com.ichi2.ui.CustomStyleDialog;
+import com.ichi2.utils.JSONArray;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -132,8 +153,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
      * deck.
      */
     private long mFocusedDeck;
-
-
+    private boolean firstLoadDeck=true;
     @Override
     public void onResume() {
         super.onResume();
@@ -141,12 +161,22 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         if (getAnkiActivity() == null) {
             return;
         }
+        if (mTabLayout != null) {
+            mTabLayout.selectTab(mTabLayout.getTabAt(0));
+        }
         if (mCacheID != -1) {
             getCol().getDecks().select(mCacheID);
         } else {
             mCacheID = getCol().getDecks().selected();
         }
-        refreshInterface(true);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                firstLoadDeck=false;
+                refreshInterface(true);
+
+            }
+        },firstLoadDeck?0:500);
 //        updateDeckList();
         /** Complete task and enqueue fetching nonessential data for
          * startup. */
@@ -193,6 +223,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                 mDeckListAdapter.notifyDataSetChanged();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             // Maybe later don't report if collectionIsOpen is false?
             String info = deckId + " colOpen:" + collectionIsOpen;
             AnkiDroidApp.sendExceptionReport(e, "deckPicker::onDeckClick", info);
@@ -230,8 +261,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
     Toolbar mToolbar;
     TextView mTextNewCardToday, mTextReviewCardToday, mCostTime, mCostTimeUnit;
+    private DeckConfig mOptions;
 
-
+    private TabLayout mTabLayout;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -239,16 +271,46 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             return null;
         }
         mStudyOptionsView = inflater.inflate(R.layout.studyoptions_fragment, container, false);
+        initOption();
         //we need to restore here, as we need it before super.onCreate() is called.
         // Open Collection on UI thread while splash screen is showing
         mToolbar = mStudyOptionsView.findViewById(R.id.toolbar);
         if (mToolbar != null) {
             mToolbar.inflateMenu(R.menu.study_options_fragment);
             mToolbar.setNavigationOnClickListener(v -> onNavigationPressed());
-            TextView title = mToolbar.findViewById(R.id.toolbar_title);
-            title.setOnClickListener(v -> getAnkiActivity().startActivityForResultWithAnimation(new Intent(getAnkiActivity(), CardBrowser.class), REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT));
-            title.setVisibility(View.VISIBLE);
-            title.setText("卡牌浏览器");
+//            TextView title = mToolbar.findViewById(R.id.toolbar_title);
+//            title.setOnClickListener(v -> getAnkiActivity().startActivityForResultWithAnimation(new Intent(getAnkiActivity(), CardBrowser.class), REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT));
+//            title.setVisibility(View.VISIBLE);
+//            title.setText("卡牌浏览器");
+            mTabLayout = mToolbar.findViewById(R.id.tab_layout);
+            TabLayout.Tab tab = mTabLayout.newTab();
+            View view = getLayoutInflater().inflate(R.layout.item_deckinfo_tab, null);
+            ((TextView) view.findViewById(R.id.name)).setText("学习");
+            tab.setCustomView(view);
+            mTabLayout.addTab(tab);
+            TabLayout.Tab tab2 = mTabLayout.newTab();
+            View view2 = getLayoutInflater().inflate(R.layout.item_deckinfo_tab, null);
+            ((TextView) view2.findViewById(R.id.name)).setText("笔记");
+            tab2.setCustomView(view2);
+            mTabLayout.addTab(tab2);
+            mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    if (tab == tab2) {
+                        getAnkiActivity().openCardBrowser();
+                    }
+                }
+
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+
+                }
+
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+
+                }
+            });
             configureToolbar();
         }
 //        refreshInterface(true);
@@ -273,9 +335,10 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         TypedArray ta = getContext().obtainStyledAttributes(new int[] {R.attr.deckDivider});
         Drawable divider = ta.getDrawable(0);
         ta.recycle();
-        DividerItemDecoration dividerDecorator = new DividerItemDecoration(getAnkiActivity(), mRecyclerViewLayoutManager.getOrientation());
-        dividerDecorator.setDrawable(divider);
-        mRecyclerView.addItemDecoration(dividerDecorator);
+//        DividerItemDecoration dividerDecorator = new DividerItemDecoration(getAnkiActivity(), mRecyclerViewLayoutManager.getOrientation());
+//        dividerDecorator.setDrawable(divider);
+//
+//        mRecyclerView.addItemDecoration(dividerDecorator);
         // create and set an adapter for the RecyclerView
         mDeckListAdapter = new DeckInfoListAdapter(getLayoutInflater(), getAnkiActivity());
         mDeckListAdapter.setDeckClickListener(mDeckClickListener);
@@ -287,8 +350,32 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
         mShortAnimDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-
         return mStudyOptionsView;
+    }
+
+
+    private void initOption() {
+        Collection mCol = getCol();
+        Deck deck = getCol().getDecks().current();
+        mOptions = null;
+        if (deck.optInt("dyn", 0) != 1) {
+            long id = deck.getLong("id");
+            mOptions = mCol.getDecks().confForDid(id);
+            if (deck.getLong("conf") == 1 && id != 1) {
+                long confID = mCol.getDecks().confId(deck.getString("name"), mOptions.toString());
+                deck.put("conf", confID);
+                mCol.getDecks().save(deck);
+                mOptions = mCol.getDecks().confForDid(id);
+
+                TreeMap<String, Long> children = getCol().getDecks().children(id);
+                Set<String> childKeys = children.keySet();
+                for (String str : childKeys) {
+                    Deck child = getCol().getDecks().get(children.get(str));
+                    child.put("conf", confID);
+                    getCol().getDecks().save(child);
+                }
+            }
+        }
     }
 
 
@@ -382,64 +469,64 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         // Get some info about the deck to handle special cases
         int pos = mDeckListAdapter.findDeckPosition(did);
         AbstractDeckTreeNode deckDueTreeNode = mDeckListAdapter.getDeckList().get(pos);
-        if (!deckDueTreeNode.shouldDisplayCounts() || deckDueTreeNode.knownToHaveRep()) {
-            // If we don't yet have numbers, we trust the user that they knows what they opens, tries to open it.
-            // If there is nothing to review, it'll come back to deck picker.
-            openReviewerOrStudyOptions(dontSkipStudyOptions);
-            return;
-        }
+//        if (!deckDueTreeNode.shouldDisplayCounts() || deckDueTreeNode.knownToHaveRep()) {
+        // If we don't yet have numbers, we trust the user that they knows what they opens, tries to open it.
+        // If there is nothing to review, it'll come back to deck picker.
+        openReviewerOrStudyOptions(dontSkipStudyOptions);
+//            return;
+//        }
         // There are numbers
         // Figure out what action to take
-        if (getCol().getSched().hasCardsTodayAfterStudyAheadLimit()) {
-            // If there are cards due that can't be studied yet (due to the learn ahead limit) then go to study options
-            openStudyOptions(false);
-        } else if (getCol().getSched().newDue() || getCol().getSched().revDue()) {
-            // If there are no cards to review because of the daily study limit then give "Study more" option
-            UIUtils.showSnackbar(getAnkiActivity(), R.string.studyoptions_limit_reached, false, R.string.study_more, v -> {
-                CustomStudyDialog d = CustomStudyDialog.newInstance(
-                        CustomStudyDialog.CONTEXT_MENU_LIMITS,
-                        getCol().getDecks().selected(), true, this);
-                showDialogFragment(d);
-            }, getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-            // Check if we need to update the fragment or update the deck list. The same checks
-            // are required for all snackbars below.
-            if (mFragmented) {
-                // Tablets must always show the study options that corresponds to the current deck,
-                // regardless of whether the deck is currently reviewable or not.
-                openStudyOptions(false);
-            } else {
-                // On phones, we update the deck list to ensure the currently selected deck is
-                // highlighted correctly.
-                updateDeckList();
-            }
-        } else if (getCol().getDecks().isDyn(did)) {
-            // Go to the study options screen if filtered deck with no cards to study
-            openStudyOptions(false);
-        } else if (!deckDueTreeNode.hasChildren() && getCol().cardCount(new Long[] {did}) == 0) {
-            // If the deck is empty and has no children then show a message saying it's empty
-            final Uri helpUrl = Uri.parse(getResources().getString(R.string.link_manual_getting_started));
-            getAnkiActivity().mayOpenUrl(helpUrl);
-            UIUtils.showSnackbar(getAnkiActivity(), R.string.empty_deck, false, R.string.help,
-                    v -> openHelpUrl(helpUrl), getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-            if (mFragmented) {
-                openStudyOptions(false);
-            } else {
-                updateDeckList();
-            }
-        } else {
-            // Otherwise say there are no cards scheduled to study, and give option to do custom study
-            UIUtils.showSnackbar(getAnkiActivity(), R.string.studyoptions_empty_schedule, false, R.string.custom_study, v -> {
-                CustomStudyDialog d = CustomStudyDialog.newInstance(
-                        CustomStudyDialog.CONTEXT_MENU_EMPTY_SCHEDULE,
-                        getCol().getDecks().selected(), true, this);
-                showDialogFragment(d);
-            }, getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
-            if (mFragmented) {
-                openStudyOptions(false);
-            } else {
-                updateDeckList();
-            }
-        }
+//        if (getCol().getSched().hasCardsTodayAfterStudyAheadLimit()) {
+//            // If there are cards due that can't be studied yet (due to the learn ahead limit) then go to study options
+//            openStudyOptions(false);
+//        } else if (getCol().getSched().newDue() || getCol().getSched().revDue()) {
+//            // If there are no cards to review because of the daily study limit then give "Study more" option
+//            UIUtils.showSnackbar(getAnkiActivity(), R.string.studyoptions_limit_reached, false, R.string.study_more, v -> {
+//                CustomStudyDialog d = CustomStudyDialog.newInstance(
+//                        CustomStudyDialog.CONTEXT_MENU_LIMITS,
+//                        getCol().getDecks().selected(), true, this);
+//                showDialogFragment(d);
+//            }, getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
+//            // Check if we need to update the fragment or update the deck list. The same checks
+//            // are required for all snackbars below.
+//            if (mFragmented) {
+//                // Tablets must always show the study options that corresponds to the current deck,
+//                // regardless of whether the deck is currently reviewable or not.
+//                openStudyOptions(false);
+//            } else {
+//                // On phones, we update the deck list to ensure the currently selected deck is
+//                // highlighted correctly.
+//                updateDeckList();
+//            }
+//        } else if (getCol().getDecks().isDyn(did)) {
+//            // Go to the study options screen if filtered deck with no cards to study
+//            openStudyOptions(false);
+//        } else if (!deckDueTreeNode.hasChildren() && getCol().cardCount(new Long[] {did}) == 0) {
+//            // If the deck is empty and has no children then show a message saying it's empty
+//            final Uri helpUrl = Uri.parse(getResources().getString(R.string.link_manual_getting_started));
+//            getAnkiActivity().mayOpenUrl(helpUrl);
+//            UIUtils.showSnackbar(getAnkiActivity(), R.string.empty_deck, false, R.string.help,
+//                    v -> openHelpUrl(helpUrl), getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
+//            if (mFragmented) {
+//                openStudyOptions(false);
+//            } else {
+//                updateDeckList();
+//            }
+//        } else {
+//            // Otherwise say there are no cards scheduled to study, and give option to do custom study
+//            UIUtils.showSnackbar(getAnkiActivity(), R.string.studyoptions_empty_schedule, false, R.string.custom_study, v -> {
+//                CustomStudyDialog d = CustomStudyDialog.newInstance(
+//                        CustomStudyDialog.CONTEXT_MENU_EMPTY_SCHEDULE,
+//                        getCol().getDecks().selected(), true, this);
+//                showDialogFragment(d);
+//            }, getView().findViewById(R.id.root_layout), mSnackbarShowHideCallback);
+//            if (mFragmented) {
+//                openStudyOptions(false);
+//            } else {
+//                updateDeckList();
+//            }
+//        }
     }
 
 
@@ -486,6 +573,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
         @Override
         public void actualOnPreExecute(@NonNull StudyOptionsFragment deckPicker) {
+            if (deckPicker.getAnkiActivity() == null) {
+                return;
+            }
             if (!deckPicker.getAnkiActivity().colIsOpen()) {
                 deckPicker.getAnkiActivity().showProgressBar();
             }
@@ -496,6 +586,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         @Override
         public void actualOnPostExecute(@NonNull StudyOptionsFragment deckPicker, TaskData result) {
             Timber.i("Updating deck list UI");
+            if (deckPicker.getAnkiActivity() == null) {
+                return;
+            }
             deckPicker.getAnkiActivity().hideProgressBar();
             // Make sure the fragment is visible
             if (deckPicker.mFragmented) {
@@ -531,42 +624,66 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     public void updateDeckList(boolean quick) {
         processNames();
         TaskListener listener = updateDeckListListener();
-        CollectionTask.TASK_TYPE taskType = quick ? LOAD_DECK_QUICK : LOAD_DECK_COUNTS;
-        CollectionTask.launchCollectionTask(taskType, listener);
+        CollectionTask.TASK_TYPE taskType = quick ? LOAD_DECK_QUICK : LOAD_SPECIFIC_DECK_COUNTS;
+        CollectionTask.launchCollectionTask(taskType, listener,new TaskData(mCacheID));
     }
 
 
     private boolean mHasSubDecks = false;
 
+    private boolean isInitStruct(){
+        StringBuilder initIds = new StringBuilder(AnkiDroidApp.getSharedPrefs(getAnkiActivity()).getString(KEY_STRUCT_INIT, ""));
+        if (initIds.length() > 0) {
+            String[] ids = initIds.toString().split(",");
+            if (ids.length > 0) {
+                for (String id : ids) {
+                    if (getCol().getDecks().current().getLong("id") == Long.parseLong(id)) {
+                        //已经初始化过了，直接跳过
+                        return true;
+                    }
+                }
+            }
+
+        }
+//        //没初始化过，那现在也初始化了。
+//        if (!initIds.toString().isEmpty()) {
+//            initIds.append(",");
+//        }
+//        initIds.append(getCol().getDecks().current().getLong("id"));
+//        AnkiDroidApp.getSharedPrefs(getAnkiActivity()).edit().putString(KEY_STRUCT_INIT, initIds.toString()).apply();
+        return false;
+    }
 
     private void processNames() {
-        if (mInitCollapsedStatus) {
-            return;
-        }
         Deck deck = getCol().getDecks().current();
-
         long id = deck.optLong("id");
+        TreeMap<String, Long> children = getCol().getDecks().children(id);
         for (Deck parent : getCol().getDecks().parents(id)) {
-            Timber.d("my parents names:%s", parent.optString("name"));
             parent.put("collapsed", false);//祖先节点全部打开
             getCol().getDecks().save(parent);
-
         }
-        TreeMap<String, Long> children = getCol().getDecks().children(id);
-        Set<String> childKeys = children.keySet();
-        for (String str : childKeys) {
-            //孩子节点全部打开
-            Timber.d("my child name:%s，%s", str, children.get(str));
-            getCol().getDecks().get(children.get(str)).put("collapsed", false);
-            getCol().getDecks().save(getCol().getDecks().get(children.get(str)));
-        }
-        if (children.size() > 0) {
-            mHasSubDecks = true;
-            deck.put("collapsed", false);
-            getCol().getDecks().save(deck);
-        } else {
-            mHasSubDecks = false;
-        }
+//        if (mInitCollapsedStatus||isInitStruct()) {
+//            //默认要打开自己
+//            deck.put("collapsed", false);
+//            getCol().getDecks().save(deck);
+//            return;
+//        }
+//        TreeMap<String, Long> children = getCol().getDecks().children(id);
+//        Set<String> childKeys = children.keySet();
+//        for (String str : childKeys) {
+//            //孩子节点全部打开
+////            Timber.d("my child name:%s，%s", str, children.get(str));
+//            getCol().getDecks().get(children.get(str)).put("collapsed", false);
+//            getCol().getDecks().save(getCol().getDecks().get(children.get(str)));
+//        }
+//        if (children.size() > 0) {
+//            mHasSubDecks = true;
+//            deck.put("collapsed", false);
+//            getCol().getDecks().save(deck);
+//        } else {
+//            mHasSubDecks = false;
+//        }
+        mHasSubDecks=children.size() > 0;
         mNoSubDeckHint.setText(mHasSubDecks ? "" : "暂无子记忆库");
         mInitCollapsedStatus = true;
     }
@@ -610,7 +727,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             // We're done here
             return;
         }
-        Timber.i("update adapter list :" + mDueTree.size());
+        Timber.i("update adapter list :%s", mDueTree.size());
         mDeckListAdapter.buildDeckList(mDueTree, getCol());
 
         // Set the "x due in y minutes" subtitle
@@ -631,11 +748,11 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //            Timber.e(e, "RuntimeException setting time remaining");
 //        }
 
-        long current = getCol().getDecks().current().optLong("id");
-        if (mFocusedDeck != current) {
-            scrollDecklistToDeck(current);
-            mFocusedDeck = current;
-        }
+//        long current = getCol().getDecks().current().optLong("id");
+//        if (mFocusedDeck != current) {
+//            scrollDecklistToDeck(current);
+//            mFocusedDeck = current;
+//        }
     }
 
 
@@ -708,8 +825,10 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     private final View.OnClickListener mSelfStudyListener = v -> {
 
         Intent intent = new Intent(getActivity(), SelfStudyActivity.class);
+        intent.putExtra("type", (int) v.getTag());
         startActivity(intent);
     };
+
     private final View.OnClickListener mButtonClickListener = v -> {
 
         if (mCurrentContentView != CONTENT_CONGRATS) {
@@ -737,34 +856,43 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         EditText addNewEditor = mCustomStudyDialog.findViewById(R.id.add_new_card);
         EditText addRevEditor = mCustomStudyDialog.findViewById(R.id.add_rev_card);
-        ((TextView) mCustomStudyDialog.findViewById(R.id.content)).setText(String.format(getAnkiActivity().getString(R.string.custom_study_dialog_content), col.getSched().totalNewForCurrentDeck(), col.getSched().totalRevForCurrentDeck()));
-        mCustomStudyDialog.findViewById(R.id.start).setOnClickListener(view1 -> {
-            int addNew = 0;
-            try {
-                addNew = Integer.parseInt(addNewEditor.getText().toString());
-            } catch (Exception ignored) {
+        int totalNew = col.getSched().totalNewForCurrentDeck();
+        int totalRev = col.getSched().totalRevForCurrentDeck();
+        ((TextView) mCustomStudyDialog.findViewById(R.id.content)).setText(String.format(getAnkiActivity().getString(R.string.custom_study_dialog_content), totalNew, totalRev));
+        Button start = mCustomStudyDialog.findViewById(R.id.start);
+        if (totalNew + totalRev == 0) {
+            start.setEnabled(false);
+            start.setText("今日已无待学习的卡牌");
+        } else {
+            start.setOnClickListener(view1 -> {
+                int addNew = 0;
+                try {
+                    addNew = Integer.parseInt(addNewEditor.getText().toString());
+                } catch (Exception ignored) {
 
-            }
-            int addRev = 0;
-            try {
-                addRev = Integer.parseInt(addRevEditor.getText().toString());
-            } catch (Exception ignored) {
+                }
+                int addRev = 0;
+                try {
+                    addRev = Integer.parseInt(addRevEditor.getText().toString());
+                } catch (Exception ignored) {
 
-            }
-            AnkiDroidApp.getSharedPrefs(getActivity()).edit().putInt("extendNew", addNew).apply();
-            Deck deck = col.getDecks().current();
-            deck.put("extendNew", addNew);
-            col.getDecks().save(deck);
-            col.getSched().extendLimits(addNew, 0);
+                }
+                AnkiDroidApp.getSharedPrefs(getActivity()).edit().putInt("extendNew", addNew).apply();
+                Deck deck = col.getDecks().current();
+                deck.put("extendNew", addNew);
+                col.getDecks().save(deck);
+                col.getSched().extendLimits(addNew, 0);
 
-            AnkiDroidApp.getSharedPrefs(getActivity()).edit().putInt("extendRev", addRev).apply();
-            deck.put("extendRev", addRev);
-            col.getDecks().save(deck);
-            col.getSched().extendLimits(0, addRev);
-            refreshInterface();
-            getAnkiActivity().startActivityForResultWithoutAnimation(new Intent(getAnkiActivity(), Reviewer.class), AnkiActivity.REQUEST_REVIEW);
-            mCustomStudyDialog.dismiss();
-        });
+                AnkiDroidApp.getSharedPrefs(getActivity()).edit().putInt("extendRev", addRev).apply();
+                deck.put("extendRev", addRev);
+                col.getDecks().save(deck);
+                col.getSched().extendLimits(0, addRev);
+                refreshInterface();
+                getAnkiActivity().startActivityForResultWithoutAnimation(new Intent(getAnkiActivity(), Reviewer.class), AnkiActivity.REQUEST_REVIEW);
+                mCustomStudyDialog.dismiss();
+            });
+        }
+
         mCustomStudyDialog.setCanceledOnTouchOutside(true);
         mCustomStudyDialog.setCancelable(true);
         mCustomStudyDialog.show();
@@ -858,8 +986,167 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     }
 
 
+    private Map<Integer, String> mMindModeMap = new HashMap<>();
+    private String[] mMindModeValues;
+    private String[] mMindModeLabels;
+    private String[] mMindModeHints;
+    private int mCurrentMindModeValue = -1;
+
+    public static String KEY_CONFIG_INIT = "KEY_CONFIG_INIT";//首次学习配置
+    public static String KEY_STRUCT_INIT = "KEY_STRUCT_INIT";//首次进入详情页查看结构
     private void openReviewer() {
-//        mCacheID = getCol().getDecks().selected();
+        if (mShouldConfigBeforeStudy && mOptions != null) {
+            SharedPreferences sharedPreferences = getAnkiActivity().getSharedPreferences(STUDY_SETTING, 0);
+            StringBuilder initIds = new StringBuilder(sharedPreferences.getString(KEY_CONFIG_INIT, ""));
+            if (initIds.length() > 0) {
+                String[] ids = initIds.toString().split(",");
+                if (ids.length > 0) {
+                    for (String id : ids) {
+                        if (getCol().getDecks().current().getLong("id") == Long.parseLong(id)) {
+                            //已经初始化过了，直接跳过
+                            openReviewerInternal();
+                            return;
+                        }
+                    }
+                }
+                //没初始化过，那现在也初始化了。
+//                initIds.append(",");
+            }
+
+            for (long id : getDeckIds(getCol().getDecks().current().getLong("id"), getCol())) {
+                if (!initIds.toString().isEmpty()) {
+                    initIds.append(",");
+                }
+                initIds.append(id);
+            }
+//            initIds += Stats.deckLimit(getCol().getDecks().current().getLong("id"), getCol()).replace("(","").replace(")","").trim();//要把子牌组也加入里面
+            sharedPreferences.edit().putString(KEY_CONFIG_INIT, initIds.toString()).apply();
+
+            String savedMindModeValue = sharedPreferences.getString(KEY_MIND_MODE, "");
+            Map<String, Integer> map = null;
+            try {
+                Gson gson = new Gson();
+                map = gson.fromJson(savedMindModeValue, new TypeToken<Map<String, Integer>>() {
+                }.getType());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String mDeckIdStr = String.valueOf(getCol().getDecks().current().getLong("id"));
+            mCurrentMindModeValue = map != null && map.get(mDeckIdStr) != null ? map.get(mDeckIdStr) : 0;
+            if (mMindModeValues == null) {
+                mMindModeValues = getResources().getStringArray(R.array.mind_mode_values);
+                mMindModeLabels = getResources().getStringArray(R.array.mind_mode_labels);
+                mMindModeHints = getResources().getStringArray(R.array.mind_mode_hint);
+                for (int i = 0; i < mMindModeValues.length; i++) {
+                    mMindModeMap.put(Integer.valueOf(mMindModeValues[i]), mMindModeLabels[i]);
+                }
+            }
+            CustomStyleDialog customDialog = new CustomStyleDialog.Builder(getAnkiActivity())
+                    .setTitle("记忆模式")
+                    .setCustomLayout(R.layout.dialog_common_custom_next)
+                    .setSelectListModeCallback(new CustomStyleDialog.Builder.SelectListModeCallback() {
+                        @Override
+                        public String[] getItemContent() {
+                            return mMindModeLabels;
+                        }
+
+
+                        @Override
+                        public String[] getItemHint() {
+                            return mMindModeHints;
+                        }
+
+
+                        @Override
+                        public int getDefaultSelectedPosition() {
+                            return mCurrentMindModeValue;
+                        }
+
+
+                        @Override
+                        public void onItemSelect(int position) {
+                            mCurrentMindModeValue = position;
+                        }
+                    })
+                    .setPositiveButton("下一步", (dialog, which) -> {
+                        String oldValue = sharedPreferences.getString(KEY_MIND_MODE, "");
+                        Map<String, Integer> oldMap = null;
+                        Gson gson = new Gson();
+                        try {
+                            oldMap = gson.fromJson(oldValue, new TypeToken<Map<String, Integer>>() {
+                            }.getType());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        if (oldMap == null) {
+                            oldMap = new HashMap<>();
+                        }
+                        for (long id : getDeckIds(getCol().getDecks().current().getLong("id"), getCol())) {
+//                            Timber.i("看看都是什么id %s", id);
+                            oldMap.put(String.valueOf(id), mCurrentMindModeValue);
+                        }
+                        String newValue = gson.toJson(oldMap);
+                        sharedPreferences.edit().putString(KEY_MIND_MODE, newValue).apply();
+                        CollectionTask.launchCollectionTask(CONF_RESET, new ConfChangeHandler(StudyOptionsFragment.this, mCurrentMindModeValue),
+                                new TaskData(new Object[] {mOptions}));//先恢复默认，即长记模式
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton("跳过", (dialog, which) -> {
+                        dialog.dismiss();
+                        try {
+                            getCol().getDecks().save(mOptions);
+                        } catch (RuntimeException e) {
+                            Timber.e(e, "DeckOptions - RuntimeException on saving conf");
+                            AnkiDroidApp.sendExceptionReport(e, "DeckOptionsSaveConf");
+                        }
+                        refreshOption();
+                        openReviewerInternal();
+                    })
+                    .create();
+            customDialog.show();
+
+        } else {
+            openReviewerInternal();
+        }
+
+    }
+
+
+    public static List<Long> getDeckIds(Long deckId, Collection col) {
+        ArrayList<Long> ids = new ArrayList<>();
+        if (deckId == ALL_DECKS_ID) {
+            // All decks
+            for (Deck d : col.getDecks().all()) {
+                ids.add(d.getLong("id"));
+            }
+            return ids;
+        } else {
+            // The given deck id and its children
+            ids.add(deckId);
+            ids.addAll(col.getDecks().children(deckId).values());
+            return ids;
+        }
+    }
+
+
+    private void refreshOption() {
+        if (mLoadWithDeckOptions) {
+            mLoadWithDeckOptions = false;
+            Deck deck = getCol().getDecks().current();
+            if (deck.getInt("dyn") != 0 && deck.has("empty")) {
+                deck.remove("empty");
+            }
+            mProgressDialog = StyledProgressDialog.show(getActivity(), "",
+                    getResources().getString(R.string.rebuild_filtered_deck), true);
+            CollectionTask.launchCollectionTask(REBUILD_CRAM, getCollectionTaskListener(true));
+        } else {
+            CollectionTask.waitToFinish();
+            refreshInterface(true);
+        }
+    }
+
+
+    private void openReviewerInternal() {
         mInitCollapsedStatus = false;
         Intent reviewer = new Intent(getActivity(), Reviewer.class);
         if (mFragmented) {
@@ -871,6 +1158,157 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //            getActivity().finish();
         }
         animateLeft();
+    }
+
+
+    private static class ConfChangeHandler extends TaskListenerWithContext<StudyOptionsFragment> {
+        public ConfChangeHandler(StudyOptionsFragment deckPreferenceHack) {
+            super(deckPreferenceHack);
+        }
+
+
+        int selectMindMode = -1;
+
+
+        public ConfChangeHandler(StudyOptionsFragment deckPreferenceHack, int selectMindMode) {
+            super(deckPreferenceHack);
+            this.selectMindMode = selectMindMode;
+        }
+
+
+        @Override
+        public void actualOnPreExecute(@NonNull StudyOptionsFragment deckPreferenceHack) {
+
+        }
+
+
+        @Override
+        public void actualOnPostExecute(@NonNull StudyOptionsFragment deckPreferenceHack, TaskData result) {
+            deckPreferenceHack.initOption();
+//            if (selectMindMode <= 0) {
+////                deckPreferenceHack.refreshInterface();
+//
+//            } else
+            if (selectMindMode == 1) {
+                deckPreferenceHack.mOptions.getJSONObject("new").put("delays", convertToJSON("1 5 10"));
+                JSONArray newInts = new JSONArray();
+                newInts.put(deckPreferenceHack.mOptions.getJSONObject("new").getJSONArray("ints").getInt(0));//
+                newInts.put(3);
+                deckPreferenceHack.mOptions.getJSONObject("new").put("ints", newInts);
+                deckPreferenceHack.mOptions.getJSONObject("rev").put("ivlFct", 70 / 100.0f);
+                deckPreferenceHack.mOptions.getJSONObject("rev").put("maxIvl", 10);
+            } else if (selectMindMode == 2) {
+                deckPreferenceHack.mOptions.getJSONObject("new").put("delays", convertToJSON("1 3 7 10 15 20"));
+                JSONArray newInts = new JSONArray();
+                newInts.put(deckPreferenceHack.mOptions.getJSONObject("new").getJSONArray("ints").getInt(0));//
+                newInts.put(1);
+                deckPreferenceHack.mOptions.getJSONObject("new").put("ints", newInts);
+                deckPreferenceHack.mOptions.getJSONObject("rev").put("maxIvl", 1);
+            }
+            deckPreferenceHack.configMaxDayLearnAndRev();
+        }
+    }
+
+
+    private void configMaxDayLearnAndRev() {
+        CustomStyleDialog customDialog = new CustomStyleDialog.Builder(getAnkiActivity())
+                .setTitle("设置每天学习量")
+                .setCustomLayout(R.layout.dialog_common_custom_next)
+                .setMultiEditorModeCallback(new CustomStyleDialog.Builder.MultiEditorModeCallback() {
+                    @Override
+                    public String[] getEditorText() {
+//                        return new String[] {mOptions.getJSONObject("new").getString("perDay"), mOptions.getJSONObject("rev").getString("perDay"),};
+                        return new String[] {"30", "200"};
+                    }
+
+
+                    @Override
+                    public String[] getEditorHint() {
+                        return new String[] {"每天新卡上限", "每天复习上限"};
+                    }
+
+
+                    @Override
+                    public String[] getItemHint() {
+                        return new String[] {"学习一段时间后，未来每天新卡+复习卡约180张，大约需30分钟", "建议设置为最大9999，有多少复习多少"};
+                    }
+                }).addSingleTextChangedListener(new CustomStyleDialog.Builder.MyTextWatcher() {
+
+                    @Override
+                    public void beforeTextChanged(Dialog dialog, CharSequence s, int start, int count, int after) {
+
+                    }
+
+
+                    @Override
+                    public void onTextChanged(Dialog dialog, CharSequence s, int start, int before, int count) {
+                        if (s.toString().isEmpty()) {
+                            ((CustomStyleDialog) dialog).getSingleEditorModeHintView().setText("未来每天学习量=新卡数x6");
+                        } else {
+                            int num = 0;
+                            try {
+                                num = Integer.parseInt(s.toString()) * 6;
+                            } catch (Exception ignored) {
+
+                            }
+                            int time = num * 10 / 60;
+                            ((CustomStyleDialog) dialog).getSingleEditorModeHintView().setText(String.format("学习一段时间后，未来每天新卡+复习卡约%s张，大约需%s分钟", num, time));
+                        }
+                    }
+
+
+                    @Override
+                    public void afterTextChanged(Dialog dialog, Editable s) {
+
+                    }
+                })
+                .setPositiveButton("进入学习", (dialog, which) -> {
+                    String text1 = ((CustomStyleDialog) dialog).getMultiEditor().get(0).getText().toString();
+                    String text2 = ((CustomStyleDialog) dialog).getMultiEditor().get(1).getText().toString();
+                    int maxNewCard = 0;
+                    int maxRevCard = 0;
+                    try {
+                        maxNewCard = Integer.parseInt(text1);
+                    } catch (Exception ignored) {
+
+                    }
+                    try {
+                        maxRevCard = Integer.parseInt(text2);
+                    } catch (Exception ignored) {
+
+                    }
+                    if (maxNewCard >= 0 && maxNewCard <= 9999 && maxRevCard >= 0 && maxRevCard <= 9999) {
+                        mOptions.getJSONObject("new").put("perDay", maxNewCard);
+                        mOptions.getJSONObject("rev").put("perDay", maxRevCard);
+                        Timber.i("edit new and rev max:" + maxNewCard + "," + maxRevCard);
+                        try {
+                            getCol().getDecks().save(mOptions);
+                        } catch (RuntimeException e) {
+                            Timber.e(e, "DeckOptions - RuntimeException on saving conf");
+                            AnkiDroidApp.sendExceptionReport(e, "DeckOptionsSaveConf");
+                        }
+                        refreshOption();
+                        dialog.dismiss();
+                        openReviewerInternal();
+                    } else {
+                        UIUtils.showThemedToast(getAnkiActivity(), "请填写0至9999之间的数值",
+                                false);
+                    }
+
+                })
+                .setNegativeButton("跳过", (dialog, which) -> {
+                    dialog.dismiss();
+                    try {
+                        getCol().getDecks().save(mOptions);
+                    } catch (RuntimeException e) {
+                        Timber.e(e, "DeckOptions - RuntimeException on saving conf");
+                        AnkiDroidApp.sendExceptionReport(e, "DeckOptionsSaveConf");
+                    }
+                    refreshOption();
+                    openReviewerInternal();
+                })
+                .create();
+        customDialog.show();
     }
 
 
@@ -921,6 +1359,11 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_browser: {
+                Timber.i("DeckPicker:: Old browser button pressed");
+                getAnkiActivity().openOldCardBrowser();
+                return true;
+            }
             case R.id.action_undo:
                 Timber.i("StudyOptionsFragment:: Undo button pressed");
                 CollectionTask.launchCollectionTask(UNDO, undoListener);
@@ -934,6 +1377,12 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     getActivity().startActivityForResult(i, DECK_OPTIONS);
                     ActivityTransitionAnimation.slide(getActivity(), ActivityTransitionAnimation.FADE);
                 }
+                return true;
+            case R.id.action_setting:
+                Timber.i("StudyOptionsFragment:: Deck setting button pressed");
+                Intent i = new Intent(getActivity(), StudySettingActivity.class);
+                getActivity().startActivityForResult(i, DECK_OPTIONS);
+                ActivityTransitionAnimation.slide(getActivity(), ActivityTransitionAnimation.FADE);
                 return true;
             case R.id.action_custom_study:
                 Timber.i("StudyOptionsFragment:: custom study button pressed");
@@ -958,20 +1407,154 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                 CollectionTask.launchCollectionTask(EMPTY_CRAM, getCollectionTaskListener(true));
                 return true;
             case R.id.action_rename:
-                ((DeckPicker) getActivity()).renameDeckDialog(getCol().getDecks().selected());
+                ((AnkiActivity) getActivity()).renameDeckDialog(getCol().getDecks().selected());
                 return true;
             case R.id.action_delete:
-                ((DeckPicker) getActivity()).confirmDeckDeletion(getCol().getDecks().selected());
+                getAnkiActivity().mContextMenuDid = getCol().getDecks().selected();
+                ((AnkiActivity) getActivity()).confirmDeckDeletion(getCol().getDecks().selected());
                 return true;
             case R.id.action_export:
-                ((DeckPicker) getActivity()).exportDeck(getCol().getDecks().selected());
+                ((AnkiActivity) getActivity()).exportDeck(getCol().getDecks().selected());
                 return true;
             case R.id.action_add_card:
                 addNote();
                 return true;
+            case R.id.create_deck:
+                getAnkiActivity().mContextMenuDid = getCol().getDecks().selected();
+                ((AnkiActivity) getActivity()).createSubdeckDialog();
+                return true;
+            case R.id.action_suspend://停止/恢复
+                mDeckIsStopped = deckIsStopped();
+                if (mDeckIsStopped) {
+                    customDialog = new CustomStyleDialog.Builder(getAnkiActivity())
+                            .setTitle("恢复学习")
+                            .setMessage("恢复学习后将每天新卡数和复习数值调整成默认值，请确认是否开始学习")
+                            .setPositiveButton("确定", (dialog, which) -> {
+                                resumeDeckStudy();
+                                dialog.dismiss();
+                            })
+                            .setNegativeButton("取消", (dialog, which) -> dialog.dismiss())
+                            .create();
+
+                } else {
+                    customDialog = new CustomStyleDialog.Builder(getAnkiActivity())
+                            .setTitle("停止学习")
+                            .setMessage("暂停学习将会自动把每天新卡数和复习数调整为零，适用于有事暂停一两周不学习，若该记忆库学习的时长不超过2个月，又暂停了30天未学习，建议重设进度，重新开始学习")
+                            .setPositiveButton("确定", (dialog, which) -> {
+                                stopDeckStudy();
+                                dialog.dismiss();
+                            })
+                            .setNegativeButton("取消", (dialog, which) -> dialog.dismiss())
+                            .create();
+                }
+                customDialog.show();
+                return true;
+            case R.id.action_reset_card_progress://重设学习进度
+                customDialog = new CustomStyleDialog.Builder(getAnkiActivity())
+                        .setTitle("重设学习进度")
+                        .setMessage("重设学习进度后，该记忆库的所有卡片学习记录都会被清除，请谨慎操作")
+                        .setPositiveButton("确定", (dialog, which) -> {
+                            CollectionTask.launchCollectionTask(RESET_DECK, new ResetCardHandler(StudyOptionsFragment.this),
+                                    new TaskData(new Object[] {"deck:\"" + getCol().getDecks().current().getString("name") + "\" "}));
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("取消", (dialog, which) -> dialog.dismiss())
+                        .create();
+                customDialog.show();
+                return true;
             default:
                 return false;
         }
+    }
+
+
+    private static class ResetCardHandler extends TaskListenerWithContext<StudyOptionsFragment> {
+        public ResetCardHandler(StudyOptionsFragment browser) {
+            super(browser);
+        }
+
+
+        @Override
+        public void actualOnPreExecute(@NonNull StudyOptionsFragment browser) {
+        }
+
+
+        @Override
+        public void actualOnPostExecute(@NonNull StudyOptionsFragment browser, TaskData result) {
+            int cardCount = result.getObjArray().length;
+            browser.refreshInterface(true);
+
+            UIUtils.showThemedToast(browser.getAnkiActivity(), String.format("共有%d张卡片被重设", cardCount), true);
+        }
+    }
+
+
+
+    CustomStyleDialog customDialog;
+
+    private boolean mDeckIsStopped = false;
+
+
+    private boolean deckIsStopped() {
+        return mOptions.getJSONObject("new").getInt("perDay") == 0 && mOptions.getJSONObject("rev").getInt("perDay") == 0;
+    }
+
+
+    private void stopDeckStudy() {
+        mOptions.getJSONObject("new").put("perDay", 0);
+        mOptions.getJSONObject("rev").put("perDay", 0);
+        try {
+            getCol().getDecks().save(mOptions);
+        } catch (RuntimeException e) {
+            Timber.e(e, "DeckOptions - RuntimeException on saving conf");
+            AnkiDroidApp.sendExceptionReport(e, "DeckOptionsSaveConf");
+        }
+        refreshOption();
+    }
+
+
+    private void resumeDeckStudy() {
+        mOptions.getJSONObject("new").put("perDay", 30);
+        mOptions.getJSONObject("rev").put("perDay", 200);
+        try {
+            getCol().getDecks().save(mOptions);
+        } catch (RuntimeException e) {
+            Timber.e(e, "DeckOptions - RuntimeException on saving conf");
+            AnkiDroidApp.sendExceptionReport(e, "DeckOptionsSaveConf");
+        }
+        refreshOption();
+    }
+
+
+    private void createDeck() {
+        EditText mDialogEditText = new EditText(getAnkiActivity());
+        mDialogEditText.setSingleLine(true);
+        // mDialogEditText.setFilters(new InputFilter[] { mDeckNameFilter });
+        new MaterialDialog.Builder(getAnkiActivity())
+                .title(R.string.new_deck)
+                .positiveText(R.string.dialog_ok)
+                .customView(mDialogEditText, true)
+                .onPositive((dialog, which) -> {
+                    String deckName = mDialogEditText.getText().toString();
+                    if (Decks.isValidDeckName(deckName)) {
+                        getAnkiActivity().createNewDeck(deckName);
+                    } else {
+                        Timber.i("configureFloatingActionsMenu::addDeckButton::onPositiveListener - Not creating invalid deck name '%s'", deckName);
+                        UIUtils.showThemedToast(getAnkiActivity(), getString(R.string.invalid_deck_name), false);
+                    }
+                })
+                .negativeText(R.string.dialog_cancel)
+                .onNegative((dialog, which) -> {
+                    String deckName = mDialogEditText.getText().toString();
+                    if (Decks.isValidDeckName(deckName)) {
+                        getAnkiActivity().createNewDeck(deckName);
+                    } else {
+                        Timber.i("configureFloatingActionsMenu::addDeckButton::onPositiveListener - Not creating invalid deck name '%s'", deckName);
+                        UIUtils.showThemedToast(getAnkiActivity(), getString(R.string.invalid_deck_name), false);
+                    }
+                })
+                .show();
+
     }
 
 
@@ -992,46 +1575,42 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                 menu.findItem(R.id.action_rebuild).setVisible(true);
                 menu.findItem(R.id.action_empty).setVisible(true);
                 menu.findItem(R.id.action_custom_study).setVisible(false);
+
+                menu.findItem(R.id.action_rename).setVisible(false);
+                menu.findItem(R.id.create_deck).setVisible(false);
+                menu.findItem(R.id.action_suspend).setVisible(false);
+                menu.findItem(R.id.action_reset_card_progress).setVisible(false);
+                menu.findItem(R.id.action_delete).setVisible(false);
+                menu.findItem(R.id.action_export).setVisible(false);
+                menu.findItem(R.id.action_setting).setVisible(false);
             } else {
                 menu.findItem(R.id.action_rebuild).setVisible(false);
                 menu.findItem(R.id.action_empty).setVisible(false);
                 menu.findItem(R.id.action_custom_study).setVisible(true);
+
+                menu.findItem(R.id.action_rename).setVisible(true);
+
+                menu.findItem(R.id.create_deck).setVisible(true);
+                menu.findItem(R.id.action_suspend).setVisible(true);
+                menu.findItem(R.id.action_suspend).setTitle(deckIsStopped() ? "恢复学习" : "停止学习");
+                menu.findItem(R.id.action_reset_card_progress).setVisible(true);
+
+                menu.findItem(R.id.action_delete).setVisible(true);
+                menu.findItem(R.id.action_export).setVisible(true);
+                menu.findItem(R.id.action_setting).setVisible(true);
+                menu.findItem(R.id.action_deck_options).setVisible(true);
+
             }
             // Don't show custom study icon if congrats shown
 //            if (mCurrentContentView == CONTENT_CONGRATS) {
 //                menu.findItem(R.id.action_custom_study).setVisible(false);
 //            }
-            // Switch on rename / delete / export if tablet layout
-            if (mFragmented) {
-                menu.findItem(R.id.action_rename).setVisible(true);
-                menu.findItem(R.id.action_delete).setVisible(true);
-                menu.findItem(R.id.action_export).setVisible(true);
-            } else {
-                menu.findItem(R.id.action_rename).setVisible(false);
-                menu.findItem(R.id.action_delete).setVisible(false);
-                menu.findItem(R.id.action_export).setVisible(false);
-            }
+
+
             // Switch on or off unbury depending on if there are cards to unbury
             menu.findItem(R.id.action_unbury).setVisible(getCol().getSched().haveBuried());
             // Switch on or off undo depending on whether undo is available
             menu.findItem(R.id.action_undo).setVisible(false);
-//            if (!getCol().undoAvailable()) {
-//                menu.findItem(R.id.action_undo).setVisible(false);
-//            } else {
-//                menu.findItem(R.id.action_undo).setVisible(true);
-//                Resources res = AnkiDroidApp.getAppResources();
-//                menu.findItem(R.id.action_undo).setTitle(res.getString(R.string.studyoptions_congrats_undo, getCol().undoName(res)));
-//            }
-            // Set the back button listener
-//            if (!mFragmented) {
-//                mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-//                mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        ((AnkiActivity) getActivity()).finishWithAnimation(ActivityTransitionAnimation.RIGHT);
-//                    }
-//                });
-//            }
         } catch (IllegalStateException e) {
             if (!CollectionHelper.getInstance().colIsOpen()) {
                 if (recur) {
@@ -1074,19 +1653,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             }
         }
         if (requestCode == DECK_OPTIONS) {
-            if (mLoadWithDeckOptions) {
-                mLoadWithDeckOptions = false;
-                Deck deck = getCol().getDecks().current();
-                if (deck.getInt("dyn") != 0 && deck.has("empty")) {
-                    deck.remove("empty");
-                }
-                mProgressDialog = StyledProgressDialog.show(getActivity(), "",
-                        getResources().getString(R.string.rebuild_filtered_deck), true);
-                CollectionTask.launchCollectionTask(REBUILD_CRAM, getCollectionTaskListener(true));
-            } else {
-                CollectionTask.waitToFinish();
-                refreshInterface(true);
-            }
+            refreshOption();
         } else if (requestCode == AnkiActivity.REQUEST_REVIEW) {
             if (resultCode == Reviewer.RESULT_NO_MORE_CARDS) {
                 // If no more cards getting returned while counts > 0 (due to learn ahead limit) then show a snackbar
@@ -1117,8 +1684,14 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     }
 
 
-    private void refreshInterfaceAndDecklist(boolean resetSched) {
+    protected void refreshInterfaceAndDecklist(boolean resetSched) {
         refreshInterface(resetSched, true);
+    }
+
+
+    protected void refreshInterfaceWithCacheSelected() {
+        getCol().getDecks().select(mCacheID);
+        refreshInterface(false, false);
     }
 
 
@@ -1136,10 +1709,12 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                 .negativeText("否")
                 .onNegative((dialog, which) -> {
                     getCol().getDecks().select(mCacheID);
+                    initOption();
 //                    refreshInterface();
                 })
                 .onPositive((dialog, which) -> {
                     mCacheID = getCol().getDecks().selected();
+                    initOption();
                     refreshInterface();
                 })
                 .show();
@@ -1162,13 +1737,17 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     protected void refreshInterface(boolean resetSched, boolean resetDecklist) {
         Timber.d("Refreshing StudyOptionsFragment");
         // Load the deck counts for the deck from Collection asynchronously
+        if (resetDecklist) {
+            mInitCollapsedStatus = false;
+        }
         CollectionTask.launchCollectionTask(UPDATE_VALUES_FROM_DECK, getCollectionTaskListener(resetDecklist),
                 new TaskData(new Object[] {resetSched}));
     }
 
 
-    int mNewCardsNum;
-    int mRevCardsNum;
+    private int mNewCardsNum;
+    private int mRevCardsNum;
+    private boolean mShouldConfigBeforeStudy = true;
 
 
     /**
@@ -1189,15 +1768,15 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             public void onPostExecute(TaskData result) {
                 dismissProgressDialog();
                 if (result != null) {
-                    Timber.i("start refresh list data");
+
                     // Get the return values back from the AsyncTask
                     Object[] obj = result.getObjArray();
                     int newCards = (Integer) obj[0];
                     int lrnCards = (Integer) obj[1];
-                    int revCards = (Integer) obj[1]+(Integer) obj[2];
+                    int revCards = (Integer) obj[1] + (Integer) obj[2];
                     int totalNew = (Integer) obj[3];
                     int totalCards = (Integer) obj[4];
-
+                    Timber.i("start refresh list data:"+newCards+","+lrnCards+","+revCards+","+totalNew+","+totalCards);
 //                    int eta = (Integer) obj[5];
 
                     // Don't do anything if the fragment is no longer attached to it's Activity or col has been closed
@@ -1333,17 +1912,31 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     double[] data = calculateStat(getCol(), getCol().getDecks().current().optLong("id"));
                     mNewCardsNum = (int) data[2];
                     mRevCardsNum = revCards;
+                    mShouldConfigBeforeStudy = mNewCardsNum == totalCards && mShouldConfigBeforeStudy;
                     int hardNum = getLapses(getCol(), getCol().getDecks().current().optLong("id"));
                     mDeckListAdapter.mTextCountHandled = String.format(Locale.CHINA, "%d", (int) data[0]);
                     mDeckListAdapter.mTextCountLearning = String.format(Locale.CHINA, "%d", (int) data[1]);
                     mDeckListAdapter.mTextCountNew = String.format(Locale.CHINA, "%d", (int) data[2]);
                     mDeckListAdapter.mTextCountHard = String.format(Locale.CHINA, "%d", hardNum);
                     mDeckListAdapter.mTextTotal = String.format(Locale.CHINA, "共%d张卡牌", totalCards);
-                    double percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
+                    double percent = 0;
+                    if (data[2] == 0) {
+                        //新卡已学完，显示已掌握
+                        percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
+                        mDeckListAdapter.mTextHandledNum = String.format(Locale.CHINA, "%.0f/%.0f", data[0], (data[0] + data[1] + data[2]));
+//                        holder.handled_percent.setText((String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%");
+                    } else {
+                        percent = (data[0] + data[1] + data[2] <= 0) ? 0 : ((data[0] + data[1]) / (data[0] + data[1] + data[2]) * 100);
+                        mDeckListAdapter.mTextHandledNum = String.format(Locale.CHINA, "%.0f/%.0f", data[0]+ data[1],  data[0] + data[1] + data[2] );
+//                        holder.handled_percent.setText((String.format(Locale.CHINA, "已学 %.1f", percent)) + "%");
+                    }
+
+//                    double percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
+
 //                    mStudyProgress.setMax(100*100);
                     mDeckListAdapter.mStudyProgress = (int) (percent * 100);
-                    mDeckListAdapter.mTextHandledPercent = (String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%";
-                    mDeckListAdapter.mTextHandledNum = String.format(Locale.CHINA, "%.0f/%.0f", data[0], (data[0] + data[1] + data[2]));
+                    mDeckListAdapter.mTextHandledPercent = (String.format(Locale.CHINA, data[2] == 0 ? "已掌握 %.1f" : "已学 %.1f", percent)) + "%";
+
                     // Set estimated time remaining
                     int eta = (newCards + revCards) * 10 / 60;
                     if ((newCards + revCards) % 60 != 0) {
@@ -1378,7 +1971,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
 
     private double[] calculateStat(Collection col, long deckId) {
-        //计算已熟悉/全部卡片数
+        //计算已熟悉
         Stats stats = new Stats(col, deckId);
         stats.calculateCardTypes(TYPE_LIFE);
         return stats.getSeriesList()[0];
@@ -1386,9 +1979,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
 
     private int getLapses(Collection col, long deckId) {
-        //计算已熟悉/全部卡片数
+        //计算失误卡牌数
         Stats stats = new Stats(col, deckId);
-        return stats.calculateCardLapses(deckId);
+        return stats.calculateCardLapses();
     }
 
 

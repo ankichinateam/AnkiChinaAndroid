@@ -46,6 +46,7 @@
                     android:layout_below="@+id/files"
                     android:background="?attr/settingItemBackground"
                     android:text="暂无子记忆库"
+                    android:visibility="gone"
                     android:gravity="center"
                     android:textColor="?attr/primary_text_third_color999999"
                     android:layout_width="match_parent"

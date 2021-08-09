@@ -120,7 +120,7 @@
     <string name="tts_summ">若没有附带声音文件则读出问题和答案</string>
     <string name="sync_fetch_missing_media">同步时获取媒体文件</string>
     <string name="sync_fetch_missing_media_summ">同步时自动获取缺失的媒体文件</string>
-    <string name="sync_account">Anki志愿版 帐户</string>
+    <string name="sync_account">Anki记忆卡 帐户</string>
     <string name="sync_account_summ_logged_out">未登录</string>
     <string name="sync_account_summ_logged_in">%s</string>
     <string name="automatic_sync_choice">自动同步</string>
@@ -202,7 +202,7 @@
     <!-- Custom sync server settings -->
     <string name="custom_sync_server_title">自定义同步服务器</string>
     <string name="custom_sync_server_enable_title">使用自定义同步服务器</string>
-    <string name="custom_sync_server_enable_summary">如果你不想使用专有的 AnkiWeb 服务，您可以指定替代的服务器</string>
+    <string name="custom_sync_server_enable_summary">如果你不想使用专有的云端服务，您可以指定替代的服务器</string>
     <string name="custom_sync_server_base_url_title">同步地址</string>
     <string name="custom_sync_server_base_url_invalid">同步地址无效</string>
     <string name="custom_sync_server_media_url_title">媒体文件同步地址</string>

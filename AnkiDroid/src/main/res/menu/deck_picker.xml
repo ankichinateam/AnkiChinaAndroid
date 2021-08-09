@@ -48,4 +48,8 @@
         android:id="@+id/action_export"
         android:menuCategory="secondary"
         android:title="@string/export_collection"/>
+    <item
+        android:id="@+id/action_browser"
+        android:menuCategory="secondary"
+        android:title="旧版浏览器"/>
 </menu>
