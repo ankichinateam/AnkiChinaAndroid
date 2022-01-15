@@ -27,6 +27,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
 import com.ichi2.anki.AnkiDroidApp;
+import com.ichi2.anki.BuildConfig;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.dialogs.DatabaseErrorDialog;
 import com.ichi2.utils.DatabaseChangeDecorator;
@@ -39,6 +40,7 @@ import java.util.Locale;
 import androidx.annotation.Nullable;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteOpenHelper;
+import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory;
 import io.requery.android.database.sqlite.RequerySQLiteOpenHelperFactory;
 import timber.log.Timber;
 
@@ -62,7 +64,7 @@ public class DB {
     /**
      * Open a connection to the SQLite collection database.
      */
-    public DB(String ankiFilename) {
+    public DB(String ankiFilename ) {
 
         SupportSQLiteOpenHelper.Configuration configuration = SupportSQLiteOpenHelper.Configuration.builder(AnkiDroidApp.getInstance())
                 .name(ankiFilename)
@@ -87,7 +89,7 @@ public class DB {
     }
 
 
-    private SupportSQLiteOpenHelper.Factory getSqliteOpenHelperFactory() {
+    private SupportSQLiteOpenHelper.Factory getSqliteOpenHelperFactory( ) {
         if (sqliteOpenHelperFactory == null) {
             return new RequerySQLiteOpenHelperFactory();
         }
@@ -195,7 +197,8 @@ public class DB {
     public String queryString(String query, Object... bindArgs) throws SQLException {
         try (Cursor cursor = mDatabase.query(query, bindArgs)) {
             if (!cursor.moveToNext()) {
-                throw new SQLException("No result for query: " + query);
+                return "";
+//                throw new SQLException("No result for query: " + query);
             }
             return cursor.getString(0);
         }
@@ -367,13 +370,12 @@ public class DB {
 
     public void executeMany(String sql, List<Object[]> list) {
         mMod = true;
-        mDatabase.beginTransaction();
-        try {
-            executeManyNoTransaction(sql, list);
-            mDatabase.setTransactionSuccessful();
-        } finally {
-            mDatabase.endTransaction();
+        if (BuildConfig.DEBUG) {
+            if (list.size() <= 1) {
+                Timber.w("Query %s called with a list of at most one element. Usually that's not expected.", sql);
+            }
         }
+        executeInTransaction(() -> executeManyNoTransaction(sql, list));
     }
 
     /** Use this executeMany version with external transaction management */
@@ -389,5 +391,42 @@ public class DB {
      */
     public String getPath() {
         return mDatabase.getPath();
+    }
+
+    public void executeInTransaction(Runnable r) {
+        // Ported from code which started the transaction outside the try..finally
+        getDatabase().beginTransaction();
+        try {
+            r.run();
+            if (getDatabase().inTransaction()) {
+                try {
+                    getDatabase().setTransactionSuccessful();
+                } catch (Exception e) {
+                    // Unsure if this can happen - copied the structure from endTransaction()
+                    Timber.w(e);
+                }
+            } else {
+                Timber.w("Not in a transaction. Cannot mark transaction successful.");
+            }
+        } finally {
+            safeEndInTransaction(getDatabase());
+        }
+    }
+
+    public static void safeEndInTransaction(DB database) {
+        safeEndInTransaction(database.getDatabase());
+    }
+
+    public static void safeEndInTransaction(SupportSQLiteDatabase database) {
+        if (database.inTransaction()) {
+            try {
+                database.endTransaction();
+            } catch (Exception e) {
+                // endTransaction throws about invalid transaction even when you check first!
+                Timber.w(e);
+            }
+        } else {
+            Timber.w("Not in a transaction. Cannot end transaction.");
+        }
     }
 }

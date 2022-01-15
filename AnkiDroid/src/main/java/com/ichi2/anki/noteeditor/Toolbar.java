@@ -104,6 +104,8 @@ public class Toolbar extends FrameLayout {
 
         setClick(R.id.note_editor_toolbar_button_insert_mathjax, "\\(", "\\)");
         setClick(R.id.note_editor_toolbar_button_horizontal_rule, "<hr>", "");
+//        setClick(R.id.note_editor_toolbar_button_cover, "<span class=\"ak-cover\">", "</span>");
+        setClick(R.id.note_editor_toolbar_button_cover, "<span class=\"ak-cover\" onclick=\"if(this.style.color == 'rgb(0, 0, 0)'){this.style.color = '#F4EDB3';}else{this.style.color = '#000000';}\">", "</span>");
 
         setClick(R.id.insert_no_index_list, "<ul>\n" +
                 "  <li>列表项1</li>\n" +

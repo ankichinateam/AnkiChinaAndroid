@@ -15,20 +15,21 @@
  ****************************************************************************************/
 package com.ichi2.anki;
 
+import android.Manifest;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ComplexColorCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+//import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.LayoutInflater;
@@ -37,12 +38,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+import com.ichi2.anki.runtimetools.TaskOperations;
 import com.ichi2.anki.stats.AnkiStatsTaskHandler;
 import com.ichi2.anki.stats.ChartView;
 import com.ichi2.anki.widgets.DeckDropDownAdapter;
@@ -51,14 +55,19 @@ import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.stats.Stats;
 import com.ichi2.libanki.Deck;
 import com.ichi2.ui.OverView;
-import com.ichi2.ui.SlidingTabLayout;
+//import com.ichi2.ui.SlidingTabLayout;
 
 import com.ichi2.utils.JSONException;
+import com.ichi2.utils.Permissions;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 import timber.log.Timber;
+
+import static com.ichi2.anki.DeckPicker.REQUEST_STORAGE_PERMISSION;
 
 
 public class Statistics extends AnkiFragment implements DeckDropDownAdapter.SubtitleListener {
@@ -73,8 +82,8 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     public static final int ANSWER_BUTTONS_TAB_POSITION = 7;
     public static final int CARDS_TYPES_TAB_POSITION = 8;
 
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-    private ViewPager mViewPager;
+    private ViewPager2 mViewPager;
+    private TabLayout mSlidingTabLayout;
     private AnkiStatsTaskHandler mTaskHandler = null;
     private long mDeckId;
     private ArrayList<Deck> mDropDownDecks;
@@ -107,6 +116,14 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         }
         mRoot = inflater.inflate(R.layout.activity_anki_stats, container, false);
         mToolbar = mRoot.findViewById(R.id.toolbar);
+        if (!Permissions.hasStorageAccessPermission(getAnkiActivity())) {
+            mRoot.findViewById(R.id.main_page).setVisibility(View.GONE);
+            mToolbar.setVisibility(View.GONE);
+
+            mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.VISIBLE);
+            mRoot.findViewById(R.id.hint_button).setOnClickListener(v -> ActivityCompat.requestPermissions(getAnkiActivity(), new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_STORAGE_PERMISSION));
+        }
         if (mToolbar != null) {
 //            mToolbar.inflateMenu(R.menu.anki_stats);
             setHasOptionsMenu(true);
@@ -141,7 +158,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             }
         });
         mActionBarSpinner.setVisibility(View.VISIBLE);
-        mViewPager = (ViewPager) mRoot.findViewById(R.id.pager);
+        mViewPager = (ViewPager2) mRoot.findViewById(R.id.pager);
 
 
     }
@@ -163,17 +180,27 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         mTaskHandler.setmStandardTextSize(size);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setAdapter(new StatsPagerAdapter(getChildFragmentManager()));
+        mSlidingTabLayout = mRoot.findViewById(R.id.sliding_tabs);
+        // Fixes #8984: scroll to position 0 in RTL layouts
+        ViewTreeObserver tabObserver = mSlidingTabLayout.getViewTreeObserver();
+        tabObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            // Note: we can't use a lambda as we use 'this' to refer to the class.
+            @Override
+            public void onGlobalLayout() {
+                // we need this here: If we select tab 0 before in an RTL context the layout has been drawn,
+                // then it doesn't perform a scroll animation and selects the wrong element
+                mSlidingTabLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                mSlidingTabLayout.selectTab(mSlidingTabLayout.getTabAt(0));
+            }
+        });
 
-        SlidingTabLayout slidingTabLayout = (SlidingTabLayout) mRoot.findViewById(R.id.sliding_tabs);
-        slidingTabLayout.setViewPager(mViewPager);
         // Prepare options menu only after loading everything
         getAnkiActivity().supportInvalidateOptionsMenu();
 //        initMenu(mToolbar.getMenu());
-        mSectionsPagerAdapter.notifyDataSetChanged();
+        mViewPager.getAdapter().notifyDataSetChanged();
 
         // Default to libanki's selected deck
         selectDeckById(col.getDecks().selected());
@@ -227,6 +254,15 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     public void onResume() {
         Timber.d("onResume()");
         super.onResume();
+        if(!Permissions.hasStorageAccessPermission(getContext())){
+            return;
+        }else {
+                mRoot.findViewById(R.id.main_page).setVisibility(View.VISIBLE);
+                mToolbar.setVisibility(View.VISIBLE);
+                mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.GONE);
+
+        }
+
         if (getAnkiActivity() != null && mToolbar != null) {
             getAnkiActivity().setSupportActionBar(mToolbar);
         }
@@ -256,7 +292,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 }
                 if (mTaskHandler.getStatType() != Stats.AxisType.TYPE_MONTH) {
                     mTaskHandler.setStatType(Stats.AxisType.TYPE_MONTH);
-                    mSectionsPagerAdapter.notifyDataSetChanged();
+                    mViewPager.getAdapter().notifyDataSetChanged();
                 }
                 return true;
             case R.id.item_time_year:
@@ -267,7 +303,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 }
                 if (mTaskHandler.getStatType() != Stats.AxisType.TYPE_YEAR) {
                     mTaskHandler.setStatType(Stats.AxisType.TYPE_YEAR);
-                    mSectionsPagerAdapter.notifyDataSetChanged();
+                    mViewPager.getAdapter().notifyDataSetChanged();
                 }
                 return true;
             case R.id.item_time_all:
@@ -278,7 +314,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 }
                 if (mTaskHandler.getStatType() != Stats.AxisType.TYPE_LIFE) {
                     mTaskHandler.setStatType(Stats.AxisType.TYPE_LIFE);
-                    mSectionsPagerAdapter.notifyDataSetChanged();
+                    mViewPager.getAdapter().notifyDataSetChanged();
                 }
                 return true;
             case R.id.action_time_chooser:
@@ -302,7 +338,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             }
         }
         mTaskHandler.setDeckId(mDeckId);
-        mSectionsPagerAdapter.notifyDataSetChanged();
+        mViewPager.getAdapter().notifyDataSetChanged();
     }
 
 
@@ -331,14 +367,15 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     }
 
 
-    public ViewPager getViewPager() {
+    public ViewPager2 getViewPager(){
         return mViewPager;
     }
 
-
-    public SectionsPagerAdapter getSectionsPagerAdapter() {
-        return mSectionsPagerAdapter;
+    public TabLayout getSlidingTabLayout() {
+        return mSlidingTabLayout;
     }
+
+
 
 
     private long getDeckId() {
@@ -346,45 +383,107 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     }
 
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class StatsPagerAdapter extends FragmentStateAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
-            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        public StatsPagerAdapter(FragmentManager fm) {
+            super(fm, Statistics.this.getLifecycle());
         }
 
 
-        //this is called when mSectionsPagerAdapter.notifyDataSetChanged() is called, so checkAndUpdate() here
-        //works best for updating all tabs
+        @NonNull
         @Override
-        public int getItemPosition(Object object) {
-            if (object instanceof StatisticFragment) {
-                ((StatisticFragment) object).checkAndUpdate();
-            }
-            //don't return POSITION_NONE, avoid fragment recreation.
-            return super.getItemPosition(object);
-        }
-
-
-        @Override
-        public Fragment getItem(int position) {
-            Fragment item = StatisticFragment.newInstance(position);
-            ((StatisticFragment) item).checkAndUpdate();
+        public Fragment createFragment(int position) {
+            StatisticFragment item = StatisticFragment.newInstance(position);
+            item.checkAndUpdate();
             return item;
         }
 
 
         @Override
-        public int getCount() {
+        public int getItemCount() {
             return 9;
+        }
+    }
+
+
+    public static abstract class StatisticFragment extends AnkiFragment {
+
+        //track current settings for each individual fragment
+        protected long mDeckId;
+        protected AsyncTask mStatisticsTask;
+        protected AsyncTask mStatisticsOverviewTask;
+        private ViewPager2 mActivityPager;
+        private TabLayout mSlidingTabLayout;
+        private TabLayoutMediator mTabLayoutMediator;
+        private final RecyclerView.AdapterDataObserver mDataObserver = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onChanged() {
+                checkAndUpdate();
+                super.onChanged();
+            }
+        };
+
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        protected static final String ARG_SECTION_NUMBER = "section_number";
+
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        @NonNull
+        @CheckResult
+        public static StatisticFragment newInstance(int sectionNumber) {
+            StatisticFragment fragment;
+            Bundle args = new Bundle();
+            switch (sectionNumber) {
+                case FORECAST_TAB_POSITION:
+                case REVIEW_COUNT_TAB_POSITION:
+                case REVIEW_TIME_TAB_POSITION:
+                case INTERVALS_TAB_POSITION:
+                case HOURLY_BREAKDOWN_TAB_POSITION:
+                case WEEKLY_BREAKDOWN_TAB_POSITION:
+                case ANSWER_BUTTONS_TAB_POSITION:
+                case CARDS_TYPES_TAB_POSITION:
+                    fragment = new ChartFragment();
+                    break;
+                case TODAYS_STATS_TAB_POSITION:
+                    fragment = new OverviewStatisticsFragment();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown section number: " + sectionNumber);
+            }
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public void onResume() {
+            checkAndUpdate();
+            super.onResume();
+        }
+
+        @Override
+        public void onDestroy() {
+            cancelTasks();
+            if (mActivityPager.getAdapter() != null) {
+                mActivityPager.getAdapter().unregisterAdapterDataObserver(mDataObserver);
+            }
+            super.onDestroy();
+        }
+
+        protected void cancelTasks() {
+            Timber.w("canceling tasks");
+            TaskOperations.stopTaskGracefully(mStatisticsTask);
+            TaskOperations.stopTaskGracefully(mStatisticsOverviewTask);
         }
 
 
-        @Override
-        public CharSequence getPageTitle(int position) {
+        private String getTabTitle(int position) {
             Locale l = Locale.getDefault();
 
             switch (position) {
@@ -405,74 +504,133 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 case ANSWER_BUTTONS_TAB_POSITION:
                     return getString(R.string.stats_answer_buttons).toUpperCase(l);
                 case CARDS_TYPES_TAB_POSITION:
-                    return getString(R.string.stats_cards_types).toUpperCase(l);
+                    return getString(R.string.title_activity_template_editor).toUpperCase(l);
             }
-            return null;
+            return "";
         }
-    }
 
-
-
-    public static abstract class StatisticFragment extends AnkiFragment {
-
-        //track current settings for each individual fragment
-        protected long mDeckId;
-        protected ViewPager mActivityPager;
-        protected SectionsPagerAdapter mActivitySectionPagerAdapter;
-
-
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        protected static final String ARG_SECTION_NUMBER = "section_number";
-
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static StatisticFragment newInstance(int sectionNumber) {
-            Fragment fragment;
-            Bundle args;
-            switch (sectionNumber) {
-                case FORECAST_TAB_POSITION:
-                case REVIEW_COUNT_TAB_POSITION:
-                case REVIEW_TIME_TAB_POSITION:
-                case INTERVALS_TAB_POSITION:
-                case HOURLY_BREAKDOWN_TAB_POSITION:
-                case WEEKLY_BREAKDOWN_TAB_POSITION:
-                case ANSWER_BUTTONS_TAB_POSITION:
-                case CARDS_TYPES_TAB_POSITION:
-                    fragment = new ChartFragment();
-                    args = new Bundle();
-                    args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-                    fragment.setArguments(args);
-                    return (ChartFragment) fragment;
-                case TODAYS_STATS_TAB_POSITION:
-                    fragment = new OverviewStatisticsFragment();
-                    args = new Bundle();
-                    args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-                    fragment.setArguments(args);
-                    return (OverviewStatisticsFragment) fragment;
-                default:
-                    return null;
+        @Override
+        public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+            mActivityPager = ((Statistics) getParentFragment()).getViewPager();
+            if (mActivityPager.getAdapter() != null) {
+                mActivityPager.getAdapter().registerAdapterDataObserver(mDataObserver);
             }
+            mSlidingTabLayout = ((Statistics) getParentFragment()).getSlidingTabLayout();
+
         }
 
 
         @Override
-        public void onResume() {
-            super.onResume();
-            checkAndUpdate();
-
+        public void onStart() {
+            super.onStart();
+            initTabLayoutMediator();
         }
 
 
-        public abstract void invalidateView();
+        private void initTabLayoutMediator() {
+            if (mTabLayoutMediator != null) {
+                mTabLayoutMediator.detach();
+            }
+            if(mTabLayoutMediator==null||!mTabLayoutMediator.isAttached()){
+                mTabLayoutMediator = new TabLayoutMediator(mSlidingTabLayout, mActivityPager,
+                        (tab, position) -> tab.setText(getTabTitle(position))
+                );
+                mTabLayoutMediator.attach();
+            }
+
+        }
 
         public abstract void checkAndUpdate();
     }
+
+//    public static abstract class StatisticFragment extends AnkiFragment {
+//
+//        //track current settings for each individual fragment
+//        protected long mDeckId;
+//        protected ViewPager mActivityPager;
+//        protected SectionsPagerAdapter mActivitySectionPagerAdapter;
+//
+//
+//        /**
+//         * The fragment argument representing the section number for this
+//         * fragment.
+//         */
+//        protected static final String ARG_SECTION_NUMBER = "section_number";
+//
+//
+//        /**
+//         * Returns a new instance of this fragment for the given section
+//         * number.
+//         */
+//        public static StatisticFragment newInstance(int sectionNumber) {
+//            Fragment fragment;
+//            Bundle args;
+//            switch (sectionNumber) {
+//                case FORECAST_TAB_POSITION:
+//                case REVIEW_COUNT_TAB_POSITION:
+//                case REVIEW_TIME_TAB_POSITION:
+//                case INTERVALS_TAB_POSITION:
+//                case HOURLY_BREAKDOWN_TAB_POSITION:
+//                case WEEKLY_BREAKDOWN_TAB_POSITION:
+//                case ANSWER_BUTTONS_TAB_POSITION:
+//                case CARDS_TYPES_TAB_POSITION:
+//                    fragment = new ChartFragment();
+//                    args = new Bundle();
+//                    args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+//                    fragment.setArguments(args);
+//                    return (ChartFragment) fragment;
+//                case TODAYS_STATS_TAB_POSITION:
+//                    fragment = new OverviewStatisticsFragment();
+//                    args = new Bundle();
+//                    args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+//                    fragment.setArguments(args);
+//                    return (OverviewStatisticsFragment) fragment;
+//                default:
+//                    return null;
+//            }
+//        }
+//
+//
+//        @Override
+//        public void onResume() {
+//            super.onResume();
+//            checkAndUpdate();
+//
+//        }
+//
+//
+//        public abstract void invalidateView();
+//
+//        public abstract void checkAndUpdate();
+//
+//
+//        public String getTabTitle(int position) {
+//            Locale l = Locale.getDefault();
+//
+//            switch (position) {
+//                case TODAYS_STATS_TAB_POSITION:
+//                    return getString(R.string.stats_overview).toUpperCase(l);
+//                case FORECAST_TAB_POSITION:
+//                    return getString(R.string.stats_forecast).toUpperCase(l);
+//                case REVIEW_COUNT_TAB_POSITION:
+//                    return getString(R.string.stats_review_count).toUpperCase(l);
+//                case REVIEW_TIME_TAB_POSITION:
+//                    return getString(R.string.stats_review_time).toUpperCase(l);
+//                case INTERVALS_TAB_POSITION:
+//                    return getString(R.string.stats_review_intervals).toUpperCase(l);
+//                case HOURLY_BREAKDOWN_TAB_POSITION:
+//                    return getString(R.string.stats_breakdown).toUpperCase(l);
+//                case WEEKLY_BREAKDOWN_TAB_POSITION:
+//                    return getString(R.string.stats_weekly_breakdown).toUpperCase(l);
+//                case ANSWER_BUTTONS_TAB_POSITION:
+//                    return getString(R.string.stats_answer_buttons).toUpperCase(l);
+//                case CARDS_TYPES_TAB_POSITION:
+//                    return getString(R.string.stats_cards_types).toUpperCase(l);
+//            }
+//            return null;
+//        }
+//
+//    }
 
 
 
@@ -538,11 +696,11 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
 
             mType = (statistics.getTaskHandler()).getStatType();
             mIsCreated = true;
-            mActivityPager = statistics.getViewPager();
-            mActivitySectionPagerAdapter = statistics.getSectionsPagerAdapter();
+//            mActivityPager = statistics.getViewPager();
+//            mActivitySectionPagerAdapter = statistics.getSectionsPagerAdapter();
             mDeckId = statistics.getDeckId();
             if (mDeckId != Stats.ALL_DECKS_ID) {
-                Collection col = CollectionHelper.getInstance().getCol(getAnkiActivity());
+                Collection col = CollectionHelper.getInstance().getCol(requireActivity());
                 String baseName = Decks.basename(col.getDecks().current().getString("name"));
                 if (sIsSubtitle) {
                     ((AppCompatActivity) getAnkiActivity()).getSupportActionBar().setSubtitle(baseName);
@@ -609,7 +767,6 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
 
             //are height and width checks still necessary without bitmaps?
             if (height != 0 && width != 0) {
-                Collection col = CollectionHelper.getInstance().getCol(getAnkiActivity());
                 if (mHeight != height || mWidth != width ||
                         mType != (statistics.getTaskHandler()).getStatType() ||
                         mDeckId != statistics.getDeckId()) {
@@ -634,12 +791,12 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         }
 
 
-        @Override
-        public void invalidateView() {
-            if (mChart != null) {
-                mChart.invalidate();
-            }
-        }
+//        @Override
+//        public void invalidateView() {
+//            if (mChart != null) {
+//                mChart.invalidate();
+//            }
+//        }
 
 
         @Override
@@ -702,8 +859,8 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             createStatisticOverview();
             mType = handler.getStatType();
             mIsCreated = true;
-            mActivityPager = statistics.getViewPager();
-            mActivitySectionPagerAdapter = statistics.getSectionsPagerAdapter();
+//            mActivityPager = statistics.getViewPager();
+//            mActivitySectionPagerAdapter = statistics.getSectionsPagerAdapter();
             Collection col = CollectionHelper.getInstance().getCol(getAnkiActivity());
             mDeckId = statistics.getDeckId();
             if (mDeckId != Stats.ALL_DECKS_ID) {
@@ -730,12 +887,12 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
         }
 
 
-        @Override
-        public void invalidateView() {
-            if (mOverView != null) {
-                mOverView.invalidate();
-            }
-        }
+//        @Override
+//        public void invalidateView() {
+//            if (mOverView != null) {
+//                mOverView.invalidate();
+//            }
+//        }
 
 
         @Override

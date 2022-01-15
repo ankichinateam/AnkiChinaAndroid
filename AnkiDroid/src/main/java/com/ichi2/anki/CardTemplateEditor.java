@@ -424,6 +424,7 @@ public class CardTemplateEditor extends AnkiActivity implements DeckSelectionDia
         }
 
 
+        @SuppressWarnings("deprecation")
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             final Collection col = mTemplateEditor.getCol();
@@ -539,7 +540,6 @@ public class CardTemplateEditor extends AnkiActivity implements DeckSelectionDia
                 return "";
             }
         }
-
 
         private void launchCardBrowserAppearance(JSONObject currentTemplate) {
             Context context = AnkiDroidApp.getInstance().getBaseContext();

@@ -18,6 +18,7 @@ package com.ichi2.anki.widgets;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -75,14 +76,17 @@ import com.ichi2.compat.CompatHelper;
 import com.ichi2.libanki.Card;
 import com.ichi2.libanki.Collection;
 
+import com.ichi2.libanki.Consts;
 import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.sched.AbstractDeckTreeNode;
 import com.ichi2.libanki.stats.Stats;
+import com.ichi2.utils.AESUtil;
 import com.ichi2.utils.AdaptionUtil;
 import com.ichi2.utils.CornerTransform;
 import com.ichi2.utils.HtmlUtils;
+import com.ichi2.utils.JSONObject;
 
 
 import java.util.ArrayList;
@@ -92,6 +96,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.ichi2.anki.AbstractFlashcardViewer.DECK_OPTIONS;
 import static com.ichi2.anki.SelfStudyActivity.PREVIEW_CARDS;
@@ -176,7 +182,8 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 
     private AnkiActivity mContext;
-
+    private SharedPreferences mPreference;
+    private JSONObject mModelKeys;
 
     public DeckInfoListAdapter(LayoutInflater layoutInflater, AnkiActivity context) {
         mLayoutInflater = layoutInflater;
@@ -206,6 +213,11 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         mExpandImage = ta.getDrawable(7);
         mCollapseImage = ta.getDrawable(8);
         ta.recycle();
+        mPreference = AnkiDroidApp.getSharedPrefs(context);
+        String modelKeyStr=mPreference.getString(Consts.KEY_SAVED_MODEL_KEY,"");
+        if(!modelKeyStr.isEmpty()){
+            mModelKeys=new JSONObject(modelKeyStr);
+        }
     }
 
 
@@ -263,37 +275,37 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         mCurrentDeck = mCol.getDecks().current();
         processNames();
         long currentID = mCurrentDeck.optLong("id");
-        TreeMap<String, Long> map = mCol.getDecks().children(currentID);
-        if (!mIniCollapsedStatus&&!isInitStruct()) {
-            mIniCollapsedStatus = true;
-
-//            Timber.i("buildDeckList：当前节点：%s", mCurrentDeck.optString("name"));
-            for (long id : mCurrentIDs) {
-//                Timber.i("关闭节点：%s", mCol.getDecks().get(id).optString("name"));
-                mCol.getDecks().get(id).put("collapsed", true);//有孩子节点的只能设置为true
-
-            }
-            for (Deck parent : mCol.getDecks().parents(currentID)) {
-                // 将当前节点的父辈节点全展开
-//                Timber.i("打开父节点：%s", parent.optString("name"));
-                parent.put("collapsed", false);
-                mCol.getDecks().save(parent);
-            }
-
-            // 将当前节点的孩子节点全展开
-            Set<String> keySet = map.keySet();
-            for (String str : keySet) {
-//                Timber.i("打开孩子节点：%s", str);
-                mCol.getDecks().get(map.get(str)).put("collapsed", false);
-                mCol.getDecks().save(mCol.getDecks().get(map.get(str)));
-            }
-            // 如果的确有孩子，记得自己展开
-
-        }
-        if (map.size() > 0) {
-//                Timber.i("打开自己节点：%s", mCurrentDeck.optString("name"));
+//        TreeMap<String, Long> map = mCol.getDecks().children(currentID);
+//        if (!mIniCollapsedStatus&&!isInitStruct()) {
+//            mIniCollapsedStatus = true;
+//
+////            Timber.i("buildDeckList：当前节点：%s", mCurrentDeck.optString("name"));
+//            for (long id : mCurrentIDs) {
+////                Timber.i("关闭节点：%s", mCol.getDecks().get(id).optString("name"));
+//                mCol.getDecks().get(id).put("collapsed", true);//有孩子节点的只能设置为true
+//
+//            }
+//            for (Deck parent : mCol.getDecks().parents(currentID)) {
+//                // 将当前节点的父辈节点全展开
+////                Timber.i("打开父节点：%s", parent.optString("name"));
+//                parent.put("collapsed", false);
+//                mCol.getDecks().save(parent);
+//            }
+//
+//            // 将当前节点的孩子节点全展开
+//            Set<String> keySet = map.keySet();
+//            for (String str : keySet) {
+////                Timber.i("打开孩子节点：%s", str);
+//                mCol.getDecks().get(map.get(str)).put("collapsed", false);
+//                mCol.getDecks().save(mCol.getDecks().get(map.get(str)));
+//            }
+//            // 如果的确有孩子，记得自己展开
+//
+//        }
+//        if (map.size() > 0) {
+////                Timber.i("打开自己节点：%s", mCurrentDeck.optString("name"));
             mCurrentDeck.put("collapsed", false);
-        }
+//        }
         processNodes(nodes);
         notifyDataSetChanged();
     }
@@ -670,25 +682,37 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 //            holder.endLayout.setOnClickListener(mCountsClickListener);
         } else if (mCurrentDeck != null) {
             if (tempHolder instanceof CardsListAdapter.CardsViewHolder) {
+
                 CardsListAdapter.CardsViewHolder holder = (CardsListAdapter.CardsViewHolder) tempHolder;
                 CardBrowser.CardCache card = mCards.get(position - mDeckList.size() - 1 - 1);
-                String question = card.getColumnHeaderText(CardBrowser.Column.QUESTION);
+                Timber.i("refresh card:%s", card.getId());
+                String question = card.getColumnHeaderText(CardBrowser.Column.SFLD);
                 if (card.getColumnHeaderText(CardBrowser.Column.SUSPENDED).equals("True")) {
                     holder.deckQuestion.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
-                    holder.deckAnswer.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
+//                    holder.deckAnswer.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
                 }
-                if (question.isEmpty()) {
-                    holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME));
-                } else {
-                    holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
+                String firstColumnStr=question.isEmpty()?card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME):card.getColumnHeaderText(CardBrowser.Column.SFLD);
+                Pattern pattern = Pattern.compile("(?<=≯#).*?(?=#≮)");
+                Matcher matcher = pattern.matcher(firstColumnStr);
+                String val = "";
+
+                if (matcher.find()) {
+                    val = matcher.group(0);
+                    try{
+                        String key=mModelKeys.getString(String.valueOf(card.getCard().model().getLong("id")));
+                        Timber.i("match key:%s", key);
+                        holder.deckQuestion.setText(HtmlUtils.delHTMLTag(firstColumnStr.substring(0, firstColumnStr.indexOf("≯#")) + AESUtil.decrypt(val, key) + firstColumnStr.substring(firstColumnStr.indexOf("#≮") + 2)));
+//                    holder.deckQuestion.setText(firstColumnStr.substring(0, firstColumnStr.indexOf("≯#")) + aesUtil.getDecryptedMessage(val) + firstColumnStr.substring(firstColumnStr.indexOf("#≮") + 2));
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        holder.deckQuestion.setText(firstColumnStr);
+                    }
+                }else {
+                    holder.deckQuestion.setText(firstColumnStr);
+
                 }
 
-//            String answer = card.getColumnHeaderText(CardBrowser.Column.ANSWER);
-//            if (answer.isEmpty()) {
-                holder.deckAnswer.setText(card.getColumnHeaderText(CardBrowser.Column.ANSWER));
-//            } else {
-//                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
-//            }
+//                holder.deckAnswer.setText(card.getColumnHeaderText(CardBrowser.Column.ANSWER));
                 holder.reviewCount.setText(card.getColumnHeaderText(CardBrowser.Column.REVIEWS));
                 holder.forgetCount.setText(card.getColumnHeaderText(CardBrowser.Column.LAPSES));
                 holder.due.setText(card.getColumnHeaderText(CardBrowser.Column.DUE2));
@@ -744,26 +768,32 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 });
 
                 holder.itemRoot.setOnClickListener(v -> {
-                Intent previewer = new Intent(mContext, Previewer.class);
-                long[] ids =  getAllCardIds();
-                long targetId = (long) v.getTag();
-                if (ids.length > 100) {
-                    //为提高效率 直接复制卡牌
-                    long[] finalIds = new long[ids.length + 1];
-                    finalIds[0] = targetId;
-                    System.arraycopy(ids, 0, finalIds, 1, ids.length);
-                    previewer.putExtra("cardList", finalIds);
-                } else {
+                    Intent previewer = new Intent(mContext, Previewer.class);
+                    long[] ids =  getAllCardIds();
+                    long targetId = (long) v.getTag();
+//                    if (ids.length > 100) {
+//                        //为提高效率 直接复制卡牌
+//                        long[] finalIds = new long[ids.length + 1];
+//                        finalIds[0] = targetId;
+//                        System.arraycopy(ids, 0, finalIds, 1, ids.length);
+//                        previewer.putExtra("cardList", finalIds);
+//                    } else {
+//                        for (int i = 0; i < ids.length; i++) {
+//                            if (ids[i] == targetId) {
+//                                ids[i] = ids[0];
+//                                ids[0] = targetId;
+//                            }
+//                        }
+//                        previewer.putExtra("cardList", ids);
+//                    }
                     for (int i = 0; i < ids.length; i++) {
                         if (ids[i] == targetId) {
-                            ids[i] = ids[0];
-                            ids[0] = targetId;
+                            previewer.putExtra("index", i);
+                            break;
                         }
                     }
                     previewer.putExtra("cardList", ids);
-                }
-                previewer.putExtra("index", 0);
-                mContext.startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+                    mContext.startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
                 });
 //                holder.itemRoot.setOnLongClickListener(mDeckLongClickListener);
             } else if (tempHolder instanceof BrowserTabViewHolder) {
@@ -966,7 +996,10 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
     private int mCurrentSelectedTab = 0;
     private boolean mInitBrowserCards = false;
-
+    public void notifyDataSetChangedAll(){
+        mInitBrowserCards=false;
+        notifyDataSetChanged();
+    }
 
     private long[] getAllCardIds() {
         long[] l = new long[mCards.size()];
@@ -1133,6 +1166,9 @@ public class DeckInfoListAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             }
             // If any of this node's parents are collapsed, don't add it to the deck list
             for (Deck parent : mCol.getDecks().parents(node.getDid())) {
+                if(parent==null){
+                    continue;
+                }
                 Timber.i("我的父节点关闭啦：%s：%s", parent.optString("name"), parent.optBoolean("collapsed"));
 //                mHasSubdecks = true;    // If a deck has a parent it means it's a subdeck so set a flag
                 if (parent.optBoolean("collapsed")) {

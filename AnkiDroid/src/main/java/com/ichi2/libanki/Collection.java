@@ -102,6 +102,22 @@ public class Collection {
     private Models mModels;
     private Tags mTags;
 
+
+    public String getTagsJson() {
+        return mTagsJson;
+    }
+
+
+    private String mTagsJson;
+
+
+    public int getVer() {
+        return mVer;
+    }
+
+
+    private int mVer;
+
     private AbstractSched mSched;
 
     private long mStartTime;
@@ -170,7 +186,7 @@ public class Collection {
     private static final int UNDO_SIZE_MAX = 20;
 
     @VisibleForTesting
-    public Collection(Context context, DB db, String path, boolean server, boolean log, @NonNull Time time) {
+    public Collection(Context context, DB db, String path, boolean server, boolean log, @NonNull Time time ) {
         mContext = context;
         mDebugLog = log;
         mDb = db;
@@ -199,9 +215,7 @@ public class Collection {
 
 
     public String name() {
-        String n = (new File(mPath)).getName().replace(".anki2", "");
-        // TODO:
-        return n;
+        return (new File(mPath)).getName().replace(".anki2", "");
     }
 
 
@@ -223,7 +237,6 @@ public class Collection {
     // Note: Additional members in the class duplicate this
     private void _loadScheduler() {
         int ver = schedVer();
-        Timber.i("_loadScheduler");
         if (ver == 1) {
             mSched = new Sched(this);
         } else if (ver == 2) {
@@ -262,9 +275,9 @@ public class Collection {
         String deckConf = "";
         try {
             // Read in deck table columns
-            cursor = mDb.getDatabase().query(
+            cursor = mDb.query(
                     "SELECT crt, mod, scm, dty, usn, ls, " +
-                    "conf, dconf, tags FROM col", null);
+                    "conf, dconf, tags,ver FROM col");
             if (!cursor.moveToFirst()) {
                 return;
             }
@@ -276,7 +289,9 @@ public class Collection {
             mLs = cursor.getLong(5);
             mConf = new JSONObject(cursor.getString(6));
             deckConf = cursor.getString(7);
-            mTags.load(cursor.getString(8));
+            mTagsJson = cursor.getString(8);
+            mTags.load(mTagsJson);
+            mVer=cursor.getInt(9);
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -333,7 +348,7 @@ public class Collection {
 
     public String loadColumn(String columnName) {
         int pos = 1;
-        StringBuffer buf = new StringBuffer("");
+        StringBuilder buf = new StringBuilder("");
 
         while (true) {
             try (Cursor cursor = mDb.query("SELECT substr(" + columnName + ", ?, ?) FROM col",
@@ -433,19 +448,12 @@ public class Collection {
             try {
                 SupportSQLiteDatabase db = mDb.getDatabase();
                 if (save) {
-                    db.beginTransaction();
-                    try {
-                        save();
-                        db.setTransactionSuccessful();
-                    } finally {
-                        db.endTransaction();
-                    }
+                    mDb.executeInTransaction(this::save);
                 } else {
-                    if (db.inTransaction()) {
-                        db.endTransaction();
-                    }
+                    DB.safeEndInTransaction(db);
                 }
             } catch (RuntimeException e) {
+                Timber.w(e);
                 AnkiDroidApp.sendExceptionReport(e, "closeDB");
             }
             if (!mServer) {
@@ -1346,6 +1354,7 @@ public class Collection {
         }
     }
 
+
     public void markReview(Card card) {
         boolean wasLeech = card.note().hasTag("leech");
         Card clonedCard = card.clone();
@@ -1404,12 +1413,13 @@ public class Collection {
         CheckDatabaseResult result = new CheckDatabaseResult(file.length());
         final int[] currentTask = {1};
         int totalTasks = (getModels().all().size() * 4) + 27; // a few fixes are in all-models loops, the rest are one-offs
-        Runnable notifyProgress = () -> fixIntegrityProgress(progressCallback, currentTask[0]++, totalTasks);
+        Runnable notifyProgress = progressCallback==null?null:() -> fixIntegrityProgress(progressCallback, currentTask[0]++, totalTasks);
         FunctionalInterfaces.Consumer<FunctionalInterfaces.FunctionThrowable<Runnable, List<String>, JSONException>> executeIntegrityTask =
                 (FunctionalInterfaces.FunctionThrowable<Runnable, List<String>, JSONException> function) -> {
                     //DEFECT: notifyProgress will lag if an exception is thrown.
                     try {
                         mDb.getDatabase().beginTransaction();
+                        if(notifyProgress!=null)
                         result.addAll(function.apply(notifyProgress));
                         mDb.getDatabase().setTransactionSuccessful();
                     } catch (Exception e) {
@@ -1605,7 +1615,7 @@ public class Collection {
         // DB must have indices. Older versions of AnkiDroid didn't create them for new collections.
         notifyProgress.run();
         int ixs = mDb.queryScalar("select count(name) from sqlite_master where type = 'index'");
-        if (ixs < 7) {
+        if (ixs < 10) {
             problems.add("Indices were missing.");
             Storage.addIndices(mDb);
         }
@@ -2072,7 +2082,9 @@ public class Collection {
     public void setLs(long ls) {
         mLs = ls;
     }
-
+    public long getLs( ) {
+       return mLs;
+    }
 
     public void setUsnAfterSync(int usn) {
         mUsn = usn;
@@ -2142,6 +2154,7 @@ public class Collection {
     @CheckResult
     public List<Long> filterToValidCards(long[] cards) {
         return getDb().queryLongList("select id from cards where id in " + Utils.ids2str(cards));
+
     }
 
     //This duplicates _loadScheduler (but returns the value and sets the report limit).
@@ -2155,6 +2168,8 @@ public class Collection {
         mSched.setReportLimit(reportLimit);
         return mSched;
     }
+
+
 
     /** Allows a mock db to be inserted for testing */
     @VisibleForTesting

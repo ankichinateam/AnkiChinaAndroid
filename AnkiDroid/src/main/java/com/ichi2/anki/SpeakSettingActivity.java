@@ -15,14 +15,13 @@
 package com.ichi2.anki;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ichi2.libanki.Card;
 import com.ichi2.libanki.Deck;
@@ -51,12 +50,14 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
     private SwitchCompat switch_use_tts;
     private SwitchCompat switch_show_icon;
 
-    public static int REQUEST_CODE_SPEAK_SETTING=1003;
+    public static int REQUEST_CODE_SPEAK_SETTING = 1003;
+
+
     public static void OpenSpeakSetting(long cardID, long did, Context context) {
         Intent intent = new Intent(context, SpeakSettingActivity.class);
         intent.putExtra("cid", cardID);
         intent.putExtra("did", did);
-        ((Activity)context).startActivityForResult(intent,REQUEST_CODE_SPEAK_SETTING);
+        ((Activity) context).startActivityForResult(intent, REQUEST_CODE_SPEAK_SETTING);
     }
 
 
@@ -86,7 +87,7 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
 
             int[] attrs = new int[] {
                     R.attr.reviewStatusBarColor,
-                    R.attr.primaryTextColor,
+                    R.attr.primaryTextColor222222,
             };
             TypedArray ta = obtainStyledAttributes(attrs);
             toolbar.setBackground(ta.getDrawable(0));
@@ -121,8 +122,8 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
             ReadText.selectDefaultLanguage(getTextForTts(mCurrentCard.q(true)), getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(),
                     Sound.SoundSide.ANSWER, true);
         }
-        tx_front_language.setText(ReadText.getLanguageName(did, ord, Sound.SoundSide.QUESTION));
-        tx_back_language.setText(ReadText.getLanguageName(did, ord, Sound.SoundSide.ANSWER));
+//        tx_front_language.setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)?ReadText.getAzureLanguageDisplay(did, ord, Sound.SoundSide.QUESTION):ReadText.getLanguageName(did, ord, Sound.SoundSide.QUESTION));
+//        tx_back_language.setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)?ReadText.getAzureLanguageDisplay(did, ord, Sound.SoundSide.ANSWER):ReadText.getLanguageName(did, ord, Sound.SoundSide.ANSWER));
         sb_speak_speed.setRange(50, 200);
         sb_speak_speed.setProgress(ReadText.getSpeechRate(did, ord) * 100);
         sb_speak_speed.setOnRangeChangedListener(new OnRangeChangedListener() {
@@ -144,21 +145,25 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
             }
         });
 //        DeckConfig mOptions = getCol().getDecks().confForDid(getDeckIdForCard(mCurrentCard));
-        switch_auto_speak.setChecked(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_AUTO_PLAY_TTS,false));
+        switch_auto_speak.setChecked(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_AUTO_PLAY_TTS, false));
         switch_auto_speak.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_AUTO_PLAY_TTS,isChecked).apply();
-            if(!isChecked)switch_use_tts.setChecked(false);
+            AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_AUTO_PLAY_TTS, isChecked).apply();
+            if (!isChecked) {
+                switch_use_tts.setChecked(false);
+            }
 //            applyAutoPlay(mOptions, isChecked);
         });
 
         switch_use_tts.setChecked(AnkiDroidApp.getSharedPrefs(this).getBoolean("tts", false));
         switch_use_tts.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            AnkiDroidApp.getSharedPrefs(this).edit().putBoolean("tts",isChecked).apply();
-            if(isChecked)switch_auto_speak.setChecked(true);
+            AnkiDroidApp.getSharedPrefs(this).edit().putBoolean("tts", isChecked).apply();
+            if (isChecked) {
+                switch_auto_speak.setChecked(true);
+            }
         });
 
         switch_show_icon.setChecked(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SHOW_TTS_ICON, true));
-        switch_show_icon.setOnCheckedChangeListener((buttonView, isChecked) -> AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_SHOW_TTS_ICON,isChecked).apply());
+        switch_show_icon.setOnCheckedChangeListener((buttonView, isChecked) -> AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_SHOW_TTS_ICON, isChecked).apply());
 
     }
 
@@ -189,7 +194,12 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
     @Override
     protected void onResume() {
         super.onResume();
-        ((TextView)findViewById(R.id.tx_engine)).setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE,false)?"在线引擎":"离线引擎");
+        ((TextView) findViewById(R.id.tx_engine)).setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false) ? "在线引擎" : "离线引擎");
+        tx_front_language.setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)?"中文":ReadText.getLanguageName(getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(), Sound.SoundSide.QUESTION));
+        tx_back_language.setText(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)?"中文":ReadText.getLanguageName(getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(), Sound.SoundSide.ANSWER));
+
+//        tx_front_language.setText(ReadText.getLanguageName(getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(), Sound.SoundSide.QUESTION));
+//        tx_back_language.setText( ReadText.getLanguageName(getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(), Sound.SoundSide.ANSWER));
     }
 
 
@@ -198,13 +208,23 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
         int id = v.getId();
         switch (id) {
             case R.id.rl_front_language:
-                ReadText.selectTts(getTextForTts(mCurrentCard.q(true)), getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(),
-                        Sound.SoundSide.QUESTION, true, (name, id1) -> tx_front_language.setText(name));
-                break;
+                if(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)){
+                    Toast.makeText(this,"在线引擎不需要设置语言",Toast.LENGTH_SHORT).show();
+                }else {
+                    ReadText.selectTts(getTextForTts(mCurrentCard.q(true)), getDeckIdForCard(mCurrentCard), mCurrentCard.getOrd(),
+                            Sound.SoundSide.QUESTION, true, (name, id1) -> tx_front_language.setText(name));
 
+                }
+
+
+                break;
             case R.id.rl_back_language:
-                ReadText.selectTts(getTextForTts(mCurrentCard.getPureAnswer()), getDeckIdForCard(mCurrentCard),
-                        mCurrentCard.getOrd(), Sound.SoundSide.ANSWER, true, (name, id12) -> tx_back_language.setText(name));
+                if(AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)){
+                    Toast.makeText(this,"在线引擎不需要设置语言",Toast.LENGTH_SHORT).show();
+                }else {
+                    ReadText.selectTts(getTextForTts(mCurrentCard.getPureAnswer()), getDeckIdForCard(mCurrentCard),
+                            mCurrentCard.getOrd(), Sound.SoundSide.ANSWER, true, (name, id12) -> tx_back_language.setText(name));
+                }
                 break;
             case R.id.rl_engine:
                 SwitchEngineActivity.OpenSwitchEngineActivity(this);
@@ -213,6 +233,53 @@ public class SpeakSettingActivity extends AnkiActivity implements View.OnClickLi
 
 
     }
+
+//    private static String speechSubscriptionKey = "5a6de7c8f8c34affb14860576b09fa15";
+//    private static String serviceRegion = "japaneast";
+//    private void setAzureLanguage(long did, int ord, Sound.SoundSide soundSide) {
+//        SpeechConfig speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);
+//        speechConfig.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Raw24Khz16BitMonoPcm);
+//        SpeechSynthesizer synthesizer = new SpeechSynthesizer(speechConfig, null);
+//        ArrayList<CharSequence> dialogItems = new ArrayList<>();
+//        final ArrayList<String> dialogIds = new ArrayList<>();
+//        List<VoiceInfo> distinctList = new ArrayList< >( );
+//        try {
+//            List<VoiceInfo> voiceInfoList = synthesizer.getVoicesAsync().get().getVoices();
+//
+//            for (VoiceInfo info : voiceInfoList) {
+//                boolean add=true;
+//                for (VoiceInfo distinct : distinctList) {
+//                    if(info.getLocale().equals(distinct.getLocale())){
+//                        add=false;
+//                    }
+//                }
+//                if(add&& Bcp47Parser.BCP47.get(info.getLocale())!=null){
+//                    distinctList.add(info);
+//                    dialogItems.add(Bcp47Parser.BCP47.get(info.getLocale()));
+//                    dialogIds.add((info.getShortName()));
+//                    Timber.i("info:" + info.getLocale() + "," + info.getShortName());
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        final MaterialDialog.Builder builder = new MaterialDialog.Builder(this);
+//        String[] items = new String[dialogItems.size()];
+//        dialogItems.toArray(items);
+//        builder.title(getResources().getString(R.string.select_locale_title))
+//                .items(items)
+//                .itemsCallback((materialDialog, view, which, charSequence) -> {
+//                    String locale = dialogIds.get(which);
+//                    Timber.d("ReadText.selectTts() user chose locale '%s'", locale);
+//                    MetaDB.storeAzureLanguages(this, did, ord, soundSide, distinctList.get(which).getLocale().equals("zh-CN")?"zh-CN-YunyangNeural":locale,dialogItems.get(which).toString());
+//                    Timber.d("update locale result '%s'", ReadText.getAzureLanguage(did, ord, Sound.SoundSide.QUESTION));
+//                    if(soundSide==Sound.SoundSide.QUESTION)
+//                    tx_front_language.setText(dialogItems.get(which));
+//                    else
+//                    tx_back_language.setText(dialogItems.get(which));
+//                });
+//        builder.build().show();
+//    }
 
 
     private String getTextForTts(String text) {

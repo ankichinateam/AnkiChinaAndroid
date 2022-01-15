@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="186dp"
+	android:layout_height="wrap_content"
+	android:layout_margin="10dp"
+	app:cardBackgroundColor="?attr/mainItemBackgroundColor"
+	app:cardCornerRadius="13dp">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:paddingVertical="15dp"
+		android:paddingHorizontal="21dp">
+		<TextView
+			android:id="@+id/title"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="16dp"
+			android:text="数据同步中"
+			android:textColor="?attr/primaryTextColor222222"
+			android:textSize="17sp"
+			android:textStyle="bold" />
+		<TextView
+			android:id="@+id/progress"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="16dp"
+			android:text="0%"
+			android:textColor="?attr/primaryTextColor222222"
+			android:textSize="17sp"
+			android:textStyle="bold" />
+		<com.ichi2.ui.IOSLoadingView
+			android:id="@+id/loading_view"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="26dp"
+			android:layout_width="20dp"
+			android:layout_height="20dp"/>
+		<Button
+			android:id="@+id/confirm"
+			android:visibility="gone"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginTop="26dp"
+			android:layout_width="match_parent"
+			android:layout_height="37dp"
+			android:background="@drawable/selector_start_study_button"
+			android:textSize="17sp"
+			android:textStyle="bold"
+			android:textColor="@color/white"
+			android:text="确定"
+			/>
+
+	</LinearLayout>
+</androidx.cardview.widget.CardView>
+
+

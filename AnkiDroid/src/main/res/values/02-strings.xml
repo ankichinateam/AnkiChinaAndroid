@@ -203,8 +203,12 @@
     <string name="import_hint">请把apkg文件放在%s目录中，然后按确定。</string>
     <string name="upgrade_import_no_file_found">没有找到可导入的 %1$s 文件</string>
     <string name="study_options">选项</string>
+    <string name="card_flip_enable">默认反面(开启)</string>
+    <string name="card_flip_disable">默认反面(关闭)</string>
     <string name="top_button_config">顶部按钮</string>
     <string name="select_tts">设置 TTS 语言</string>
+    <string name="layout_config">布局样式</string>
+    <string name="controller_config">游戏手柄</string>
     <string name="custom_study">自定义学习</string>
     <string name="add_today_study_amount">增加今日学习量</string>
     <string name="custom_study_dialog_content">新卡有%d张，待复习%d张</string>
@@ -321,6 +325,7 @@
     <string name="insert_heading">插入标题</string>
     <string name="format_font_size">更改字体大小</string>
     <string name="format_font_color">更改字体颜色</string>
+    <string name="format_cover">遮挡</string>
     <string name="insert_mathjax">插入 MathJax 方程</string>
     <string name="insert_list">插入列表</string>
     <string name="insert_no_index_list">插入无序列表</string>

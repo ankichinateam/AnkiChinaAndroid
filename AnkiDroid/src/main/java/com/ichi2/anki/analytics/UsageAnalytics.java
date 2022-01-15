@@ -57,6 +57,7 @@ public class UsageAnalytics {
      *
      * @param context required to look up the analytics codes for the app
      */
+
     synchronized public static GoogleAnalytics initialize(Context context) {
         Timber.i("initialize()");
         if (sAnalytics == null) {
@@ -83,7 +84,7 @@ public class UsageAnalytics {
 
         installDefaultExceptionHandler();
 
-        SharedPreferences userPrefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences userPrefs = AnkiDroidApp.getSharedPrefs(context);
         setOptIn(userPrefs.getBoolean(ANALYTICS_OPTIN_KEY, false));
         userPrefs.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
             if (key.equals(ANALYTICS_OPTIN_KEY)) {

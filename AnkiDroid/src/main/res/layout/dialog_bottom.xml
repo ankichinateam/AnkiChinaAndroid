@@ -23,7 +23,7 @@
 			android:layout_height="wrap_content"
 			android:gravity="center"
 			android:text="知识卡"
-			android:textColor="?attr/primaryTextColor"
+			android:textColor="?attr/primaryTextColor222222"
 			android:textSize="11sp" />
 	</LinearLayout>
 	<LinearLayout
@@ -44,7 +44,7 @@
 			android:layout_height="wrap_content"
 			android:gravity="center"
 			android:text="记忆库"
-			android:textColor="?attr/primaryTextColor"
+			android:textColor="?attr/primaryTextColor222222"
 			android:textSize="11sp" />
 	</LinearLayout>
 

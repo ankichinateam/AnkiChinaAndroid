@@ -394,6 +394,7 @@ public class Anki2Importer extends Importer {
     private boolean _uniquifyNote(Object[] note) {
         String origGuid = (String) note[GUID];
         long srcMid = (Long) note[MID];
+        Timber.i("search src mid:%s,id:%s", srcMid, note[0]);
         long dstMid = _mid(srcMid);
         // duplicate Schemas?
         if (srcMid == dstMid) {

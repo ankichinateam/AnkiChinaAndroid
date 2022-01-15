@@ -25,6 +25,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -53,6 +54,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import timber.log.Timber;
 
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_FLIP_OR_ANSWER_EASE1;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_FLIP_OR_ANSWER_EASE2;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_NEXT_CARD;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_PRE_CARD;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.DISMISS;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.DISMISS_MULTI;
 
@@ -189,12 +194,12 @@ public class Previewer2 extends AbstractFlashcardViewer {
 
     protected LinearLayout mShowPreview2AnswerLayout;
     protected LinearLayout mMarkButtonsLayout;
-    protected LinearLayout mMark1Layout;
+    protected LinearLayout mAgainLayout;
     protected LinearLayout mMark2Layout;
     protected LinearLayout mMark3Layout;
     //    protected LinearLayout mMark4Layout;
     protected LinearLayout mNextCardLayout;
-    protected TextView mMark1Text;
+    protected TextView mAgainText;
     protected TextView mMark2Text;
     protected TextView mMark3Text;
     //    protected TextView mMark4Text;
@@ -213,28 +218,18 @@ public class Previewer2 extends AbstractFlashcardViewer {
 
         mShowPreview2AnswerLayout = findViewById(R.id.flashcard_layout_flip_preview2);
         mMarkButtonsLayout = findViewById(R.id.mark_buttons);
-        mMark1Layout = findViewById(R.id.mark1);
-//        mMark2Layout = findViewById(R.id.mark2);
-//        mMark3Layout = findViewById(R.id.mark3);
-//        mMark4Layout = findViewById(R.id.mark4);
+        mAgainLayout = findViewById(R.id.again);
+        mAgainLayout.setOnClickListener(new AgainListener());
 
-        mMark1Layout.setOnClickListener(new MarkListener(1));
-//        mMark2Layout.setOnClickListener(new MarkListener(2));
-//        mMark3Layout.setOnClickListener(new MarkListener(3));
-//        mMark4Layout.setOnClickListener(new MarkListener(4));
 
-        mNextCardLayout = findViewById(R.id.next);
-        mMark1Text = findViewById(R.id.mark1_text);
-//        mMark2Text = findViewById(R.id.mark2_text);
-//        mMark3Text = findViewById(R.id.mark3_text);
-//        mMark4Text = findViewById(R.id.mark4_text);
+        mAgainText = findViewById(R.id.again_text);
         mNextText = findViewById(R.id.next_text);
 
         mMarkButtonsLayout.setVisibility(View.GONE);
         mShowPreview2AnswerLayout.setVisibility(View.VISIBLE);
         mShowPreview2AnswerLayout.setOnClickListener(mToggleAnswerHandler);
 
-//        mPreviewPrevCard.setOnClickListener(mSelectScrollHandler);
+        mNextCardLayout = findViewById(R.id.next);
         mNextCardLayout.setOnClickListener(mSelectScrollHandler);
 
         mTextBarNew = (TextView) findViewById(R.id.new_number);
@@ -253,34 +248,34 @@ public class Previewer2 extends AbstractFlashcardViewer {
         switch (mCurrentCard.userFlag()) {
             case 0:
             case 4:
-                mMark1Text.setText("标红");
+                mAgainText.setText("标红");
                 mMark2Text.setText("标橙");
                 mMark3Text.setText("标绿");
-                mMark1Layout.setSelected(false);
+                mAgainLayout.setSelected(false);
                 mMark2Layout.setSelected(false);
                 mMark3Layout.setSelected(false);
                 break;
             case 1:
-                mMark1Text.setText("取标");
+                mAgainText.setText("取标");
                 mMark2Text.setText("标橙");
                 mMark3Text.setText("标绿");
-                mMark1Layout.setSelected(true);
+                mAgainLayout.setSelected(true);
                 mMark2Layout.setSelected(false);
                 mMark3Layout.setSelected(false);
                 break;
             case 2:
-                mMark1Text.setText("标红");
+                mAgainText.setText("标红");
                 mMark2Text.setText("取标");
                 mMark3Text.setText("标绿");
-                mMark1Layout.setSelected(false);
+                mAgainLayout.setSelected(false);
                 mMark2Layout.setSelected(true);
                 mMark3Layout.setSelected(false);
                 break;
             case 3:
-                mMark1Text.setText("标红");
+                mAgainText.setText("标红");
                 mMark2Text.setText("标橙");
                 mMark3Text.setText("取标");
-                mMark1Layout.setSelected(false);
+                mAgainLayout.setSelected(false);
                 mMark2Layout.setSelected(false);
                 mMark3Layout.setSelected(true);
                 break;
@@ -293,18 +288,12 @@ public class Previewer2 extends AbstractFlashcardViewer {
 
     private List<Long> mHardCardList=new ArrayList<>();//重来一次的卡牌
 
-    class MarkListener implements View.OnClickListener {
-        int flag;
-
-
-        MarkListener(int flag) {
-            this.flag = flag;
-        }
+    class AgainListener implements View.OnClickListener {
 
 
         @Override
         public void onClick(View v) {
-
+            if(mIndex<0)return;//切换下一张失败，代表之前已经点过一次再来一次了，不需要重复处理
             int random = new Random().nextInt(20) + 10;//限定在1~5张卡后
             int needSwitchIndex = Math.min(mCardList.length - 1, mIndex + random);
             long temId = mCardList[needSwitchIndex];
@@ -459,6 +448,7 @@ public class Previewer2 extends AbstractFlashcardViewer {
     protected final TaskListener mDismissCardHandler = new NextCardHandler() { /* superclass is sufficient */
 
         protected void displayNext(Card nextCard) {
+            mReloadRequired = true;
            unblockControls();
 
 //           mNextCardLayout.performClick();
@@ -578,11 +568,11 @@ public class Previewer2 extends AbstractFlashcardViewer {
     }
 
 
-    @Override
-    public boolean executeCommand(int which) {
-        /* do nothing */
-        return false;
-    }
+//    @Override
+//    public boolean executeCommand(int which) {
+//        /* do nothing */
+//        return false;
+//    }
 
 
     @Override
@@ -618,9 +608,12 @@ public class Previewer2 extends AbstractFlashcardViewer {
         @Override
         public void onClick(View view) {
             if (view.getId() == R.id.next) {
+                final SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getBaseContext());
+                preferences.edit().putInt(Consts.KEY_SELF_STUDYING_LIST_INDEX,mIndex+1).apply();
                 if(mIndex+1==mCardList.length){
                     //最后一张
                     Toast.makeText(Previewer2.this,"恭喜你，已经学完啦",Toast.LENGTH_SHORT).show();
+                    preferences.edit().putString(Consts.KEY_SELF_STUDYING_LIST,"").apply();
                     finishActivityWithFade(Previewer2.this);
                     return;
                 }
@@ -686,11 +679,87 @@ public class Previewer2 extends AbstractFlashcardViewer {
     }
 
 
-    @NonNull
-    private Intent getResultIntent() {
+    @Override
+    protected Intent getResultIntent() {
         Intent intent = new Intent();
         intent.putExtra("reloadRequired", mReloadRequired);
         intent.putExtra("noteChanged", mNoteChanged);
         return intent;
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Timber.i("show me the key code on key up:%s", keyCode);
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                executeCommandByController(mControllerUp);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                executeCommandByController(mControllerDown);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                executeCommandByController(mControllerRight);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                executeCommandByController(mControllerLeft);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBL:
+                executeCommandByController(mControllerLeftPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBR:
+                executeCommandByController(mControllerRightPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_X:
+                executeCommandByController(mControllerX);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_Y:
+                executeCommandByController(mControllerY);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_A:
+                executeCommandByController(mControllerA);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_B:
+                executeCommandByController(mControllerB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L1:
+                executeCommandByController(mControllerLT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R1:
+                executeCommandByController(mControllerRT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L2:
+                executeCommandByController(mControllerLB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R2:
+                executeCommandByController(mControllerRB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_START:
+                executeCommandByController(mControllerMenu);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_MODE:
+                executeCommandByController(mControllerOption);
+                return true;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
+    protected void executeCommandByController(int which) {
+        switch (which) {
+            case COMMAND_FLIP_OR_ANSWER_EASE1:
+                if (!sDisplayAnswer) {
+                    displayCardAnswer();
+                    return;
+                }
+                mAgainLayout.performClick();
+                break;
+            case COMMAND_FLIP_OR_ANSWER_EASE2:
+                if (!sDisplayAnswer) {
+                    displayCardAnswer();
+                    return;
+                }
+                mNextCardLayout.performClick();
+                break;
+            default:executeCommand(which);
+        }
     }
 }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/text"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:paddingHorizontal="9dp"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:background="@mipmap/poster_member_tmpty"
+        android:id="@+id/avatar"
+        android:layout_centerHorizontal="true"
+        android:layout_width="43dp"
+        android:layout_height="43dp" />
+    <TextView
+        android:layout_marginTop="12dp"
+        android:layout_below="@id/avatar"
+        android:text="拼团"
+        android:layout_centerHorizontal="true"
+        android:textSize="11sp"
+        android:textColor="#999999"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</RelativeLayout>

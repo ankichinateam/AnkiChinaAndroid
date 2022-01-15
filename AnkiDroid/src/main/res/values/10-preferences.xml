@@ -55,7 +55,9 @@
     <string name="pref_cat_themes">主题</string>
     <string name="pref_cat_fonts">字体</string>
     <string name="pref_cat_gestures">手势操作</string>
+    <string name="pref_cat_controller">游戏手柄</string>
     <string name="pref_cat_gestures_summ">使用点击和滑动代替按钮</string>
+    <string name="pref_cat_controller_summ">使用游戏手柄操作复习</string>
     <string name="pref_cat_actions">动作</string>
     <string name="pref_cat_advanced">高级设置</string>
     <string name="pref_user_protocol" translatable="false">用户协议</string>
@@ -125,6 +127,7 @@
     <string name="sync_account_summ_logged_in">%s</string>
     <string name="automatic_sync_choice">自动同步</string>
     <string name="automatic_sync_choice_summ">如果距离上次同步了超过10分钟，在应用程序启动/退出自动同步。</string>
+<!--    <string name="automatic_sync_choice_summ">启动、登录、长时间后台运行后返回前台时自动同步。</string>-->
     <string name="sync_status_badge">显示同步状态</string>
     <string name="sync_status_badge_summ">当更改可被上传时改变同步图标</string>
     <string name="day_theme">白天主题</string>
@@ -169,6 +172,7 @@
     <string name="learn_cutoff_summ">XXX 分钟</string>
     <string name="time_limit">时间盒时间限制</string>
     <string name="time_limit_summ">XXX 分钟</string>
+    <string name="new_timezone" maxLength="41">新时区处理</string>
     <string name="day_offset">下一天开始的时间</string>
     <string name="day_offset_summ">午夜过后的XXX小时</string>
     <string name="sched_ver">实验性 V2 调度器</string>

@@ -1,0 +1,6 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_selected="true" android:drawable="@mipmap/edit_icon_middle_selected"/>
+    <item  android:drawable="@mipmap/edit_icon_middle_normal"/>
+
+</selector>

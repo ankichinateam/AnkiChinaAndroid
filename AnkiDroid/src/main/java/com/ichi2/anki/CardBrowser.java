@@ -184,7 +184,7 @@ public class CardBrowser extends AnkiActivity implements
     private static final int DEFAULT_FONT_SIZE_RATIO = 100;
     // Should match order of R.array.card_browser_order_labels
     public static final int CARD_ORDER_NONE = 0;
-    private static final String[] fSortTypes = new String[] {
+    public static final String[] fSortTypes = new String[] {
             "",
             "noteFld",
             "noteCrt",
@@ -356,7 +356,7 @@ public class CardBrowser extends AnkiActivity implements
 
 
 
-    private CardBrowserMySearchesDialog.MySearchesDialogListener mMySearchesDialogListener =
+    private final CardBrowserMySearchesDialog.MySearchesDialogListener mMySearchesDialogListener =
             new CardBrowserMySearchesDialog.MySearchesDialogListener() {
                 @Override
                 public void onSelection(String searchName) {
@@ -2305,9 +2305,6 @@ public class CardBrowser extends AnkiActivity implements
 
 
     private List<CardCache> getCards() {
-        if (mCards == null) {
-            mCards = new ArrayList<>();
-        }
         return mCards;
     }
 

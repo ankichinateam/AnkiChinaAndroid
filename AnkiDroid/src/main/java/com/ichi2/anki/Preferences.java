@@ -91,7 +91,7 @@ import timber.log.Timber;
 import static com.ichi2.libanki.Consts.URL_PRIVATE;
 import static com.ichi2.libanki.Consts.URL_USER_PROTOCOL;
 import static com.ichi2.themes.Themes.NO_SPECIFIC_STATUS_BAR_COLOR;
-
+@SuppressWarnings("deprecation")
 interface PreferenceContext {
     void addPreferencesFromResource(int preferencesResId);
     android.preference.PreferenceScreen getPreferenceScreen();
@@ -100,6 +100,7 @@ interface PreferenceContext {
 /**
  * Preferences dialog.
  */
+@SuppressWarnings("deprecation")
 public class Preferences extends AppCompatPreferenceActivity implements PreferenceContext, OnSharedPreferenceChangeListener {
 
     /** Key of the language preference */
@@ -277,6 +278,10 @@ public class Preferences extends AppCompatPreferenceActivity implements Preferen
                 break;
             case "com.ichi2.anki.prefs.gestures":
                 listener.addPreferencesFromResource(R.xml.preferences_gestures);
+                break;
+            case "com.ichi2.anki.prefs.custom_controller_buttons":
+                getSupportActionBar().setTitle(R.string.pref_cat_controller);
+                listener.addPreferencesFromResource(R.xml.preferences_custom_controller_buttons);
                 break;
             case "com.ichi2.anki.prefs.custom_buttons":
                 getSupportActionBar().setTitle(R.string.custom_buttons);
@@ -707,6 +712,7 @@ public class Preferences extends AppCompatPreferenceActivity implements Preferen
                     pm.setComponentEnabledSetting(providerName, state, PackageManager.DONT_KILL_APP);
                     break;
                 }
+
                 case "schedVer": {
                     boolean wantNew = ((android.preference.CheckBoxPreference) pref).isChecked();
                     boolean haveNew = getCol().schedVer() == 2;

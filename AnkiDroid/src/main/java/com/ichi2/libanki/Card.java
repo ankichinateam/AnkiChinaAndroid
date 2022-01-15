@@ -178,8 +178,6 @@ public class Card implements Cloneable {
         mNote = null;
     }
 
-
-
     public void flush() {
         flush(true);
     }
@@ -259,18 +257,40 @@ public class Card implements Cloneable {
     }
 
 
-    public String q(boolean reload, boolean browser) {
-        return css() + _getQA(reload, browser).get("q");
+    private String q(boolean reload, boolean browser) {
+        if(!AnkiDroidApp.getSharedPrefs(mCol.getContext()).getBoolean(Consts.KEY_FLIP_CARD ,false)){
+            return css() + _getQA(reload, browser).get("q");
+        }else {
+            return aInternal();
+        }
     }
 
-
-    public String a() {
+    private String qInternal(boolean reload, boolean browser) {
+            return css() + _getQA(reload, browser).get("q");
+    }
+    private String aInternal() {
         return css() + _getQA().get("a");
+    }
+    public String a() {
+        if(!AnkiDroidApp.getSharedPrefs(mCol.getContext()).getBoolean(Consts.KEY_FLIP_CARD ,false)){
+            return css() + _getQA().get("a");
+        }else {
+            return qInternal(false,false);
+        }
+
     }
 
 
     public String css() {
+        Timber.i("show css:%s",model().getString("css"));
         return String.format(Locale.US, "<style>%s</style>", model().getString("css"));
+//        return  "<style>.card {\n" +
+//                "     font-family: arial;\n" +
+//                "     font-size: 40px;\n" +
+//                "     text-align: right;\n" +
+//                "     color: red;\n" +
+//                "     background-color: white;\n" +
+//                "    }</style>" ;
     }
 
 
@@ -326,7 +346,7 @@ public class Card implements Cloneable {
         if (m.getInt("type") == Consts.MODEL_STD) {
             return m.getJSONArray("tmpls").getJSONObject(mOrd);
         } else {
-            return model().getJSONArray("tmpls").getJSONObject(0);
+            return m.getJSONArray("tmpls").getJSONObject(0);
         }
     }
 

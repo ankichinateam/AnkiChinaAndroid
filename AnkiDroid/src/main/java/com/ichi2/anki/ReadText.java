@@ -98,7 +98,12 @@ public class ReadText {
         return MetaDB.getLanguage(mReviewer.get(), did, ord, qa);
     }
 
-
+    public static String getAzureLanguage(long did, int ord, Sound.SoundSide qa) {
+        return MetaDB.getAzureLanguages(mReviewer.get(), did, ord, qa);
+    }
+    public static String getAzureLanguageDisplay(long did, int ord, Sound.SoundSide qa) {
+        return MetaDB.getAzureLanguageDisplay(mReviewer.get(), did, ord, qa);
+    }
     public static float getSpeechRate(long did, int ord) {
         return MetaDB.getSpeech(mReviewer.get(), did, ord);
     }
@@ -132,8 +137,6 @@ public class ReadText {
         mQuestionAnswer = qa;
         mDid = did;
         mOrd = ord;
-        Resources res = mReviewer.get().getResources();
-        final MaterialDialog.Builder builder = new MaterialDialog.Builder(mReviewer.get());
         // Build the language list if it's empty
         if (availableTtsLocales.isEmpty()) {
             buildAvailableLanguages(TextToSpeech.LANG_AVAILABLE);
@@ -173,7 +176,7 @@ public class ReadText {
      * @param qa   The card question or card answer
      */
     public static void selectTts(String text, long did, int ord, Sound.SoundSide qa, boolean vipSpeak, SelectTtsCallback callback) {//在设置页面时需要知道最后选择了什么语言，通过callback获得
-        Timber.w("selectTts:" + vipSpeak);
+        Timber.w("selectTts:%s", vipSpeak);
         //TODO: Consolidate with ReadText.readCardSide
         mTextToSpeak = text;
         mQuestionAnswer = qa;
@@ -183,7 +186,7 @@ public class ReadText {
         final MaterialDialog.Builder builder = new MaterialDialog.Builder(mReviewer.get());
         // Build the language list if it's empty
         if (availableTtsLocales.isEmpty()) {
-            buildAvailableLanguages(vipSpeak ? TextToSpeech.LANG_AVAILABLE : TextToSpeech.LANG_COUNTRY_AVAILABLE);
+            buildAvailableLanguages(TextToSpeech.LANG_AVAILABLE);
         }
         if (availableTtsLocales.size() == 0) {
             Timber.w("ReadText.textToSpeech() no TTS languages available");
@@ -218,7 +221,6 @@ public class ReadText {
             }
             String[] items = new String[dialogItems.size()];
             dialogItems.toArray(items);
-
             builder.title(res.getString(R.string.select_locale_title))
                     .items(items)
                     .itemsCallback((materialDialog, view, which, charSequence) -> {
@@ -245,10 +247,8 @@ public class ReadText {
         }, delay);
     }
 
-
-
     public static void selectTtsForVip(String text, long cid, long did, int ord, Sound.SoundSide qa, boolean vipSpeak) {
-        Timber.w("selectTts:" + vipSpeak);
+        Timber.w("selectTts:%s", vipSpeak);
         //TODO: Consolidate with ReadText.readCardSide
         mTextToSpeak = text;
         mQuestionAnswer = qa;
@@ -258,7 +258,7 @@ public class ReadText {
         final MaterialDialog.Builder builder = new MaterialDialog.Builder(mReviewer.get());
         // Build the language list if it's empty
         if (availableTtsLocales.isEmpty()) {
-            buildAvailableLanguages(vipSpeak ? TextToSpeech.LANG_AVAILABLE : TextToSpeech.LANG_COUNTRY_AVAILABLE);
+            buildAvailableLanguages(TextToSpeech.LANG_AVAILABLE);
         }
         if (availableTtsLocales.size() == 0) {
             Timber.w("ReadText.textToSpeech() no TTS languages available");
@@ -268,8 +268,6 @@ public class ReadText {
         } else {
             if (vipSpeak) {
                 for (int i = 0; i < availableTtsLocales.size(); i++) {//vip里的设置，默认选择中文
-                    ArrayList<CharSequence> temp = new ArrayList<>();
-                    temp.add(availableTtsLocales.get(i).getDisplayName());
                     String name = availableTtsLocales.get(i).getDisplayName();
                     if (name.contains("chinese")
                             || name.contains("Chinese")
@@ -280,10 +278,10 @@ public class ReadText {
 //                            speak(mTextToSpeak, locale, TextToSpeech.QUEUE_FLUSH);
 //                        }
                         MetaDB.storeLanguage(mReviewer.get(), mDid, mOrd, mQuestionAnswer, locale);
-//                        return;
+                        return;
                     }
                 }
-                CustomStyleDialog mBeVipDialog = new CustomStyleDialog.Builder(mReviewer.get())
+                CustomStyleDialog d = new CustomStyleDialog.Builder(mReviewer.get())
                         .setCustomLayout(R.layout.dialog_common_custom_next)
                         .setTitle("首次朗读，请设置语言")
                         .centerTitle()
@@ -293,7 +291,7 @@ public class ReadText {
                             SpeakSettingActivity.OpenSpeakSetting(cid, did, mReviewer.get());
                         })
                         .create();
-                mBeVipDialog.show();
+                d.show();
             }
 
         }
@@ -379,11 +377,12 @@ public class ReadText {
             Toast.makeText(mReviewer.get(), mReviewer.get().getString(R.string.no_tts_available_message)
                     + " (" + originalLocaleCode + ")", Toast.LENGTH_LONG).show();
         }
-        if (vipSpeak) {
-            selectTtsForVip(mTextToSpeak, cid, mDid, mOrd, mQuestionAnswer, true);
-        } else {
-            selectTts(mTextToSpeak, mDid, mOrd, mQuestionAnswer, false, null);
-        }
+//        if (vipSpeak) {
+//            selectTtsForVip(mTextToSpeak, cid, mDid, mOrd, mQuestionAnswer, true);
+//        }
+//        else {
+            selectTts(mTextToSpeak, mDid, mOrd, mQuestionAnswer, true, null);
+//        }
     }
 
 
@@ -442,7 +441,7 @@ public class ReadText {
         mTts = new TextToSpeech(context, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 // build list of available languages
-                buildAvailableLanguages(vipSpeak ? TextToSpeech.LANG_AVAILABLE : TextToSpeech.LANG_COUNTRY_AVAILABLE);
+                buildAvailableLanguages(TextToSpeech.LANG_AVAILABLE);
                 if (availableTtsLocales.size() > 0) {
                     // notify the reviewer that TTS has been initialized
                     Timber.d("TTS initialized and available languages found");

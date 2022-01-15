@@ -29,7 +29,9 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:windowSoftInputMode="adjustResize">
         <activity
@@ -49,6 +51,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:host="ankichina"
                     android:path="/home"
@@ -59,6 +62,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:host="*"
                     android:mimeType="*/*"
@@ -78,6 +82,27 @@
                     android:host="*"
                     android:mimeType="*/*"
                     android:pathPattern=".*\\.apkg"
+                    android:scheme="file" />
+                <!-- .card files -->
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.card"
+                    android:scheme="http" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.card"
+                    android:scheme="https" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.card"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.card"
                     android:scheme="file" />
                 <!-- .colpkg files -->
                 <data
@@ -108,6 +133,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="application/apkg" />
+                <data android:mimeType="application/card" />
                 <data android:mimeType="application/colpkg" />
                 <data android:mimeType="application/vnd.anki" />
                 <data android:mimeType="application/x-apkg" />
@@ -160,9 +186,9 @@
         <activity
             android:name=".SelfStudyActivity"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
-            android:windowSoftInputMode="adjustPan|stateHidden"
             android:exported="false"
-             android:label="@string/model_self_study_label" />
+            android:label="@string/model_self_study_label"
+            android:windowSoftInputMode="adjustPan|stateHidden" />
         <activity
             android:name=".ModelBrowser"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
@@ -200,9 +226,9 @@
         <activity
             android:name="com.ichi2.anki.MyAccount2"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
-            android:windowSoftInputMode="stateHidden"
             android:exported="false"
-            android:label="@string/menu_my_account" />
+            android:label="@string/menu_my_account"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.ichi2.anki.Preferences"
             android:configChanges="keyboardHidden|orientation|locale|screenSize"
@@ -325,7 +351,35 @@
             android:configChanges="locale"
             android:exported="false"
             android:label="朗读设置" />
+        <activity
+            android:name=".PosterActivity"
+            android:configChanges="locale"
+            android:exported="false"
+            android:label="海报"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity android:name=".SwitchEngineActivity" />
+        <activity
+            android:name="com.app.ankichinas.wxapi.WXEntryActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name="com.tencent.tauth.AuthActivity"
+            android:launchMode="singleTask"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="tencent20211020" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.tencent.connect.common.AssistActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity-alias
             android:name="com.ichi2.anki.CardBrowserContextMenuAction"
@@ -358,6 +412,7 @@
         <meta-data
             android:name="com.sec.minimode.icon.landscape.normal"
             android:resource="@drawable/anki" />
+
         <provider
             android:name=".provider.CardContentProvider"
             android:authorities="${applicationId}.flashcards"
@@ -376,7 +431,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
         </provider>
-
+        <!--        <provider-->
+        <!--            android:name="androidx.core.content.FileProvider"-->
+        <!--            android:authorities="${applicationId}.fileprovider"-->
+        <!--            android:exported="false"-->
+        <!--            android:grantUriPermissions="true">-->
+        <!--            <meta-data-->
+        <!--                android:name="android.support.FILE_PROVIDER_PATHS"-->
+        <!--                android:resource="@xml/filepaths" />-->
+        <!--        </provider>-->
         <receiver
             android:name="com.ichi2.widget.AnkiDroidWidgetSmall"
             android:label="@string/widget_small">
@@ -440,11 +503,12 @@
             android:name="com.sec.android.app.multiwindow"
             android:required="false" />
     </application>
-    <permission
-        android:name="${applicationId}.permission.READ_WRITE_DATABASE"
-        android:description="@string/read_write_permission_description"
-        android:label="@string/read_write_permission_label"
-        android:protectionLevel="dangerous" />
+
+    <queries>
+        <package android:name="com.tencent.mm" />
+        <package android:name="com.tencent.mobileqq" />
+        <package android:name="com.sina.weibo" />
+    </queries>
     <supports-screens
         android:anyDensity="true"
         android:largeScreens="true"
@@ -452,6 +516,7 @@
         android:resizeable="true"
         android:smallScreens="true"
         android:xlargeScreens="true" />
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
@@ -465,23 +530,26 @@
     <uses-feature
         android:name="android.software.app_widgets"
         android:required="false" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
-
     <uses-permission
         android:name="android.permission.WAKE_LOCK"
         tools:node="replace" />
     <!-- custom tabs library has minimum SDK of 16 -->
     <uses-permission android:name="android.permission.CAMERA" />
-
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-
+    <permission
+        android:name="${applicationId}.permission.READ_WRITE_DATABASE"
+        android:description="@string/read_write_permission_description"
+        android:label="@string/read_write_permission_label"
+        android:protectionLevel="dangerous" />
     <uses-sdk tools:overrideLibrary="android.support.customtabs, com.getbase.floatingactionbutton" />
 
 </manifest>

@@ -105,6 +105,7 @@ public class Finder {
         String[] tokens = _tokenize(query);
         Pair<String, String[]> res1 = _where(tokens);
         String preds = res1.first;
+        Timber.i("res1.first:%s", preds);
         String[] args = res1.second;
         List<Long> res = new ArrayList<>();
         if (preds == null) {
@@ -258,11 +259,10 @@ public class Finder {
                 // if it was to be negated then we can just ignore it
                 if (isnot) {
                     isnot = false;
-                    return;
                 } else {
                     bad = true;
-                    return;
                 }
+                return;
             } else if ("skip".equals(txt)) {
                 return;
             }
@@ -293,6 +293,8 @@ public class Finder {
         SearchState s = new SearchState();
         List<String> args = new ArrayList<>();
         for (String token : tokens) {
+            Timber.i("show the token:"+token);
+            Timber.i("show the s:"+s.bad+","+s.q);
             if (s.bad) {
                 return new Pair<>(null, null);
             }
@@ -348,6 +350,7 @@ public class Finder {
                 s.add(_findText(token, args));
             }
         }
+        Timber.i("show the s:"+s.bad+","+s.q);
         if (s.bad) {
             return new Pair<>(null, null);
         }
@@ -541,6 +544,7 @@ public class Finder {
         try {
             newCardLimits = Integer.parseInt(r[0]);
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             return null;
         }
 //        int revCardLimits;

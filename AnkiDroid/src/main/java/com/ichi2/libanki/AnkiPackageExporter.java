@@ -22,6 +22,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
 import com.ichi2.anki.exception.ImportExportException;
+import com.ichi2.utils.AESUtil;
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONException;
 import com.ichi2.utils.JSONObject;
@@ -38,6 +39,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
@@ -60,7 +62,10 @@ class Exporter {
         mDid = did;
     }
 
-    /** card ids of cards in deck self.did if it is set, all ids otherwise. */
+
+    /**
+     * card ids of cards in deck self.did if it is set, all ids otherwise.
+     */
     public Long[] cardIds() {
         Long[] cids;
         if (mDid == null) {
@@ -74,12 +79,15 @@ class Exporter {
 }
 
 
-@SuppressWarnings({"PMD.AvoidReassigningParameters","PMD.DefaultPackage",
-        "PMD.NPathComplexity","PMD.MethodNamingConventions","PMD.ExcessiveMethodLength",
-        "PMD.EmptyIfStmt","PMD.CollapsibleIfStatements"})
+
+@SuppressWarnings( {"PMD.AvoidReassigningParameters", "PMD.DefaultPackage",
+        "PMD.NPathComplexity", "PMD.MethodNamingConventions", "PMD.ExcessiveMethodLength",
+        "PMD.EmptyIfStmt", "PMD.CollapsibleIfStatements"})
 class AnkiExporter extends Exporter {
     protected boolean mIncludeSched;
     protected boolean mIncludeMedia;
+    protected boolean mExportCard;
+    protected boolean mExportApkg;
     private Collection mSrc;
     String mMediaDir;
     ArrayList<String> mMediaFiles = new ArrayList<>();
@@ -90,6 +98,8 @@ class AnkiExporter extends Exporter {
         super(col);
         mIncludeSched = false;
         mIncludeMedia = true;
+        mExportApkg = true;
+        mExportCard = false;
     }
 
 
@@ -97,7 +107,7 @@ class AnkiExporter extends Exporter {
      * Export source database into new destination database Note: The following python syntax isn't supported in
      * Android: for row in mSrc.db.execute("select * from cards where id in "+ids2str(cids)): therefore we use a
      * different method for copying tables
-     * 
+     *
      * @param path String path to destination database
      * @throws JSONException
      * @throws IOException
@@ -106,7 +116,7 @@ class AnkiExporter extends Exporter {
     public void exportInto(String path, Context context) throws JSONException, IOException, ImportExportException {
         // create a new collection at the target
         new File(path).delete();
-        Collection dst = Storage.Collection(context, path);
+        Collection dst = Storage.Collection(context, path );
         mSrc = mCol;
         // find cards
         Long[] cids = cardIds();
@@ -132,10 +142,10 @@ class AnkiExporter extends Exporter {
             ArrayList<String> srcTags = mSrc.getDb().queryStringList(
                     "select tags from notes where id in " + strnids);
             ArrayList<Object[]> args = new ArrayList<>(srcTags.size());
-            Object [] arg = new Object[2];
+            Object[] arg = new Object[2];
             for (int row = 0; row < srcTags.size(); row++) {
-                arg[0]=removeSystemTags(srcTags.get(row));
-                arg[1]=uniqueNids.get(row);
+                arg[0] = removeSystemTags(srcTags.get(row));
+                arg[1] = uniqueNids.get(row);
                 args.add(row, arg);
             }
             mSrc.getDb().executeMany("UPDATE DST_DB.notes set tags=? where id=?", args);
@@ -165,8 +175,14 @@ class AnkiExporter extends Exporter {
         Timber.d("Copy models");
         for (Model m : mSrc.getModels().all()) {
             if (mids.contains(m.getLong("id"))) {
+                Timber.d("Copy models:%s", m.getLong("id"));
                 dst.getModels().update(m);
             }
+        }
+        for (Model m : dst.getModels().all()) {
+
+                Timber.d("check dst model:%s", m.getLong("id"));
+
         }
         // decks
         Timber.d("Copy decks");
@@ -255,10 +271,12 @@ class AnkiExporter extends Exporter {
         dst.close();
     }
 
+
     /**
      * Returns whether or not the specified model contains a reference to the given media file.
      * In order to ensure relatively fast operation we only check if the styling, front, back templates *contain* fname,
      * and thus must allow for occasional false positives.
+     *
      * @param model the model to scan
      * @param fname the name of the media file to check for
      * @return
@@ -309,6 +327,16 @@ class AnkiExporter extends Exporter {
     }
 
 
+    public void setExportCard(boolean exportCard) {
+        mExportCard = exportCard;
+    }
+
+
+    public void setExportApkg(boolean exportApkg) {
+        mExportApkg = exportApkg;
+    }
+
+
     public void setDid(Long did) {
         mDid = did;
     }
@@ -342,6 +370,12 @@ public final class AnkiPackageExporter extends AnkiExporter {
         // media map
         z.writeStr("media", Utils.jsonToString(media));
         z.close();
+        if (mExportCard && path.endsWith(".apkg")) {
+            AESUtil.encryptionFile(path, path.replace(".apkg", ".card"));
+        }
+        if(!mExportApkg && path.endsWith(".apkg")){
+            new File(path).delete();
+        }
     }
 
 
@@ -370,15 +404,17 @@ public final class AnkiPackageExporter extends AnkiExporter {
         }
     }
 
+
     private JSONObject _exportMedia(ZipFile z, ArrayList<String> fileNames, String mdir) throws IOException {
         int size = fileNames.size();
         int i = 0;
         File[] files = new File[size];
-        for (String fileName: fileNames){
+        for (String fileName : fileNames) {
             files[i++] = new File(mdir, fileName);
         }
         return _exportMedia(z, files, ValidateFiles.VALIDATE);
     }
+
 
     private JSONObject _exportMedia(ZipFile z, File[] files, ValidateFiles validateFiles) throws IOException {
         int c = 0;
@@ -410,7 +446,7 @@ public final class AnkiPackageExporter extends AnkiExporter {
         z.write(colfile, CollectionHelper.COLLECTION_FILENAME);
         // and media
         prepareMedia();
-    	JSONObject media = _exportMedia(z, mMediaFiles, mCol.getMedia().dir());
+        JSONObject media = _exportMedia(z, mMediaFiles, mCol.getMedia().dir());
         // tidy up intermediate files
         SQLiteDatabase.deleteDatabase(new File(colfile));
         SQLiteDatabase.deleteDatabase(new File(path.replace(".apkg", ".media.ad.db2")));
@@ -433,6 +469,7 @@ public final class AnkiPackageExporter extends AnkiExporter {
         // is zipped up
     }
 
+
     // create a dummy collection to ensure older clients don't try to read
     // data they don't understand
     private void _addDummyCollection(ZipFile zip, Context context) throws IOException {
@@ -451,7 +488,9 @@ public final class AnkiPackageExporter extends AnkiExporter {
     }
 
 
-    /** Whether media files should be validated before being added to the zip */
+    /**
+     * Whether media files should be validated before being added to the zip
+     */
     private enum ValidateFiles {
         VALIDATE,
         SKIP_VALIDATION
@@ -462,7 +501,7 @@ public final class AnkiPackageExporter extends AnkiExporter {
 
 /**
  * Wrapper around standard Python zip class used in this module for exporting to APKG
- * 
+ *
  * @author Tim
  */
 class ZipFile {

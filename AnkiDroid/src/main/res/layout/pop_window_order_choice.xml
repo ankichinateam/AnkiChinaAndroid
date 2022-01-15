@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".SelfStudyActivity"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/settingItemBackgroundBottom"
+    android:orientation="vertical"
+    android:paddingBottom="13dp"
+    android:paddingHorizontal="16dp">
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/orders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:drawSelectorOnTop="true"
+        android:fastScrollEnabled="true"
+        android:focusable="true"
+        android:scrollbars="none"
+        />
+
+    <Button
+        android:id="@+id/confirm"
+        android:layout_width="96dp"
+        android:layout_height="34dp"
+        android:background="@drawable/login_button_china"
+        android:layout_alignParentEnd="true"
+       android:layout_below="@id/orders"
+        android:padding="0dp"
+        android:gravity="center"
+        android:text="完成"
+        android:layout_marginTop="13dp"
+        android:textColor="@color/white"
+        android:textSize="13sp" />
+</RelativeLayout>
+
+
+

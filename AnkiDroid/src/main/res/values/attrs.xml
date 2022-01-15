@@ -52,9 +52,9 @@
     <attr name="expandRef" format="reference"/>
     <attr name="collapseRef" format="reference"/>
     <attr name="fileBagRef" format="reference"/>
-    <!-- Menu item list -->
     <attr name="syncIconRef" format="reference"/>
-    <!-- Review Menu item list -->
+    <attr name="filterIconRef" format="reference"/>
+    <attr name="editorIconRef" format="reference"/>
     <attr name="reviewMenuUndoIconRef" format="reference"/>
     <attr name="reviewMenuSpeakIconRef" format="reference"/>
     <attr name="reviewMenuFlagIconRef" format="reference"/>
@@ -103,7 +103,7 @@
     <attr name="itemIconMarkEmpty" format="reference"/>
     <attr name="settingDividerColor" format="color"/>
     <attr name="settingHeaderRef" format="color"/>
-    <attr name="primaryTextColor" format="color"/>
+    <attr name="primaryTextColor222222" format="color"/>
     <attr name="primary_text_third_color999999" format="color"/>
     <attr name="primary_text_third_color666666" format="color"/>
     <attr name="primaryForthTextColor333333" format="color"/>
@@ -194,4 +194,5 @@
         <attr name="vertical_Space" format="dimension"></attr>
         <attr name="isFull" format="boolean"></attr>
     </declare-styleable>
+
 </resources>

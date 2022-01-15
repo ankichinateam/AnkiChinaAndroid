@@ -3,13 +3,12 @@ package com.ichi2.bd;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import timber.log.Timber;
 
 
 public class PCM2Wav {

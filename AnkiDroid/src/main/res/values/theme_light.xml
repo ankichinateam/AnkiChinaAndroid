@@ -78,6 +78,8 @@ APIs. It's visible when there aren't enough decks to fill the screen.
         <item name="fileBagRef">@mipmap/home_card_group_normal</item>
         <!-- Menu item list -->
         <item name="syncIconRef">@mipmap/nav_bar_icon_tongbu_normal</item>
+        <item name="filterIconRef">@drawable/card_browser_filter_icon_light</item>
+        <item name="editorIconRef">@drawable/card_browser_editor_icon_light</item>
         <!-- Review Menu item list -->
         <item name="reviewMenuUndoIconRef">@drawable/review_menu_undo_selector</item>
         <item name="reviewMenuSpeakIconRef">@mipmap/nav_bar_aloud_normal</item>
@@ -126,7 +128,7 @@ APIs. It's visible when there aren't enough decks to fill the screen.
         <item name="primaryTextSecondaryColor">@color/new_primary_text_secondary_color</item>
         <item name="answerButtonBackgroundColor">#F2F2F2</item>
 
-        <item name="primaryTextColor">@color/new_primary_text_color</item>
+        <item name="primaryTextColor222222">@color/new_primary_text_color</item>
         <item name="primaryForthTextColor333333">@color/new_primary_text_forth_color</item>
         <item name="primary_text_third_color999999">@color/new_primary_text_third_color</item>
         <item name="primary_text_third_color666666">@color/new_primary_text_secondary_color</item>

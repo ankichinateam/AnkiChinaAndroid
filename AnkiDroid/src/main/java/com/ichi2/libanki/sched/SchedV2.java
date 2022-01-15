@@ -72,6 +72,7 @@ import timber.log.Timber;
 
 import static com.ichi2.libanki.sched.AbstractSched.UnburyType.*;
 import static com.ichi2.libanki.stats.Stats.ALL_DECKS_ID;
+import static com.ichi2.libanki.stats.Stats.HANDLED_INTERVALS;
 import static com.ichi2.libanki.stats.Stats.SECONDS_PER_DAY;
 
 @SuppressWarnings({"PMD.ExcessiveClassLength", "PMD.AvoidThrowingRawExceptionTypes","PMD.AvoidReassigningParameters",
@@ -509,6 +510,7 @@ public class SchedV2 extends AbstractSched {
     // Overridden
     public @Nullable List<DeckDueTreeNode> deckDueList(@Nullable CollectionTask collectionTask,long did) {
         _checkDay();
+
         mCol.getDecks().checkIntegrity();
 
 //        ArrayList<Deck> decks = mCol.getDecks().allSorted();
@@ -550,15 +552,41 @@ public class SchedV2 extends AbstractSched {
         return data;
     }
 
+    public AbstractDeckTreeNode updateDeck(Deck deck){
+        HashMap<String, Integer[]> lims = new HashMap<>();
+        HashMap<Long, HashMap> childMap = mCol.getDecks().childMap();
+        String deckName = deck.getString("name");
+        String p = Decks.parent(deckName);
+        int nlim = _deckNewLimitSingle(deck);
+        Integer plim = null;
+        if (!TextUtils.isEmpty(p)) {
+            Integer[] parentLims = lims.get(Decks.normalizeName(p));
+            // 'temporary for diagnosis of bug #6383'
+            Assert.that(parentLims != null, "Deck %s is supposed to have parent %s. It has not be found.", deckName, p);
+            nlim = Math.min(nlim, parentLims[0]);
+            // reviews
+            plim = parentLims[1];
+        }
+        int _new = _newForDeck(deck.getLong("id"), nlim);
+        // learning
+        int lrn = _lrnForDeck(deck.getLong("id"));
+        // reviews
+        int rlim = _deckRevLimitSingle(deck, plim);
+        int rev = _revForDeck(deck.getLong("id"), rlim, childMap);
+        double[] datas= _getCardDataCount(deck.getLong("id"));
+        return new DeckDueTreeNode(mCol, deck.getString("name"), deck.getLong("id"), rev, lrn, _new,datas);
+    }
+
+
     protected double[] _getCardDataCount(long did) {
         double[] pieData;
         Cursor cur = null;
         String query = "select " +
-                "sum(case when queue=" + Consts.QUEUE_TYPE_REV + " and ivl >= 21 then 1 else 0 end), -- mtr\n" +
-                "sum(case when queue in (" + Consts.QUEUE_TYPE_LRN + "," + Consts.QUEUE_TYPE_DAY_LEARN_RELEARN + ") or (queue=" + Consts.QUEUE_TYPE_REV + " and ivl < 21) then 1 else 0 end), -- yng/lrn\n" +
+                "sum(case when queue=" + Consts.QUEUE_TYPE_REV + " and ivl >= "+HANDLED_INTERVALS+" then 1 else 0 end), -- mtr\n" +
+                "sum(case when queue in (" + Consts.QUEUE_TYPE_LRN + "," + Consts.QUEUE_TYPE_DAY_LEARN_RELEARN + ") or (queue=" + Consts.QUEUE_TYPE_REV + " and ivl < "+HANDLED_INTERVALS+") then 1 else 0 end), -- yng/lrn\n" +
                 "sum(case when queue=" + Consts.QUEUE_TYPE_NEW + " then 1 else 0 end) -- new\n" +
                 "from cards where did in " + Stats.deckLimit(did,mCol);
-//        Timber.d("CardsTypes query: %s", query);
+//        Timber.d("CardDataCount query: %s", query);
         try {
             cur = mCol.getDb()
                     .getDatabase()
@@ -1052,6 +1080,17 @@ public class SchedV2 extends AbstractSched {
     // Overridden: V1 has less queues
     protected void _resetLrnCount() {
         _updateLrnCutoff(true);
+        String sub_day_sql=String.format(
+                "SELECT count() FROM cards WHERE did IN " + _deckLimit()
+                        + " AND queue = " + Consts.QUEUE_TYPE_LRN + " AND id != ? AND due < ?", currentCardId(), mLrnCutoff) ;
+        String day_sql=String.format(
+                "SELECT count() FROM cards WHERE did IN " + _deckLimit() + " AND queue = " + Consts.QUEUE_TYPE_DAY_LEARN_RELEARN + " AND due <= ? AND id != ?",
+                mToday, currentCardId()) ;
+        String previews_sql=String.format(
+                "SELECT count() FROM cards WHERE did IN " + _deckLimit() + " AND queue = " + Consts.QUEUE_TYPE_PREVIEW + " AND id != ? ", currentCardId()) ;
+        Timber.i("sub_day_sql:%s", sub_day_sql);
+        Timber.i("day_sql:%s", day_sql);
+        Timber.i("previews_sql:%s", previews_sql);
         // sub-day
         mLrnCount = mCol.getDb().queryScalar(
                 "SELECT count() FROM cards WHERE did IN " + _deckLimit()
@@ -2272,7 +2311,6 @@ public class SchedV2 extends AbstractSched {
 
         return (int) (((getTime().intTimeMS() - c.getTimeInMillis()) / 1000) / SECONDS_PER_DAY);
     }
-
 
     protected void update(@NonNull Deck g) {
         for (String t : new String[] { "new", "rev", "lrn", "time" }) {

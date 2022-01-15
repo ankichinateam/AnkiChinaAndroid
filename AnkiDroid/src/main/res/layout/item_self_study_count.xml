@@ -2,22 +2,33 @@
 <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_centerVertical="true"
+    android:gravity="center_vertical"
     xmlns:android="http://schemas.android.com/apk/res/android" >
     <TextView
         android:id="@+id/search_result_num"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
+        android:layout_centerVertical="true"
         android:textSize="15sp"
-        android:textColor="?attr/primaryForthTextColor333333"
+        android:textColor="?attr/primary_text_third_color999999"
         android:text="筛选出0张卡片"/>
     <TextView
-        android:id="@+id/edit"
-        android:layout_alignParentRight="true"
+        android:id="@+id/tv_order"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="15sp"
-        android:textColor="?attr/primaryForthTextColor333333"
-        android:text="编辑"/>
+        android:layout_centerVertical="true"
+        android:textSize="11sp"
+        android:textColor="?attr/primary_text_third_color666666"
+        android:layout_toStartOf="@id/order"
+        android:text="时间排序"/>
+    <ImageView
+        android:id="@+id/order"
+        android:src="@drawable/icon_order"
+        android:minWidth="19dp"
+        android:minHeight="19dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </RelativeLayout>

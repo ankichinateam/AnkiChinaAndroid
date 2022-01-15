@@ -1,7 +1,6 @@
 package com.ichi2.bd;
 
 import android.os.Handler;
-import android.util.Log;
 
 import com.baidu.tts.client.SpeechError;
 

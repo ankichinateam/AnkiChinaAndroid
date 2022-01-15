@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Button android:id="@+id/text"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="21dp"
+    android:background="@drawable/poster_tags_background"
+    android:gravity="center"
+    android:text="疑难"
+    android:paddingHorizontal="11dp"
+    android:minHeight="21dp"
+    android:minWidth="43dp"
+    android:textColor="@color/warp_item_text_color_selector"
+    android:textSize="11sp" />

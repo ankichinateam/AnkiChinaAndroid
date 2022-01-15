@@ -66,7 +66,7 @@ public class ImportUtils {
     /** @return Whether the file is either a deck, or a collection package */
     @Contract("null -> false")
     public static boolean isValidPackageName(@Nullable String filename) {
-        return FileImporter.isDeckPackage(filename) || isCollectionPackage(filename);
+        return  FileImporter.isEncryptDeckPackage(filename) ||FileImporter.isDeckPackage(filename) || isCollectionPackage(filename);
     }
 
     /**
@@ -193,6 +193,9 @@ public class ImportUtils {
 
         @Nullable
         protected ImportResult validateZipFile(Context ctx, String filePath) {
+            if(filePath.endsWith(".card")){
+                return null;
+            }
             File file = new File(filePath);
             ZipFile zf = null;
             try {
@@ -302,6 +305,9 @@ public class ImportUtils {
             DialogHandler.storeMessage(handlerMessage);
         }
 
+        private static boolean isEncryptDeckPackage(String filename) {
+            return filename != null && filename.toLowerCase().endsWith(".card")  ;
+        }
         private static boolean isDeckPackage(String filename) {
             return filename != null && filename.toLowerCase().endsWith(".apkg") && !"collection.apkg".equals(filename);
         }

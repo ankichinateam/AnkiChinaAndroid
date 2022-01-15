@@ -24,7 +24,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="长记模式(默认)"
-                android:textColor="?attr/primaryTextColor"
+                android:textColor="?attr/primaryTextColor222222"
                 android:textSize="15sp"
                 android:textStyle="normal" />
 

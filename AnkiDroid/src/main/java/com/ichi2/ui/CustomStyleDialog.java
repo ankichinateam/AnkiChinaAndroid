@@ -1,5 +1,6 @@
 package com.ichi2.ui;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,8 +29,10 @@ public class CustomStyleDialog extends Dialog {
     public CustomStyleDialog(@NonNull Context context) {
         super(context);
     }
-
-
+//    @Override
+//    public boolean isShowing(){
+//        return super.isShowing()&&!((Activity)getContext()).isFinishing()&&!((Activity)getContext()).isDestroyed();
+//    }
     public CustomStyleDialog(Context context, int theme) {
         super(context, theme);
     }
@@ -261,7 +264,7 @@ public class CustomStyleDialog extends Dialog {
             LayoutInflater inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             // instantiate the dialog with the custom Theme
-             dialog = new CustomStyleDialog(context, R.style.CommonDialogTheme);
+            dialog = new CustomStyleDialog(context, R.style.CommonDialogTheme);
             dialog.setContentView(customLayoutRes>0?customLayoutRes:R.layout.dialog_common_custom);
 //            View dialog = inflater.inflate(R.dialog.dialog_common_custom, null);
 //            dialog.addContentView(dialog, new LinearLayout.LayoutParams(
@@ -272,6 +275,7 @@ public class CustomStyleDialog extends Dialog {
             if(centerTitle){
                 ViewGroup.LayoutParams layoutParams=title.getLayoutParams();
                 layoutParams.width= LinearLayout.LayoutParams.MATCH_PARENT;
+                title.setLayoutParams(layoutParams);
             }
             LinearLayout contentLayout = dialog.findViewById(R.id.ll_content);
             // set the confirm button

@@ -113,6 +113,7 @@
     <string name="menu_delete_note">删除笔记</string>
     <string name="menu_flag">标志</string>
     <string name="menu_flag_card">标志卡</string>
+    <string name="menu_more">更多</string>
     <string name="menu_flag_card_zero">无标志</string>
     <string name="menu_flag_card_one">红色标志</string>
     <string name="menu_flag_card_two">橙色标志</string>

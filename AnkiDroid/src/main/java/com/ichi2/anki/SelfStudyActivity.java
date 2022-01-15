@@ -1,42 +1,29 @@
 package com.ichi2.anki;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -47,7 +34,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.ichi2.anim.ActivityTransitionAnimation;
@@ -61,6 +47,7 @@ import com.ichi2.anki.dialogs.TagsDialog;
 import com.ichi2.anki.receiver.SdCardReceiver;
 import com.ichi2.anki.widgets.CardsListAdapter;
 import com.ichi2.anki.widgets.DeckDropDownAdapter;
+import com.ichi2.anki.widgets.OrderListAdapter;
 import com.ichi2.async.CollectionTask;
 import com.ichi2.async.TaskData;
 import com.ichi2.async.TaskListenerWithContext;
@@ -71,7 +58,6 @@ import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.stats.Stats;
-import com.ichi2.themes.Themes;
 import com.ichi2.ui.CustomStyleDialog;
 import com.ichi2.ui.KeyBoardListenerLayout;
 import com.ichi2.ui.WarpLinearLayout;
@@ -79,21 +65,17 @@ import com.ichi2.upgrade.Upgrade;
 import com.ichi2.utils.FunctionalInterfaces;
 import com.ichi2.utils.JSONException;
 import com.ichi2.utils.JSONObject;
-import com.ichi2.utils.OKHttpUtil;
 import com.ichi2.utils.Permissions;
 import com.ichi2.widget.WidgetStatus;
 import com.jaygoo.widget.OnRangeChangedListener;
 import com.jaygoo.widget.RangeSeekBar;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -111,8 +93,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import okhttp3.Call;
-import okhttp3.Response;
 import timber.log.Timber;
 
 import static com.ichi2.anki.CardBrowser.CardCache;
@@ -133,7 +113,6 @@ import static com.ichi2.anki.CardBrowser.Column.REVIEWS;
 import static com.ichi2.anki.CardBrowser.Column.SFLD;
 import static com.ichi2.anki.CardBrowser.Column.TAGS;
 import static com.ichi2.anki.CardBrowser.sCardBrowserCard;
-import static com.ichi2.anki.DeckPicker.BE_VIP;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.CHECK_CARD_SELECTION;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.DISMISS_MULTI;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.RENDER_BROWSER_QA;
@@ -223,7 +202,7 @@ public class SelfStudyActivity extends AnkiActivity implements
     //    private Spinner mActionBarSpinner;
     private TextView mActionBarTitle;
     private TextView mComplete;
-    private ImageView  mBack;
+    private ImageView mBack;
     private TabLayout mTabLayout;
     private boolean mReloadRequired = false;
     //    private boolean inMultiSelectMode() = false;
@@ -441,9 +420,12 @@ public class SelfStudyActivity extends AnkiActivity implements
     private long[] getSelectedCardIds() {
         return mCardsAdapter != null ? mCardsAdapter.getSelectedItemIdArray() : new long[] {};
     }
+
+
     private Set<CardBrowser.CardCache> getSelectedCards() {
         return mCardsAdapter != null ? mCardsAdapter.getSelectedCards() : null;
     }
+
 
     private boolean canPerformMultiSelectEditNote() {
         //The noteId is not currently available. Only allow if a single card is selected for now.
@@ -508,7 +490,7 @@ public class SelfStudyActivity extends AnkiActivity implements
     }
 
 
-    public static  void saveLastDeckId(Long id) {
+    public static void saveLastDeckId(Long id) {
         if (id == null) {
             clearLastDeckId();
             return;
@@ -533,7 +515,7 @@ public class SelfStudyActivity extends AnkiActivity implements
             displayDeckPickerForPermissionsDialog();
             return;
         }
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN|WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         setContentView(R.layout.activity_self_study);
 //        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
@@ -541,11 +523,11 @@ public class SelfStudyActivity extends AnkiActivity implements
         mArrayMark = getResources().getStringArray(R.array.self_study_items_mark);
         mArrayAnswer = getResources().getStringArray(R.array.self_study_items_answer);
         mArrayMain = getResources().getStringArray(R.array.self_study_items_main);
-        ((KeyBoardListenerLayout)findViewById(R.id.root_layout)).setKeyboardListener((isActive, keyboardHeight) -> {
-            findViewById(R.id.bottom_area_layout).setVisibility(isActive?View.GONE:View.VISIBLE);
-            RelativeLayout.LayoutParams params= (RelativeLayout.LayoutParams) mCardsListView.getLayoutParams();
-            params.bottomMargin=isActive?0:(int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 52,  getResources().getDisplayMetrics());;
+        ((KeyBoardListenerLayout) findViewById(R.id.root_layout)).setKeyboardListener((isActive, keyboardHeight) -> {
             mCardsListView = findViewById(R.id.card_browser_list);
+            findViewById(R.id.bottom_area_layout).setVisibility(isActive ? View.GONE : View.VISIBLE);
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mCardsListView.getLayoutParams();
+            params.bottomMargin = isActive ? 0 : (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 52, getResources().getDisplayMetrics());
         });
 
 //        initNavigationDrawer(findViewById(android.R.id.content));
@@ -580,6 +562,8 @@ public class SelfStudyActivity extends AnkiActivity implements
     private final int[] mFlagRes = {R.mipmap.button_white_flag_normal, R.mipmap.mark_red_flag_normal, R.mipmap.mark_yellow_flag_normal, R.mipmap.mark_green_flag_normal, R.mipmap.mark_blue_flag_normal};
 
     private RelativeLayout mMultiModeBottomLayout;
+    private String[] mOrderNames;
+    private View mTop;
 
 
     // Finish initializing the activity after the collection has been correctly loaded
@@ -587,36 +571,98 @@ public class SelfStudyActivity extends AnkiActivity implements
     protected void onCollectionLoaded(Collection col) {
         super.onCollectionLoaded(col);
         Timber.d("onCollectionLoaded()");
+
         registerExternalStorageListener();
         final SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getBaseContext());
         // Load reference to action bar title
         mActionBarTitle = findViewById(R.id.toolbar_title);
         mTabLayout = findViewById(R.id.tab_layout);
+        mTop = findViewById(R.id.invisible_top);
+        mTop.setVisibility(View.GONE);
         mRestrictOnTab = "";
         mTabType = getIntent().getIntExtra("type", 0);
         mComplete = findViewById(R.id.tv_complete);
-        mComplete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleMultiSelectMode(false);
-            }
-        });
+        mComplete.setOnClickListener(v -> toggleMultiSelectMode(false));
         mBack = findViewById(R.id.iv_back);
         mStartStudyButton = findViewById(R.id.confirm);
         mStartStudyButton.setOnClickListener(v -> {
-            Intent previewer = new Intent(SelfStudyActivity.this, Previewer2.class);
-            if (inMultiSelectMode() && checkedCardCount() > 1) {
-                // Multiple cards have been explicitly selected, so preview only those cards
-                previewer.putExtra("index", 0);
-                previewer.putExtra("cardList", getSelectedCardIds());
-            } else {
-                // Preview all cards, starting from the one that is currently selected
+            boolean showDialog = false;
+            try {
+                if (!preferences.getString(Consts.KEY_SELF_STUDYING_LIST, "").isEmpty()) {
+                    String[] savedCardListStr = preferences.getString(Consts.KEY_SELF_STUDYING_LIST, "").replace("[", "").replace("]", "").split(", ");
+                    long[] savedCardList = new long[savedCardListStr.length];
+                    for (int i = 0; i < savedCardListStr.length; i++) {
+                        savedCardList[i] = Long.parseLong(savedCardListStr[i]);
+                    }
+                    List<Long> newCardList = getCol().filterToValidCards(savedCardList);
+                    long[] filterToValidCards = new long[newCardList.size()];
+                    for (int i = 0; i < newCardList.size(); i++) {
+                        filterToValidCards[i] = newCardList.get(i);
+                    }
+                    if (preferences.getInt(Consts.KEY_SELF_STUDYING_LIST_INDEX, 0)+1 < savedCardListStr.length) {
+                        //没跑完
+                        Intent previewer = new Intent(SelfStudyActivity.this, Previewer2.class);
+                        CustomStyleDialog studyDialog = new CustomStyleDialog.Builder(this)
+                                .setCustomLayout(R.layout.dialog_common_custom_next)
+                                .setTitle("是否继续上一次的主动练习?")
+                                .centerTitle()
+                                .setMessage("你上次的主动练习还有待学任务,请选择是继续上一次还是开始新的主动练习")
+                                .setPositiveButton("开始新的", (dialog, which) -> {
+                                    dialog.dismiss();
+                                    long[] cardList;
+                                    if (inMultiSelectMode() && checkedCardCount() > 1) {
+                                        // Multiple cards have been explicitly selected, so preview only those cards
+                                        previewer.putExtra("index", 0);
+                                        cardList = getSelectedCardIds();
+                                    } else {
+                                        // Preview all cards, starting from the one that is currently selected
 //                int startIndex = mCheckedCards.isEmpty() ? 0 : mCheckedCards.iterator().next().getPosition();
-                previewer.putExtra("index", 0);
-                previewer.putExtra("cardList", getAllCardIds());
-            }
-            startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+                                        previewer.putExtra("index", 0);
+                                        cardList = getAllCardIds();
+                                    }
+                                    previewer.putExtra("cardList", cardList);
+                                    preferences.edit().putString(Consts.KEY_SELF_STUDYING_LIST, Arrays.toString(cardList))
+                                            .putInt(Consts.KEY_SELF_STUDYING_LIST_INDEX, 0).apply();
+                                    startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+                                })
+                                .setNegativeButton("继续上次", (dialog, which) -> {
+                                    dialog.dismiss();
 
+                                    previewer.putExtra("cardList", filterToValidCards);
+                                    previewer.putExtra("index", preferences.getInt(Consts.KEY_SELF_STUDYING_LIST_INDEX, 0));
+                                    startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+
+                                })
+                                .create();
+                        showDialog = true;
+                        studyDialog.show();
+
+
+                    }
+
+
+                }
+            } catch (Exception ignored) {
+            }
+
+            if (!showDialog) {
+                Intent previewer = new Intent(SelfStudyActivity.this, Previewer2.class);
+                long[] cardList;
+                if (inMultiSelectMode() && checkedCardCount() > 1) {
+                    // Multiple cards have been explicitly selected, so preview only those cards
+                    previewer.putExtra("index", 0);
+                    cardList = getSelectedCardIds();
+                } else {
+                    // Preview all cards, starting from the one that is currently selected
+//                int startIndex = mCheckedCards.isEmpty() ? 0 : mCheckedCards.iterator().next().getPosition();
+                    previewer.putExtra("index", 0);
+                    cardList = getAllCardIds();
+                }
+                previewer.putExtra("cardList", cardList);
+                preferences.edit().putString(Consts.KEY_SELF_STUDYING_LIST, Arrays.toString(cardList))
+                        .putInt(Consts.KEY_SELF_STUDYING_LIST_INDEX, 0).apply();
+                startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
+            }
 
         });
         // Add drop-down menu to select deck to action bar.
@@ -639,24 +685,24 @@ public class SelfStudyActivity extends AnkiActivity implements
         }
 
 
-        mOrder = CARD_ORDER_CREATE_TIME;
-//        String colOrder = getCol().getConf().getString("sortType");
-//        for (int c = 0; c < fSortTypes.length; ++c) {
-//            if (fSortTypes[c].equals(colOrder)) {
-//                mOrder = c;
-//                break;
-//            }
-//        }
-//        if (mOrder == 1 && preferences.getBoolean("cardBrowserNoSorting", false)) {
-//            mOrder = 0;
-//        }
+//        mOrder = CARD_ORDER_CREATE_TIME;
+        String colOrder = getCol().getConf().getString("sortType");
+        for (int c = 0; c < fSortTypes.length; ++c) {
+            if (fSortTypes[c].equals(colOrder)) {
+                mOrder = c;
+                break;
+            }
+        }
+        if (mOrder == 1 && preferences.getBoolean("cardBrowserNoSorting", false)) {
+            mOrder = 0;
+        }
         //This upgrade should already have been done during
         //setConf. However older version of AnkiDroid didn't call
         //upgradeJSONIfNecessary during setConf, which means the
         //conf saved may still have this bug.
-//        mOrderAsc = Upgrade.upgradeJSONIfNecessary(getCol(), getCol().getConf(), "sortBackwards", false);
-        mOrderAsc = true;
-        getCol().getConf().put("sortType",fSortTypes[mOrder]);
+        mOrderAsc = Upgrade.upgradeJSONIfNecessary(getCol(), getCol().getConf(), "sortBackwards", false);
+//        mOrderAsc = true;
+        getCol().getConf().put("sortType", fSortTypes[mOrder]);
         getCol().getConf().put("sortBackwards", mOrderAsc);
 
         mCards = new ArrayList<>();
@@ -673,7 +719,9 @@ public class SelfStudyActivity extends AnkiActivity implements
         TextView cancel = findViewById(R.id.cancel);
         CheckBox stick = findViewById(R.id.stick);
         move.setOnClickListener(v -> {
-            if(mCardsAdapter.getSelectedItemIds().isEmpty())return;
+            if (mCardsAdapter.getSelectedItemIds().isEmpty()) {
+                return;
+            }
             AlertDialog.Builder builderSingle = new AlertDialog.Builder(SelfStudyActivity.this);
             builderSingle.setTitle(getString(R.string.move_all_to_deck));
             //WARNING: changeDeck depends on this index, so any changes should be reflected there.
@@ -693,7 +741,9 @@ public class SelfStudyActivity extends AnkiActivity implements
 
         });
         delete.setOnClickListener(v -> {
-            if(mCardsAdapter.getSelectedItemIds().isEmpty())return;
+            if (mCardsAdapter.getSelectedItemIds().isEmpty()) {
+                return;
+            }
             CollectionTask.launchCollectionTask(DISMISS_MULTI,
                     mDeleteNoteHandler,
                     new TaskData(new Object[] {mCardsAdapter.getSelectedItemIdArray(), Collection.DismissType.DELETE_NOTE_MULTI}));
@@ -729,8 +779,8 @@ public class SelfStudyActivity extends AnkiActivity implements
                 mMultiModeBottomLayout.setVisibility(isMultiMode ? View.VISIBLE : View.GONE);
                 mStartStudyButton.setVisibility(isMultiMode ? View.GONE : mCards.size() > 0 ? View.VISIBLE : View.GONE);
                 mSearchView.setVisibility(isMultiMode ? View.INVISIBLE : View.VISIBLE);
-                mBack.setVisibility(isMultiMode?View.GONE:View.VISIBLE);
-                mComplete.setVisibility(isMultiMode?View.VISIBLE:View.GONE);
+                mBack.setVisibility(isMultiMode ? View.GONE : View.VISIBLE);
+                mComplete.setVisibility(isMultiMode ? View.VISIBLE : View.GONE);
                 selectCount.setText("已选0");
                 supportInvalidateOptionsMenu();
 
@@ -746,33 +796,52 @@ public class SelfStudyActivity extends AnkiActivity implements
         // link the adapter to the main mCardsListView
         mCardsListView.setAdapter(mCardsAdapter);
         mCardsListView.setLayoutManager(new LinearLayoutManager(this));
+        mCardsAdapter.setTvOrderClickListener(v -> showOrderListDialog());
+        mCardsAdapter.setIvOrderClickListener(v -> {
+            //修改升序/降序
+            mOrderAsc = !mOrderAsc;
+            getCol().getConf().put("sortBackwards", mOrderAsc);
+            Collections.reverse(mCards);
+            updateList();
+            mCardsAdapter.updateOrderState(mOrderNames[mOrder], mOrderAsc);
+        });
         mCardsAdapter.setDeckClickListener(view -> {
-            if(mCardsAdapter.isMultiCheckableMode())return;
+            if (mCardsAdapter.isMultiCheckableMode()) {
+                return;
+            }
             Intent previewer = new Intent(SelfStudyActivity.this, Previewer.class);
             long[] ids = inMultiSelectMode() && checkedCardCount() > 1 ? getSelectedCardIds() : getAllCardIds();
             long targetId = (long) view.getTag();
-//            mLastSelectedPosition = position;
-            if (ids.length > 100) {
-                //为提高效率 直接复制卡牌
-                long[] finalIds = new long[ids.length + 1];
-                finalIds[0] = targetId;
-                System.arraycopy(ids, 0, finalIds, 1, ids.length);
-                previewer.putExtra("cardList", finalIds);
-            } else {
-                for (int i = 0; i < ids.length; i++) {
-                    if (ids[i] == targetId) {
-                        ids[i] = ids[0];
-                        ids[0] = targetId;
-                    }
+//            if (ids.length > 100) {
+//                //为提高效率 直接复制卡牌
+//                long[] finalIds = new long[ids.length + 1];
+//                finalIds[0] = targetId;
+//                System.arraycopy(ids, 0, finalIds, 1, ids.length);
+//                previewer.putExtra("cardList", finalIds);
+//            } else {
+//                for (int i = 0; i < ids.length; i++) {
+//                    if (ids[i] == targetId) {
+//                        ids[i] = ids[0];
+//                        ids[0] = targetId;
+//                    }
+//                }
+//                previewer.putExtra("cardList", ids);
+//            }
+
+            for (int i = 0; i < ids.length; i++) {
+                if (ids[i] == targetId) {
+                    previewer.putExtra("index", i);
+                    break;
                 }
-                previewer.putExtra("cardList", ids);
             }
-            previewer.putExtra("index", 0);
+            previewer.putExtra("cardList", ids);
             startActivityForResultWithoutAnimation(previewer, PREVIEW_CARDS);
 //            openNoteEditorForCard((long) view.getTag());
         });
         mCardsAdapter.setDeckLongClickListener(view -> {
-            if(mCardsAdapter.isMultiCheckableMode())return false;
+            if (mCardsAdapter.isMultiCheckableMode()) {
+                return false;
+            }
             mCardsAdapter.setMultiCheckable(true);
             return true;
         });
@@ -782,6 +851,9 @@ public class SelfStudyActivity extends AnkiActivity implements
                     new TaskData(new Object[] {new long[] {(long) v.getTag()}, Collection.DismissType.MARK_NOTE_MULTI}));
             mCardsAdapter.notifyDataSetChanged();
         });
+
+        mOrderNames = getResources().getStringArray(R.array.card_browser_order_labels);
+        mCardsAdapter.updateOrderState(mOrderNames[mOrder], mOrderAsc);
         mCardsAdapter.setFlagClickListener(v -> {
             if (mListPop == null) {
                 mListPop = new ListPopupWindow(this);
@@ -812,7 +884,7 @@ public class SelfStudyActivity extends AnkiActivity implements
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
         // If a valid value for last deck exists then use it, otherwise use libanki selected deck
-        if ((getLastDeckId() != null && getLastDeckId() == ALL_DECKS_ID)  ) {
+        if ((getLastDeckId() != null && getLastDeckId() == ALL_DECKS_ID)) {
             selectAllDecks();
         } else if (getLastDeckId() != null && getCol().getDecks().get(getLastDeckId(), false) != null) {
             selectDeckById(getLastDeckId());
@@ -822,7 +894,15 @@ public class SelfStudyActivity extends AnkiActivity implements
 
         initSearchView();
         initTabLayout();
-        findViewById(R.id.shadeView).setOnClickListener(v -> mPopupWindow.dismiss());
+        findViewById(R.id.shadeView).setOnClickListener(v -> {
+            if (mPopupWindow != null && mPopupWindow.isShowing()) {
+                mPopupWindow.dismiss();
+            }
+            if (mOrderListWindow != null && mOrderListWindow.isShowing()) {
+                mOrderListWindow.dismiss();
+            }
+        });
+
     }
 
 
@@ -886,7 +966,7 @@ public class SelfStudyActivity extends AnkiActivity implements
 //            }
         });
         mSearchView.setOnFocusChangeListener((v, hasFocus) -> {
-            mStartStudyButton.setVisibility(hasFocus?View.GONE:View.VISIBLE);
+            mStartStudyButton.setVisibility(hasFocus ? View.GONE : View.VISIBLE);
             if (hasFocus) {
                 return;
             }
@@ -1270,7 +1350,7 @@ public class SelfStudyActivity extends AnkiActivity implements
     }
 
 
-    private boolean showScreenDialog() {
+    private void showScreenDialog() {
         InputMethodManager manager = ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE));
         if (manager != null && getCurrentFocus() != null) {
             manager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
@@ -1539,7 +1619,7 @@ public class SelfStudyActivity extends AnkiActivity implements
         });
         deck_spinner.setSelection(mSelectedDropDownDeckPosition);
         RelativeLayout tag_spinner = dialog.findViewById(R.id.tag_spinner);
-        tag_spinner.setVisibility(mTabType == TAB_CUSTOM_STATE ||mTabType == TAB_MAIN_STATE? View.VISIBLE : View.GONE);
+        tag_spinner.setVisibility(mTabType == TAB_CUSTOM_STATE || mTabType == TAB_MAIN_STATE ? View.VISIBLE : View.GONE);
         TextView tag_selected = dialog.findViewById(R.id.tag_selected);
         tag_spinner.setOnClickListener(v -> showTagsDialog(tag_selected));
         Button reset = dialog.findViewById(R.id.reset);
@@ -1574,14 +1654,6 @@ public class SelfStudyActivity extends AnkiActivity implements
             forgetTimesSeekBar.setProgress(0, 10);
             reviewTimesSeekBar.setProgress(0, 20);
             answerTimesSeekBar.setProgress(mTabType == TAB_CUSTOM_STATE || mTabType == TAB_MAIN_STATE ? 31 : 30);
-//            mSelectedMarkButtonList.add(0);
-//            mSelectedAnswerButtonList.add(0);
-//            mSelectedStudyButtonList.add(0);
-//            studyLayout.getChildAt(0).setSelected(true);
-//            markLayout.getChildAt(0).setSelected(true);
-//            answerLayout.getChildAt(0).setSelected(true);
-
-
         });
         confirm.setOnClickListener(v -> {
             if (mTabType == TAB_MAIN_STATE) {
@@ -1609,29 +1681,102 @@ public class SelfStudyActivity extends AnkiActivity implements
         mPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         mPopupWindow.setOutsideTouchable(false);
         mPopupWindow.setFocusable(true);
-//        ViewGroup.LayoutParams lp = dialog.getLayoutParams();
-////        lp.alpha = 0.4f;
-////        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-//        lp.height=2000;
-//        dialog.setLayoutParams(lp);
-//        // 在dismiss中恢复透明度
         mPopupWindow.setOnDismissListener(() -> findViewById(R.id.shadeView).setVisibility(View.GONE));
-//        DisplayMetrics outMetrics = new DisplayMetrics();
-//        getWindowManager().getDefaultDisplay().getMetrics(outMetrics);
-//        int heightPixels = outMetrics.heightPixels;
-//
-//        int notificationBar = Resources.getSystem().getDimensionPixelSize(
-//                Resources.getSystem().getIdentifier("status_bar_height", "dimen", "android"));
-//        int[] location = new int[2];
-////        mToolbar.getLocationInWindow(location); //获取在当前窗体内的绝对坐标
-//        mToolbar.getLocationOnScreen(location);//获取在整个屏幕内的绝对坐标
-////        lp.width = WindowManager.LayoutParams.WRAP_CONTENT;
-////        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-////        lp.x = location[0];
-//        mPopupWindow.setHeight(heightPixels - (location[1] + mToolbar.getHeight()));
         mPopupWindow.showAsDropDown(mToolbar, 0, 0);
         findViewById(R.id.shadeView).setVisibility(View.VISIBLE);
-        return false;
+    }
+
+
+    private PopupWindow mOrderListWindow;
+    private OrderListAdapter mOrderAdapter;
+    private RecyclerView mOrderRecyclerView;
+    private OrderListAdapter.OrderItem selectedItem;
+
+
+    private void showOrderListDialog() {
+        mToolbar.setVisibility(View.GONE);
+        mTop.setVisibility(View.VISIBLE);
+        InputMethodManager manager = ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE));
+        if (manager != null && getCurrentFocus() != null) {
+            manager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        }
+        View dialog = getLayoutInflater().inflate(R.layout.pop_window_order_choice, null);
+        mOrderListWindow = new PopupWindow(dialog, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        mOrderAdapter = new OrderListAdapter(getLayoutInflater(), this);
+        mOrderRecyclerView = dialog.findViewById(R.id.orders);
+        mOrderRecyclerView.setAdapter(mOrderAdapter);
+        mOrderRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        List<OrderListAdapter.OrderItem> orderItems = new ArrayList<>();
+
+        String[] items = getResources().getStringArray(R.array.card_browser_order_labels);
+        for (int c = 0; c < fSortTypes.length; ++c) {
+            OrderListAdapter.OrderItem item = new OrderListAdapter.OrderItem();
+            item.name = items[c];
+            item.selected = c == mOrder;
+            item.index = c;
+            item.asc = mOrderAsc;
+            if (c == mOrder) {
+                selectedItem = item;
+            }
+            orderItems.add(item);
+        }
+        mOrderAdapter.setItems(orderItems);
+
+        mOrderAdapter.setItemClickListener(v -> {
+            for (OrderListAdapter.OrderItem item : orderItems) {
+                item.selected = item == v.getTag();
+            }
+            selectedItem = (OrderListAdapter.OrderItem) v.getTag();
+            mOrderAdapter.notifyDataSetChanged();
+        });
+
+        View.OnClickListener changeAsc = v -> {
+            selectedItem.asc = !selectedItem.asc;
+            mOrderAdapter.notifyItemChanged(selectedItem.index);
+        };
+
+        dialog.findViewById(R.id.confirm).setOnClickListener(v -> {
+            mOrderListWindow.dismiss();
+            if (selectedItem.index != mOrder) {
+                mOrder = selectedItem.index;
+                mOrderAsc = selectedItem.asc;
+                if (mOrder == 0) {
+                    getCol().getConf().put("sortType", fSortTypes[1]);
+                    AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
+                            .putBoolean("cardBrowserNoSorting", true)
+                            .commit();
+                } else {
+                    getCol().getConf().put("sortType", fSortTypes[mOrder]);
+                    AnkiDroidApp.getSharedPrefs(getBaseContext()).edit()
+                            .putBoolean("cardBrowserNoSorting", false)
+                            .commit();
+                }
+                getCol().getConf().put("sortBackwards", mOrderAsc);
+                searchCards();
+            } else if (selectedItem.index != CARD_ORDER_NONE && mOrderAsc != selectedItem.asc) {
+                mOrderAsc = selectedItem.asc;
+                getCol().getConf().put("sortBackwards", mOrderAsc);
+                Collections.reverse(mCards);
+                updateList();
+            }
+
+            mCardsAdapter.updateOrderState(mOrderNames[mOrder], mOrderAsc);
+
+        });
+        mOrderAdapter.setIvOrderClickListener(changeAsc);
+        mOrderAdapter.setTvOrderClickListener(changeAsc);
+        mOrderListWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        mOrderListWindow.setOutsideTouchable(false);
+        mOrderListWindow.setFocusable(true);
+        mOrderListWindow.setOnDismissListener(() -> {
+            findViewById(R.id.shadeView).setVisibility(View.GONE);
+            mToolbar.setVisibility(View.VISIBLE);
+            mTop.setVisibility(View.GONE);
+        });
+        mOrderListWindow.showAsDropDown(mTop, 0, 0);
+        findViewById(R.id.shadeView).setVisibility(View.VISIBLE);
     }
 
 
@@ -1666,10 +1811,9 @@ public class SelfStudyActivity extends AnkiActivity implements
         mActionBarMenu = menu;
         if (mCardsAdapter != null && mCardsAdapter.isMultiCheckableMode()) {
             getMenuInflater().inflate(R.menu.card_browser_multiselect2, menu);
-
         } else {
-            getMenuInflater().inflate(R.menu.activity_self_study_menu, menu);
-            menu.findItem(R.id.screen).setOnMenuItemClickListener(item -> showScreenDialog());
+            getMenuInflater().inflate(mTabType == TAB_MAIN_STATE ? R.menu.activity_card_browser_new_menu : R.menu.activity_self_study_menu, menu);
+//            menu.findItem(R.id.screen).setOnMenuItemClickListener(item -> showScreenDialog());
         }
         return super.onCreateOptionsMenu(menu);
     }
@@ -1721,7 +1865,7 @@ public class SelfStudyActivity extends AnkiActivity implements
             return;
         }
 
-        if ( getSelectedCardIds().length!=0) {
+        if (getSelectedCardIds().length != 0) {
             CollectionTask.cancelAllTasks(CHECK_CARD_SELECTION);
             CollectionTask.launchCollectionTask(CHECK_CARD_SELECTION,
                     mCheckSelectedCardsHandler,
@@ -1762,7 +1906,14 @@ public class SelfStudyActivity extends AnkiActivity implements
 
         switch (item.getItemId()) {
             case android.R.id.home:
+
                 endMultiSelectMode();
+                return true;
+            case R.id.screen:
+                showScreenDialog();
+                return true;
+            case R.id.action_edit:
+                mCardsAdapter.setMultiCheckable(!mCardsAdapter.isMultiCheckableMode());
                 return true;
             case R.id.action_add_note_from_card_browser: {
                 Intent intent = new Intent(SelfStudyActivity.this, NoteEditor.class);
@@ -1978,6 +2129,9 @@ public class SelfStudyActivity extends AnkiActivity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // FIXME:
         Timber.d("onActivityResult(requestCode=%d, resultCode=%d)", requestCode, resultCode);
+        if(data!=null){
+            Timber.d("onActivityResult data (reloadRequired=%s, noteChanged=%s)", data.getBooleanExtra("reloadRequired", false), data.getBooleanExtra("noteChanged", false));
+        }
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == DeckPicker.RESULT_DB_ERROR) {
@@ -2073,7 +2227,7 @@ public class SelfStudyActivity extends AnkiActivity implements
      * Exists as mActionBarSpinner.setSelection() caused a loop in roboelectirc (calling onItemSelected())
      */
     private void deckDropDownItemChanged(int position) {
-        if (position == 0) {
+        if (position <= 0) {
             mRestrictOnDeck = "";
             saveLastDeckId(ALL_DECKS_ID);
         } else {
@@ -2130,16 +2284,16 @@ public class SelfStudyActivity extends AnkiActivity implements
         }
         Timber.i("show the final mSearchTerms text:%s", mSearchTerms);
         if (mSearchTerms.contains("deck:")) {
-            searchText = mRestrictOnTab + " " + mSearchStudyFilter + " " + mSearchMarkFilter + " " + mSearchAnswerFilter + " " + mRangeSearchReviewTimesFilter + " " + mRangeCreateTimeFilter+ " " + mRangeSearchAnswerFilter + " " + mRangeSearchForgetTimesFilter + " " + mTagsFilter + " " + mSearchTerms;
+            searchText = mRestrictOnTab + " " + mSearchStudyFilter + " " + mSearchMarkFilter + " " + mSearchAnswerFilter + " " + mRangeSearchReviewTimesFilter + " " + mRangeCreateTimeFilter + " " + mRangeSearchAnswerFilter + " " + mRangeSearchForgetTimesFilter + " " + mTagsFilter + " " + mSearchTerms;
         } else {
-            searchText = mRestrictOnDeck + " " + mRestrictOnTab + " " + mSearchStudyFilter + " " + mSearchMarkFilter + " " + mSearchAnswerFilter + " " + mRangeSearchReviewTimesFilter + " " + mRangeCreateTimeFilter+ " " + mRangeSearchAnswerFilter + " " + mRangeSearchForgetTimesFilter + " " + mTagsFilter + " " + mSearchTerms;
+            searchText = mRestrictOnDeck + " " + mRestrictOnTab + " " + mSearchStudyFilter + " " + mSearchMarkFilter + " " + mSearchAnswerFilter + " " + mRangeSearchReviewTimesFilter + " " + mRangeCreateTimeFilter + " " + mRangeSearchAnswerFilter + " " + mRangeSearchForgetTimesFilter + " " + mTagsFilter + " " + mSearchTerms;
         }
 //        String showingText=searchText;
 //        if(!mShowGrammarInSearchView){
 //            searchText=mSearchTerms;
 //        }
         Timber.i("mRestrictOnDeck： +%s+  mRestrictOnTab +%s+  mSearchStudyFilter +%s+  mSearchMarkFilter +%s+  mSearchAnswerFilter+%s+  mRangeSearchReviewTimesFilter + %s + mRangeCreateTimeFilter +%s+  mRangeSearchAnswerFilter +%s+  mRangeSearchForgetTimesFilter +%s+ mTagsFilter +%s+  mSearchTerms +%s+ ",
-                mRestrictOnDeck, mRestrictOnTab, mSearchStudyFilter, mSearchMarkFilter, mSearchAnswerFilter, mRangeSearchReviewTimesFilter, mRangeCreateTimeFilter,mRangeSearchAnswerFilter, mRangeSearchForgetTimesFilter, mTagsFilter,mSearchTerms);
+                mRestrictOnDeck, mRestrictOnTab, mSearchStudyFilter, mSearchMarkFilter, mSearchAnswerFilter, mRangeSearchReviewTimesFilter, mRangeCreateTimeFilter, mRangeSearchAnswerFilter, mRangeSearchForgetTimesFilter, mTagsFilter, mSearchTerms);
         Timber.i("show the final search text:%s", searchText);
         if (!mShowGrammarInSearchView) {
             mSearchView.setQuery(mSearchTerms, false);
@@ -2250,7 +2404,7 @@ public class SelfStudyActivity extends AnkiActivity implements
         tag_selected.setText(getResources().getString(R.string.card_browser_tags_shown,
                 tags.substring(1, tags.length() - 1)));
 
-        mSelectedTags=selectedTags;
+        mSelectedTags = selectedTags;
 //        searchCards();
     }
 
@@ -2867,7 +3021,7 @@ public class SelfStudyActivity extends AnkiActivity implements
                     R.attr.reviewMenuUnSuspendIconRef,//1
                     R.attr.reviewMenuMarkIconRef,//2
             };
-            TypedArray ta =  browser.obtainStyledAttributes(attrs);
+            TypedArray ta = browser.obtainStyledAttributes(attrs);
 
             MenuItem suspend_item = browser.mActionBarMenu.findItem(R.id.action_suspend_card);
             if (hasUnsuspended) {

@@ -374,12 +374,13 @@
                     android:layout_centerVertical="true"
                     android:src="@mipmap/set_sync_set_normal" />
 
-                <ImageView
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_auto_sync"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
-                    android:src="@mipmap/icon_left_arrow_normal" />
+                    android:theme="@style/SwitchCompat.Control" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -387,7 +388,7 @@
                     android:layout_centerVertical="true"
                     android:layout_marginStart="14dp"
                     android:layout_toEndOf="@id/icon1"
-                    android:text="同步设置"
+                    android:text="自动同步"
                     android:textSize="16sp" />
             </RelativeLayout>
 

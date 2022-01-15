@@ -38,6 +38,7 @@ import com.ichi2.anki.AnkiDroidApp;
  * This technique can be used with an {@link android.app.Activity} class, not just
  * {@link android.preference.PreferenceActivity}.
  */
+@SuppressWarnings("deprecation")
 public abstract class AppCompatPreferenceActivity extends android.preference.PreferenceActivity {
 
     private AppCompatDelegate mDelegate;

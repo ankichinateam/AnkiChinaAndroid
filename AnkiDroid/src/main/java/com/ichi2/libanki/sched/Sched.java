@@ -344,6 +344,14 @@ public class Sched extends SchedV2 {
 
     @Override
     protected void _resetLrnCount() {
+        String sub_day_sql=String.format( "SELECT sum(left / 1000) FROM (SELECT left FROM cards WHERE did IN " + _deckLimit()
+                + " AND queue = " + Consts.QUEUE_TYPE_LRN + " AND due < %d and id != %d LIMIT %d)",mDayCutoff, currentCardId(), mReportLimit) ;
+        String day_sql=String.format(
+                "SELECT count() FROM cards WHERE did IN " + _deckLimit() + " AND queue = " + Consts.QUEUE_TYPE_DAY_LEARN_RELEARN + " AND due <= %d "+
+                        "AND id != %d LIMIT %d",
+                mToday, currentCardId(), mReportLimit) ;
+        Timber.i("sub_day_sql:%s", sub_day_sql);
+        Timber.i("day_sql:%s", day_sql);
         // sub-day
         mLrnCount = mCol.getDb().queryScalar(
                 "SELECT sum(left / 1000) FROM (SELECT left FROM cards WHERE did IN " + _deckLimit()

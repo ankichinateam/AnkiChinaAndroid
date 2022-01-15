@@ -692,6 +692,7 @@ public class DeckOptions extends AppCompatPreferenceActivity implements OnShared
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             closeWithResult();

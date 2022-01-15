@@ -16,6 +16,7 @@
 
 package com.ichi2.anki.widgets;
 
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
@@ -27,18 +28,26 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.ichi2.anki.AnkiActivity;
+import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.CardBrowser;
 import com.ichi2.anki.R;
 import com.ichi2.libanki.Card;
+import com.ichi2.libanki.Consts;
+import com.ichi2.utils.AESUtil;
+import com.ichi2.utils.HtmlUtils;
+import com.ichi2.utils.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import timber.log.Timber;
 
 public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -48,6 +57,8 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private View.OnClickListener mDeckClickListener;
     private View.OnClickListener mMarkClickListener;
     private View.OnClickListener mSetFlagClickListener;
+    private View.OnClickListener mTvOrderClickListener;
+    private View.OnClickListener mIvOrderClickListener;
     private View.OnLongClickListener mDeckLongClickListener;
 
 
@@ -68,6 +79,31 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     public void setFlagClickListener(View.OnClickListener listener) {
         mSetFlagClickListener = listener;
+    }
+
+    String mOrderName="";
+    boolean mAsc;
+    public void updateOrderState(String name,boolean asc){
+        mOrderName=name;
+        mAsc=asc;
+        notifyItemChanged(0);
+    }
+
+    /**
+     * 展示排序方式
+     * @param listener
+     */
+    public void setTvOrderClickListener(View.OnClickListener listener) {
+        mTvOrderClickListener = listener;
+    }
+
+
+    /**
+     * 修改升序/降序
+     * @param listener
+     */
+    public void setIvOrderClickListener(View.OnClickListener listener) {
+        mIvOrderClickListener = listener;
     }
 
 
@@ -95,7 +131,7 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         public final LinearLayout itemRoot;
         public final TextView deckQuestion;
-        public final TextView deckAnswer;
+        //        public final TextView deckAnswer;
         public final TextView reviewCount;
         public final TextView forgetCount;
         public final TextView due;
@@ -108,7 +144,7 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             super(v);
             itemRoot = v.findViewById(R.id.DeckPickerHoriz);
             deckQuestion = v.findViewById(R.id.deck_question);
-            deckAnswer = v.findViewById(R.id.deck_answer);
+//            deckAnswer = v.findViewById(R.id.deck_answer);
             reviewCount = v.findViewById(R.id.review_count);
             forgetCount = v.findViewById(R.id.forget_count);
             flag = v.findViewById(R.id.flag_icon);
@@ -125,13 +161,15 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
 
         public final TextView cardsCount;
-        public final TextView edit;
+        public final TextView orderText;
+        public final ImageView order;
 
 
         public HeaderViewHolder(View v) {
             super(v);
             cardsCount = v.findViewById(R.id.search_result_num);
-            edit = v.findViewById(R.id.edit);
+            orderText = v.findViewById(R.id.tv_order);
+            order = v.findViewById(R.id.order);
 
         }
     }
@@ -141,9 +179,15 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private Drawable mEmptyFlag;
     private Drawable mEmptyMark;
 
-
+    SharedPreferences mPreference;
+    JSONObject mModelKeys;
     public CardsListAdapter(LayoutInflater layoutInflater, AnkiActivity context, CardListAdapterCallback callback) {
         mLayoutInflater = layoutInflater;
+        mPreference = AnkiDroidApp.getSharedPrefs(context);
+        String modelKeyStr=mPreference.getString(Consts.KEY_SAVED_MODEL_KEY,"");
+        if(!modelKeyStr.isEmpty()){
+            mModelKeys=new JSONObject(modelKeyStr);
+        }
         mCallback = callback;
         mContext = context;
         int[] attrs = new int[] {
@@ -166,7 +210,9 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
 
     public void setMultiCheckable(boolean enable) {
-        if(mMultiCheckableMode==enable)return;
+        if (mMultiCheckableMode == enable) {
+            return;
+        }
         mMultiCheckableMode = enable;
         if (mMultiCheckableMode) {
             mSelectedPosition.clear();
@@ -203,10 +249,14 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_LIST;
     }
 
+
     private int mStudyCountLayoutRes;
-    public void setStudyCountLayoutRes(int resLayout){
-        mStudyCountLayoutRes=resLayout;
+
+
+    public void setStudyCountLayoutRes(int resLayout) {
+        mStudyCountLayoutRes = resLayout;
     }
+
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -215,7 +265,7 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             v = mLayoutInflater.inflate(R.layout.deck_item_self_study, parent, false);
             return new CardsViewHolder(v);
         } else {
-            v = mLayoutInflater.inflate(mStudyCountLayoutRes>0?mStudyCountLayoutRes:R.layout.item_self_study_count, parent, false);
+            v = mLayoutInflater.inflate(mStudyCountLayoutRes > 0 ? mStudyCountLayoutRes : R.layout.item_self_study_count, parent, false);
             return new HeaderViewHolder(v);
         }
     }
@@ -228,23 +278,48 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             position--;
             CardsViewHolder holder = (CardsViewHolder) tempHolder;
             CardBrowser.CardCache card = mCallback.getCards().get(position);
-            String question = card.getColumnHeaderText(CardBrowser.Column.QUESTION);
-            if(card.getColumnHeaderText(CardBrowser.Column.SUSPENDED).equals("True")){
+            String question = card.getColumnHeaderText(CardBrowser.Column.SFLD);
+            if (card.getColumnHeaderText(CardBrowser.Column.SUSPENDED).equals("True")) {
                 holder.deckQuestion.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
-                holder.deckAnswer.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
+//                holder.deckAnswer.setTextColor(ContextCompat.getColor(mContext, R.color.new_primary_text_third_color));
             }
-            if (question.isEmpty()) {
-                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME));
-            } else {
-                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
-            }
+            String firstColumnStr=question.isEmpty()?card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME):card.getColumnHeaderText(CardBrowser.Column.SFLD);
+            Pattern pattern = Pattern.compile("(?<=≯#).*?(?=#≮)");
+            Matcher matcher = pattern.matcher(firstColumnStr);
+            String val = "";
 
-//            String answer = card.getColumnHeaderText(CardBrowser.Column.ANSWER);
-//            if (answer.isEmpty()) {
-                holder.deckAnswer.setText(card.getColumnHeaderText(CardBrowser.Column.ANSWER));
-//            } else {
-//                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.QUESTION));
+            if (matcher.find()) {
+                val = matcher.group(0);
+                try{
+                    String key=mModelKeys.getString(String.valueOf(card.getCard().model().getLong("id")));
+                    Timber.i("match key:%s", key);
+                    holder.deckQuestion.setText(HtmlUtils.delHTMLTag(firstColumnStr.substring(0, firstColumnStr.indexOf("≯#")) + AESUtil.decrypt(val, key) + firstColumnStr.substring(firstColumnStr.indexOf("#≮") + 2)));
+//                    holder.deckQuestion.setText(firstColumnStr.substring(0, firstColumnStr.indexOf("≯#")) + aesUtil.getDecryptedMessage(val) + firstColumnStr.substring(firstColumnStr.indexOf("#≮") + 2));
+                }catch (Exception e){
+                    e.printStackTrace();
+                    holder.deckQuestion.setText(firstColumnStr);
+                }
+            }else {
+                holder.deckQuestion.setText(firstColumnStr);
+
+            }
+            Timber.i("match content:%s", val);
+
+
+//            if(mModelKeys!=null&&(  key=mModelKeys.getString(String.valueOf(card.getCard().model().getLong("id"))))!=JSONObject.NULL){
+//                holder.deckQuestion.setText(AESUtil.decrypt(firstColumnStr,key));
+//            }else {
+//                holder.deckQuestion.setText((mModelKeys!=null&&(  key=mModelKeys.getString(String.valueOf(card.getCard().model().getLong("id"))))!=JSONObject.NULL)?AESUtil.decrypt(firstColumnStr,key):firstColumnStr);
 //            }
+//            holder.deckQuestion.setText((mModelKeys!=null&&(  key=mModelKeys.getString(String.valueOf(card.getCard().model().getLong("id"))))!=JSONObject.NULL)?AESUtil.decrypt(firstColumnStr,key):firstColumnStr);
+//            if (question.isEmpty()) {
+//
+//                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.MEDIA_NAME));
+//            } else {
+//                holder.deckQuestion.setText(card.getColumnHeaderText(CardBrowser.Column.SFLD));
+//            }
+
+//                holder.deckAnswer.setText(card.getColumnHeaderText(CardBrowser.Column.ANSWER));
             holder.reviewCount.setText(card.getColumnHeaderText(CardBrowser.Column.REVIEWS));
             holder.forgetCount.setText(card.getColumnHeaderText(CardBrowser.Column.LAPSES));
             holder.due.setText(card.getColumnHeaderText(CardBrowser.Column.DUE2));
@@ -307,38 +382,47 @@ public class CardsListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         } else {
             HeaderViewHolder holder = (HeaderViewHolder) tempHolder;
             holder.cardsCount.setText(String.format("筛选出%d张卡片", getItemCount() - 1));
-            holder.cardsCount.setVisibility(isMultiCheckableMode()?View.GONE:View.VISIBLE);
+            holder.cardsCount.setVisibility(isMultiCheckableMode() ? View.GONE : View.VISIBLE);
 
-            if(holder.edit!=null){
-                holder.edit.setVisibility(isMultiCheckableMode()?View.GONE:View.VISIBLE);
-                holder.edit.setOnClickListener(v -> {
-                    setMultiCheckable(!mMultiCheckableMode);
-                });
+            if (holder.order != null) {
+                holder.order.setOnClickListener(mIvOrderClickListener);
+                holder.orderText.setOnClickListener(mTvOrderClickListener);
+                holder.orderText.setText(mOrderName);
+                holder.order.setSelected(mAsc);
             }
         }
     }
 
 
-    private  List<Long> mSelectedPosition = new ArrayList<>();
+
+    private List<Long> mSelectedPosition = new ArrayList<>();
     private Set<CardBrowser.CardCache> mCheckedCards = Collections.synchronizedSet(new LinkedHashSet<>());
 
-    public int selectItemCount(){
+
+    public int selectItemCount() {
         return mSelectedPosition.size();
     }
 
-    public List<Long> getSelectedItemIds(){
+
+    public List<Long> getSelectedItemIds() {
         return mSelectedPosition;
     }
-    public Set<CardBrowser.CardCache> getSelectedCards(){
+
+
+    public Set<CardBrowser.CardCache> getSelectedCards() {
         return mCheckedCards;
     }
-    public long[] getSelectedItemIdArray(){
-        long[] temp=new long[mSelectedPosition.size()];
-        for(int i=0;i<temp.length;i++){
-            temp[i]=mSelectedPosition.get(i);
+
+
+    public long[] getSelectedItemIdArray() {
+        long[] temp = new long[mSelectedPosition.size()];
+        for (int i = 0; i < temp.length; i++) {
+            temp[i] = mSelectedPosition.get(i);
         }
         return temp;
     }
+
+
     public static int getFlagRes(Card card) {
         int flag = card.userFlag();
         switch (flag) {

@@ -24,6 +24,7 @@ package com.ichi2.anki;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,13 +33,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -73,6 +70,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -118,9 +116,9 @@ import com.ichi2.anki.reviewer.ReviewerCustomFonts;
 import com.ichi2.anki.reviewer.ReviewerUi;
 import com.ichi2.anki.cardviewer.TypedAnswer;
 import com.ichi2.async.CollectionTask;
+import com.ichi2.async.Connection;
 import com.ichi2.async.TaskListener;
 import com.ichi2.bd.Auth;
-import com.ichi2.bd.AutoCheck;
 import com.ichi2.bd.FileSaveListener;
 import com.ichi2.bd.IOfflineResourceConst;
 import com.ichi2.bd.InitConfig;
@@ -147,6 +145,7 @@ import com.ichi2.utils.FileUtil;
 import com.ichi2.utils.FunctionalInterfaces.Consumer;
 import com.ichi2.utils.FunctionalInterfaces.Function;
 
+import com.ichi2.utils.HtmlUtils;
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONException;
 import com.ichi2.utils.JSONObject;
@@ -166,6 +165,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -176,14 +176,12 @@ import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.FormBody;
-import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.BufferedSink;
 import timber.log.Timber;
 
 import static com.ichi2.anki.DeckPicker.BE_VIP;
-import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE;
+import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML;
 import static com.ichi2.anki.DeckPicker.REFRESH_VOICE_INFO;
 import static com.ichi2.anki.SpeakSettingActivity.REQUEST_CODE_SPEAK_SETTING;
 import static com.ichi2.anki.cardviewer.CardAppearance.calculateDynamicFontSize;
@@ -201,8 +199,13 @@ import static com.ichi2.bd.MainHandlerConstant.UI_PLAY_START;
 import static com.ichi2.libanki.Consts.KEY_SELECT_ONLINE_SPEAK_ENGINE;
 import static com.ichi2.libanki.Consts.KEY_SHOW_TTS_ICON;
 import static com.ichi2.libanki.Sound.SoundSide;
+import static com.ichi2.themes.Themes.THEME_NIGHT_BLACK;
+import static com.ichi2.themes.Themes.THEME_NIGHT_DARK;
 
 import com.github.zafarkhaja.semver.Version;
+import com.jaygoo.widget.OnRangeChangedListener;
+import com.jaygoo.widget.RangeSeekBar;
+
 
 @SuppressWarnings( {"PMD.AvoidThrowingRawExceptionTypes", "PMD.FieldDeclarationsShouldBeAtStartOfClass"})
 public abstract class AbstractFlashcardViewer extends AnkiActivity implements ReviewerUi, CommandProcessor {
@@ -220,6 +223,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     public static final int DECK_OPTIONS = 1;
     public static final int REFRESH_TOP_BUTTONS = 5;
     public static final int REFRESH_GESTURE = 6;
+    public static final int REFRESH_CONTROLLER = 7;
     public static final int EASE_1 = 1;
     public static final int EASE_2 = 2;
     public static final int EASE_3 = 3;
@@ -403,6 +407,27 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     private int mGestureVolumeUp;
     private int mGestureVolumeDown;
 
+    /**
+     * Controller Allocation
+     */
+    protected int mControllerA;
+    protected int mControllerB;
+    protected int mControllerX;
+    protected int mControllerY;
+    protected int mControllerUp;
+    protected int mControllerDown;
+    protected int mControllerLeft;
+    protected int mControllerRight;
+    protected int mControllerLT;
+    protected int mControllerRT;
+    protected int mControllerLB;
+    protected int mControllerRB;
+    protected int mControllerMenu;
+    protected int mControllerOption;
+    protected int mControllerLeftPad;
+    protected int mControllerRightPad;
+
+
     private String mCardContent;
     private String mBaseUrl;
 
@@ -577,6 +602,521 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             return false;
         }
     };
+    private Dialog mLayoutConfigDialog;
+    ImageView alignLeft;
+    ImageView alignRight;
+    ImageView alignNormal;
+    ImageView alignCenter;
+    ImageView layerTop;
+    ImageView layerCenter;
+    ImageView layerBottom;
+    ImageView bgColorWhite;
+    ImageView bgColorGrey;
+    ImageView bgColorBrown;
+    ImageView bgColorGreen;
+    ImageView bgColorBlack;
+    RangeSeekBar fontSizeSeekBar;
+    List<ImageView> aligns = new ArrayList<>();
+    List<ImageView> layers = new ArrayList<>();
+    List<ImageView> bgColors = new ArrayList<>();
+    JSONObject needUploadViewSetting = null;
+    private String mCurrentCSS = "";
+    private String mCurrentEditingDefaultCSS = "";
+    private long mCurrentCSSModelID = -1;
+
+
+    protected void showLayoutDialog() {
+        SharedPreferences preference = AnkiDroidApp.getSharedPrefs(this);
+        if (mLayoutConfigDialog == null) {
+            mLayoutConfigDialog = new Dialog(this, R.style.DialogTheme2);
+            View view = View.inflate(this, R.layout.dialog_layout_config, null);
+            mLayoutConfigDialog.setContentView(view);
+            Window window = mLayoutConfigDialog.getWindow();
+            mLayoutConfigDialog.setOnDismissListener(dialog -> {
+                if (mCurrentCSS.equals(mCurrentEditingDefaultCSS)) {
+                    //没修改过，直接返回
+                    return;
+                }
+                JSONObject object = convertCss2JsonAndSave();//将当前css转化为类,添加修改时间
+                if (needUploadViewSetting == null) {
+                    needUploadViewSetting = new JSONObject();
+                }
+                needUploadViewSetting.put(String.valueOf(mCurrentCard.model().getLong("id")), object);
+                Timber.i("save layout config :%s", needUploadViewSetting.toString());
+                preference.edit().putString(Consts.KEY_LOCAL_LAYOUT_CONFIG, needUploadViewSetting.toString().replace("\\", "")).apply();
+                getAccount().getToken(AbstractFlashcardViewer.this, new MyAccount.TokenCallback() {
+                    @Override
+                    public void onSuccess(String token) {
+                        RequestBody formBody = new FormBody.Builder()
+                                .add("models_view_settings", needUploadViewSetting.toString())
+                                .build();
+
+                        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/conf", formBody, token, "", new OKHttpUtil.MyCallBack() {
+                            @Override
+                            public void onFailure(Call call, IOException e) {
+                                e.printStackTrace();
+                            }
+
+
+                            @Override
+                            public void onResponse(Call call, String token, Object arg1, Response response) {
+                                if (response.isSuccessful()) {
+                                    Timber.i("post view settings successfully!:%s", response.body());
+
+                                } else {
+                                    Timber.e("post view settings failed, error code %d", response.code());
+                                }
+                            }
+                        });
+                    }
+
+
+                    @Override
+                    public void onFail(String message) {
+
+                    }
+                });
+            });
+//            addMenuBottomDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            //设置弹出位置
+            window.setGravity(Gravity.BOTTOM);
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            view.findViewById(R.id.close).setOnClickListener(v -> mLayoutConfigDialog.dismiss());
+            view.findViewById(R.id.reset).setOnClickListener(v -> {
+                //将当前样式变回css()样式
+//                mCurrentCSS = mCurrentCard.css().replace("<style>", "").replace("</style>", "");
+                mCurrentCSS = ".card {}";
+//                mCurrentCSS = mCurrentEditingDefaultCSS;
+//                Timber.i("show updateTypeAnswerInfo");
+//                JSONObject temp = convertCss2JsonAndSave();
+                fontSizeSeekBar.setProgress(0);
+                for (View view1 : layers) {//存在无一被选中的情况，通过预先全设置为非选中实现
+                    view1.setSelected(false);
+                }
+                for (View view1 : bgColors) {
+                    view1.setSelected(false);
+                }
+                for (View view1 : aligns) {
+                    view1.setSelected(false);
+                }
+
+                String localViewSettingStr = preference.getString(Consts.KEY_LOCAL_LAYOUT_CONFIG, "");
+                mCurrentCSSModelID = mCurrentCard.model().getLong("id");
+                if (localViewSettingStr != null && !localViewSettingStr.isEmpty()) {
+                    needUploadViewSetting = new JSONObject(localViewSettingStr);
+                    if (needUploadViewSetting.remove(String.valueOf(mCurrentCSSModelID)) != null) {
+                        Timber.i("remove saved setting :%s", mCurrentCSSModelID);
+                        preference.edit().putString(Consts.KEY_LOCAL_LAYOUT_CONFIG, needUploadViewSetting.toString().replace("\\", "")).apply();
+                    }
+                }
+                if (!mCacheContent.isEmpty()) {
+                    updateCard(mCacheContent);
+                }
+            });
+
+            alignLeft = view.findViewById(R.id.ic_align_left);
+            alignRight = view.findViewById(R.id.ic_align_right);
+            alignNormal = view.findViewById(R.id.ic_align_normal);
+            alignCenter = view.findViewById(R.id.ic_align_center);
+
+
+            aligns.add(alignLeft);
+            aligns.add(alignRight);
+            aligns.add(alignNormal);
+            aligns.add(alignCenter);
+
+
+            layerTop = view.findViewById(R.id.ic_layer_top);
+            layerCenter = view.findViewById(R.id.ic_layer_center);
+            layerBottom = view.findViewById(R.id.ic_layer_bottom);
+
+
+            layers.add(layerTop);
+            layers.add(layerCenter);
+            layers.add(layerBottom);
+
+            bgColorWhite = view.findViewById(R.id.ic_bg_white);
+            bgColorGrey = view.findViewById(R.id.ic_bg_grey);
+            bgColorBrown = view.findViewById(R.id.ic_bg_brown);
+            bgColorGreen = view.findViewById(R.id.ic_bg_green);
+            bgColorBlack = view.findViewById(R.id.ic_bg_black);
+
+
+            bgColors.add(bgColorWhite);
+            bgColors.add(bgColorGrey);
+            bgColors.add(bgColorBrown);
+            bgColors.add(bgColorGreen);
+            bgColors.add(bgColorBlack);
+
+
+            alignLeft.setOnClickListener(v -> onLayoutConfigAlignClick("left", alignLeft));
+            alignRight.setOnClickListener(v -> onLayoutConfigAlignClick("right", alignRight));
+            alignNormal.setOnClickListener(v -> onLayoutConfigAlignClick("justify", alignNormal));
+            alignCenter.setOnClickListener(v -> onLayoutConfigAlignClick("center", alignCenter));
+
+            layerTop.setOnClickListener(v -> onLayoutConfigLayerClick("flex-start", layerTop));
+            layerCenter.setOnClickListener(v -> onLayoutConfigLayerClick("center", layerCenter));
+            layerBottom.setOnClickListener(v -> onLayoutConfigLayerClick("flex-end", layerBottom));
+
+            bgColorWhite.setOnClickListener(v -> onLayoutConfigBgClick("white", bgColorWhite));
+            bgColorGrey.setOnClickListener(v -> onLayoutConfigBgClick("#F4F4F6", bgColorGrey));
+            bgColorBrown.setOnClickListener(v -> onLayoutConfigBgClick("#E4DCCE", bgColorBrown));
+            bgColorGreen.setOnClickListener(v -> onLayoutConfigBgClick("#BADEBE", bgColorGreen));
+            bgColorBlack.setOnClickListener(v -> onLayoutConfigBgClick("black", bgColorBlack));
+
+
+            fontSizeSeekBar = view.findViewById(R.id.font_size_seek_bar);
+            fontSizeSeekBar.setRange(0, 80);
+            fontSizeSeekBar.setOnRangeChangedListener(new OnRangeChangedListener() {
+                @Override
+                public void onRangeChanged(RangeSeekBar view, float leftValue, float rightValue, boolean isFromUser) {
+                    if (!isFromUser) {
+                        return;
+                    }
+                    Matcher fontSizeMatcher = Pattern.compile("font-size:(.+?)px").matcher(mCurrentCSS);
+                    if (fontSizeMatcher.find()) {
+                        String fld1 = fontSizeMatcher.group(0);
+
+                        mCurrentCSS = mCurrentCSS.replace(fld1, String.format(Locale.CHINA, "font-size: %.0fpx", leftValue));
+
+                    } else {
+                        mCurrentCSS = mCurrentCSS.replace("}", String.format(Locale.CHINA, "font-size: %.0fpx;}", leftValue));
+                    }
+                    Timber.i("set font size fld:%s", leftValue);//字体大小
+                    if (!mCacheContent.isEmpty()) {
+                        updateCard(mCacheContent);
+                    }
+//                    needUploadViewSetting.put(String.valueOf(mCurrentCard.model().getLong("id")), mCurrentCSS.replace(".card", ""));
+
+                }
+
+
+                @Override
+                public void onStartTrackingTouch(RangeSeekBar view, boolean isLeft) {
+
+                }
+
+
+                @Override
+                public void onStopTrackingTouch(RangeSeekBar view, boolean isLeft) {
+
+                }
+            });
+        }
+        if (mLayoutConfigDialog.isShowing()) {
+            mLayoutConfigDialog.dismiss();
+            return;
+        }
+        if (mCurrentCSS.isEmpty() || mCurrentCSSModelID != mCurrentCard.model().getLong("id")) {
+            //获取preferences是否有保存的布局设置
+            String localViewSettingStr = preference.getString(Consts.KEY_LOCAL_LAYOUT_CONFIG, "");
+            boolean notSync = false;
+            mCurrentCSSModelID = mCurrentCard.model().getLong("id");
+            if (localViewSettingStr != null && !localViewSettingStr.isEmpty()) {
+                Timber.i("find local view setting:%s", localViewSettingStr);
+                needUploadViewSetting = new JSONObject(localViewSettingStr);
+                try {
+                    JSONObject currentModelSetting = needUploadViewSetting.getJSONObject(String.valueOf(mCurrentCSSModelID));
+                    if (currentModelSetting != null) {
+                        mCurrentCSS = convertJson2Css(currentModelSetting, true);
+
+                    } else {
+                        notSync = true;
+                        //没这个记录，新建一个默认模板
+                        mCurrentCSS = ".card {}";
+
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    notSync = true;
+                    mCurrentCSS = ".card {}";
+//                    needUploadViewSetting.put()
+                }
+
+            } else {
+//                needUploadViewSetting = new JSONObject();
+                mCurrentCSS = ".card {}";
+            }
+        } else {
+            //将dialog改为原设布局
+            convertJson2Css(convertCss2JsonAndSave(), true);
+        }
+        mCurrentEditingDefaultCSS = mCurrentCSS;//保存刚载入时的css，留着备用
+//        if (localViewSettingStr == null || localViewSettingStr.isEmpty() || notSync) {
+//            //本地没数据或当前model未保存，则从数据库model里的css里找 //不找了。
+//            mCurrentCSS = mCurrentCard.css().replace("<style>", "").replace("</style>", "");
+////            Timber.i("show updateTypeAnswerInfo");
+//            JSONObject temp = convertCss2JsonAndSave();
+//            fontSizeSeekBar.setProgress(Float.parseFloat(temp.getString("font_size")) - 8);
+//            updateLayoutConfigDialog(TYPE_ALIGN, temp.getString("text_align"));
+//            updateLayoutConfigDialog(TYPE_LAYER, temp.getString("layout"));
+//            updateLayoutConfigDialog(TYPE_BG, temp.getString("background_color"));
+//            if (needUploadViewSetting == null) {
+//                needUploadViewSetting = new JSONObject();
+//            }
+//            if (notSync) {
+//                needUploadViewSetting.put(String.valueOf(mCurrentCSSModelID), temp.toString());
+//            }
+//        }
+
+        mLayoutConfigDialog.show();
+    }
+
+
+    private String convertJson2Css(JSONObject currentModelSetting, boolean updateUI) {
+        String fontSize = "";
+        String layer = "";
+        String align = "";
+        String bg = "";
+        String content = "";
+        try {
+            fontSize = currentModelSetting.getString("font_size");
+            if (!fontSize.isEmpty()) {
+                content += String.format("font-size: %spx;\n", fontSize);
+            }
+            if (updateUI) {
+                fontSizeSeekBar.setProgress(Float.parseFloat(fontSize) - 8);
+            }
+        } catch (Exception ignored) {
+            if (updateUI) {
+                fontSizeSeekBar.setProgress(0);
+            }
+        }
+        try {
+            layer = currentModelSetting.getString("layout");
+            if (!layer.isEmpty()) {
+                content += String.format("align-items: %s;\ndisplay: %s;\nheight: %s;\n", layer, "flex", "100vh");
+            }
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_LAYER, layer);
+            }
+        } catch (Exception ignored) {
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_LAYER, "");
+            }
+        }
+        try {
+            align = currentModelSetting.getString("text_align");
+            if (!align.isEmpty()) {
+                content += String.format("text-align: %s;\n", align);
+            }
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_ALIGN, align);
+            }
+        } catch (Exception ignored) {
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_ALIGN, "");
+            }
+        }
+        try {
+            bg = currentModelSetting.getString("background_color");
+            if (!bg.isEmpty()) {
+                content += String.format("background-color: %s;\n", bg);
+                if (bg.equals("#000000") || bg.equals("black")) {
+                    content += "filter: invert(1);\n";
+                }
+            }
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_BG, bg);
+            }
+        } catch (Exception ignored) {
+            if (updateUI) {
+                updateLayoutConfigDialog(TYPE_BG, "");
+            }
+        }
+
+
+        return /*content.isEmpty() ? ".card {}" : */String.format(".card {%s}", content);
+
+    }
+
+
+    private JSONObject convertCss2JsonAndSave() {
+        String fontSize = "", align = "", layer = "", bg = "";
+        JSONObject temp = new JSONObject();
+        Matcher fontSizeMatcher = Pattern.compile("font-size:(.+?)px").matcher(mCurrentCSS);
+        if (fontSizeMatcher.find()) {
+            fontSize = fontSizeMatcher.group(1).trim();
+            Timber.i("saved font size:%s", fontSize);
+
+        }
+        Matcher alignMatcher = Pattern.compile("text-align:(.+?);").matcher(mCurrentCSS);
+        if (alignMatcher.find()) {
+            align = alignMatcher.group(1).trim();
+            Timber.i("saved text align :%s", align);
+
+        }
+        Matcher layerMatcher = Pattern.compile("align-items:(.+?);").matcher(mCurrentCSS);
+        if (layerMatcher.find()) {
+            layer = layerMatcher.group(1).trim();
+            Timber.i("saved align items:%s", layer);
+
+        }
+        Matcher bgMatcher = Pattern.compile("background-color:(.+?);").matcher(mCurrentCSS);
+        if (bgMatcher.find()) {
+            bg = bgMatcher.group(1).trim();
+            Timber.i("saved bg:%s", bg);
+        }
+        temp.put("font_size", fontSize.isEmpty() ? "" : String.valueOf(Math.round(Double.parseDouble(fontSize))));
+        temp.put("text_align", align);
+        temp.put("layout", layer);
+        temp.put("background_color", bg);
+        temp.put("updated_at", String.valueOf(System.currentTimeMillis() / 1000));
+        return temp;
+    }
+
+
+    private static final int TYPE_LAYER = 0;
+    private static final int TYPE_ALIGN = 1;
+    private static final int TYPE_BG = 2;
+
+
+    private void updateLayoutConfigDialog(int type, String value) {
+        if (type == TYPE_LAYER) {
+            switch (value) {
+                case "flex-start":
+                case "top":
+                    updateViewsSelected(layerTop, layers);
+                    break;
+                case "flex-end":
+                case "bottom":
+                    updateViewsSelected(layerBottom, layers);
+                    break;
+                case "center":
+                    updateViewsSelected(layerCenter, layers);
+                    break;
+                case "":
+                    updateViewsSelected(null, layers);
+                    break;
+            }
+        } else if (type == TYPE_ALIGN) {
+            switch (value) {
+                case "left":
+                    updateViewsSelected(alignLeft, aligns);
+                    break;
+                case "right":
+                    updateViewsSelected(alignRight, aligns);
+                    break;
+                case "center":
+                    updateViewsSelected(alignCenter, aligns);
+                    break;
+                case "justify":
+                    updateViewsSelected(alignNormal, aligns);
+                    break;
+                case "":
+                    updateViewsSelected(null, aligns);
+                    break;
+            }
+        } else if (type == TYPE_BG) {
+            switch (value) {
+                case "#F4F4F6":
+                    updateViewsSelected(bgColorGrey, bgColors);
+                    break;
+                case "#E4DCCE":
+                    updateViewsSelected(bgColorBrown, bgColors);
+                    break;
+                case "#BADEBE":
+                    updateViewsSelected(bgColorGreen, bgColors);
+                    break;
+                case "#000000":
+                case "black":
+                    updateViewsSelected(bgColorBlack, bgColors);
+                    break;
+                case "white":
+                case "#FFFFFF":
+//                default:
+                    updateViewsSelected(bgColorWhite, bgColors);
+                    break;
+                case "":
+                    updateViewsSelected(null, bgColors);
+                    break;
+            }
+        }
+    }
+
+
+    private void updateViewsSelected(ImageView view, List<ImageView> views) {
+        for (ImageView imageView : views) {
+            imageView.setSelected(view == imageView);
+        }
+    }
+
+
+    private void onLayoutConfigBgClick(String value, ImageView clickView) {
+        updateViewsSelected(clickView, bgColors);
+        Matcher bgMatcher = Pattern.compile("background-color:(.+?);").matcher(mCurrentCSS);
+        if (bgMatcher.find()) {
+            String str = bgMatcher.group(0);
+            Timber.i("show bg str:%s", str);
+            mCurrentCSS = mCurrentCSS.replace(str, "background-color: " + value + ";");
+        } else {
+            mCurrentCSS = mCurrentCSS.replace("}", "background-color: " + value + ";}");
+        }
+
+        Matcher filter = Pattern.compile("filter: invert(.+?);").matcher(mCurrentCSS);
+        if (filter.find()) {
+            String str = filter.group(0);
+            Timber.i("show filter str:%s", str);
+            if (!value.equalsIgnoreCase("black") && !value.equals("#000000")) {
+                //不是黑色要把反转去掉
+                mCurrentCSS = mCurrentCSS.replace(str, "");
+            }
+        } else {
+            if (value.equalsIgnoreCase("black") || value.equals("#000000")) {
+                //黑色需要添加反转
+                mCurrentCSS = mCurrentCSS.replace("}", "filter: invert(1);}");
+            }
+        }
+        if (!mCacheContent.isEmpty()) {
+            updateCard(mCacheContent);
+        }
+//        needUploadViewSetting.put(String.valueOf(mCurrentCard.model().getLong("id")), mCurrentCSS.replace(".card", ""));
+    }
+
+
+    private void onLayoutConfigLayerClick(String value, ImageView clickView) {
+        updateViewsSelected(clickView, layers);
+        Matcher layerMatcher = Pattern.compile("align-items:(.+?);").matcher(mCurrentCSS);
+        if (layerMatcher.find()) {
+            String str = layerMatcher.group(0);
+            Timber.i("show layer str:%s", str);
+            mCurrentCSS = mCurrentCSS.replace(str, "align-items: " + value + ";");
+
+        } else {
+            mCurrentCSS = mCurrentCSS.replace("}", "align-items: " + value + ";}");
+        }
+        Matcher layerMatcher2 = Pattern.compile("display:(.+?);").matcher(mCurrentCSS);
+        if (!layerMatcher2.find()) {
+            mCurrentCSS = mCurrentCSS.replace("}", "display: flex;}");
+        }
+        Matcher layerMatcher3 = Pattern.compile("height:(.+?);").matcher(mCurrentCSS);
+        if (!layerMatcher3.find()) {
+            mCurrentCSS = mCurrentCSS.replace("}", "height: 100vh;}");
+        }
+        if (!mCacheContent.isEmpty()) {
+            updateCard(mCacheContent);
+        }
+//        needUploadViewSetting.put(String.valueOf(mCurrentCard.model().getLong("id")), mCurrentCSS.replace(".card", ""));
+
+    }
+
+
+    private void onLayoutConfigAlignClick(String value, ImageView clickView) {
+        updateViewsSelected(clickView, aligns);
+        Matcher alignMatcher = Pattern.compile("text-align:(.+?);").matcher(mCurrentCSS);
+        if (alignMatcher.find()) {
+            String str = alignMatcher.group(0);
+            Timber.i("show text align str:%s", str);
+            mCurrentCSS = mCurrentCSS.replace(str, "text-align: " + value + ";");
+        } else {
+            mCurrentCSS = mCurrentCSS.replace("}", "text-align: " + value + ";}");
+        }
+        if (!mCacheContent.isEmpty()) {
+            updateCard(mCacheContent);
+        }
+//        needUploadViewSetting.put(String.valueOf(mCurrentCard.model().getLong("id")), mCurrentCSS.replace(".card", ""));
+
+    }
 
 
     @SuppressLint("CheckResult")
@@ -707,7 +1247,6 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         protected void displayNext(Card nextCard) {
 
-            Resources res = getResources();
             Timber.i("display next:" + hasSched() + "," + (mSched == null));
             if (hasSched() && mSched == null) {
                 // TODO: proper testing for restored activity
@@ -789,10 +1328,13 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mTypeInput = "";
         String q = mCurrentCard.q(false);
         Matcher m = sTypeAnsPat.matcher(q);
+
         int clozeIdx = 0;
         if (!m.find()) {
             return;
         }
+
+
         String fld = m.group(1);
         // if it's a cloze, extract data
         if (fld.startsWith("cloze:", 0)) {
@@ -1013,17 +1555,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //            preferences.edit().putInt("speak_count", mFreeVipCount)
 //                    .putInt("speak_count_day", calendar.get(Calendar.DAY_OF_YEAR)).apply();
 //        }
-        mainHandler = new Handler() {
-            /*
-             * @param msg
-             */
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                handle(msg);
-            }
-
-        };
+        mainHandler = new Handler();
     }
 
 
@@ -1113,6 +1645,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             mOnlineSpeaking = false;
             speakingHandler.obtainMessage(10086).sendToTarget();
         }
+        Timber.e("stop online speaking!");
     }
 
 
@@ -1121,6 +1654,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         super.onDestroy();
         // Tells the scheduler there is no more current cards. 0 is
         // not a valid id.
+        activityStop = true;
         if (mSched != null) {
             mSched.discardCurrentCard();
         }
@@ -1132,6 +1666,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         if (synthesizer != null && synthesizer.isInitied()) {
             synthesizer.release();
         }
+
         if (mUnmountReceiver != null) {
             unregisterReceiver(mUnmountReceiver);
         }
@@ -1162,6 +1697,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         if (processCardFunction(cardWebView -> processHardwareButtonScroll(keyCode, cardWebView))) {
             return true;
         }
+
         return super.onKeyDown(keyCode, event);
     }
 
@@ -1201,6 +1737,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+
         if (answerFieldIsFocused()) {
             return super.onKeyUp(keyCode, event);
         }
@@ -1259,10 +1796,11 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Timber.i("onActivityResult:" + requestCode);
-        if (requestCode == BE_VIP || requestCode == REFRESH_LOGIN_STATE) {
+        if (requestCode == BE_VIP || requestCode == REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML) {
             mRefreshVipStateOnResume = true;
-            mTurnToVipHtml = requestCode == REFRESH_LOGIN_STATE;
+            mTurnToVipHtml = requestCode == REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML;
         } else if (requestCode == REFRESH_VOICE_INFO) {
+
             mRefreshVoiceInfoStateOnResume = true;
         } else if (resultCode == DeckPicker.RESULT_DB_ERROR) {
             closeReviewer(DeckPicker.RESULT_DB_ERROR, false);
@@ -1270,11 +1808,16 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             finishNoStorageAvailable();
         } else if (requestCode == REFRESH_TOP_BUTTONS) {
             restorePreferences();
+            supportInvalidateOptionsMenu();
             invalidateOptionsMenu();
+
         } else if (requestCode == REQUEST_CODE_SPEAK_SETTING) {
+            restorePreferences();
             mReInitBDVoice = true;
         } else if (requestCode == REFRESH_GESTURE) {
-            initLayout();
+            restorePreferences();
+        } else if (requestCode == REFRESH_CONTROLLER) {
+            restorePreferences();
         }
 
         /* Reset the schedule and reload the latest card off the top of the stack if required.
@@ -1906,15 +2449,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mFlipCardLayout.setVisibility(View.VISIBLE);
 
         mAnswerField.setVisibility(typeAnswer() ? View.VISIBLE : View.GONE);
-        mAnswerField.setOnEditorActionListener(new EditText.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    displayCardAnswer();
-                    return true;
-                }
-                return false;
+        mAnswerField.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                displayCardAnswer();
+                return true;
             }
+            return false;
         });
         mAnswerField.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -1963,6 +2503,22 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             mGestureVolumeUp = Integer.parseInt(preferences.getString("gestureVolumeUp", "0"));
             mGestureVolumeDown = Integer.parseInt(preferences.getString("gestureVolumeDown", "0"));
         }
+        mControllerA = Integer.parseInt(preferences.getString("A", "2"));
+        mControllerB = Integer.parseInt(preferences.getString("B", "3"));
+        mControllerX = Integer.parseInt(preferences.getString("X", "4"));
+        mControllerY = Integer.parseInt(preferences.getString("Y", "5"));
+        mControllerUp = Integer.parseInt(preferences.getString("up", "30"));
+        mControllerDown = Integer.parseInt(preferences.getString("down", "31"));
+        mControllerLeft = Integer.parseInt(preferences.getString("left", "8"));
+        mControllerRight = Integer.parseInt(preferences.getString("right", "9"));
+        mControllerLT = Integer.parseInt(preferences.getString("lt", "20"));
+        mControllerRT = Integer.parseInt(preferences.getString("rt", "0"));
+        mControllerLB = Integer.parseInt(preferences.getString("lb", "0"));
+        mControllerRB = Integer.parseInt(preferences.getString("tb", "0"));
+        mControllerLeftPad = Integer.parseInt(preferences.getString("leftPad", "0"));
+        mControllerRightPad = Integer.parseInt(preferences.getString("rightPad", "0"));
+        mControllerOption = Integer.parseInt(preferences.getString("option", "0"));
+        mControllerMenu = Integer.parseInt(preferences.getString("menu", "0"));
 
         if (preferences.getBoolean("keepScreenOn", false)) {
             this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -2184,6 +2740,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //            }
         }
         Timber.d("displayCardQuestion:" + displayString);
+
         updateCard(displayString);
         hideEaseButtons();
 
@@ -2359,9 +2916,17 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
+    private String mCacheContent = "";
+
+
+    protected boolean statusBarColorHasChanged() {
+        return true;
+    }
+
+
     private void updateCard(final String newContent) {
         Timber.d("updateCard()");
-
+        mCacheContent = newContent;
         mUseTimerDynamicMS = 0;
 
         // Add CSS for font color and font size
@@ -2405,9 +2970,91 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
 
         content = CardAppearance.convertSmpToHtmlEntity(content);
+        SharedPreferences prefs = AnkiDroidApp.getSharedPrefs(this);
+        String localViewSettingStr = prefs.getString(Consts.KEY_LOCAL_LAYOUT_CONFIG, "");
+
+        boolean dark = false;
+        if (AnkiDroidApp.getSharedPrefs(this).getBoolean("invertedColors", false)) {
+            int theme = Integer.parseInt(prefs.getString("nightTheme", "0"));
+            dark = theme == THEME_NIGHT_DARK || theme == THEME_NIGHT_BLACK;
+        }
+        if (mCurrentCSS.isEmpty() || mCurrentCSSModelID != mCurrentCard.model().getLong("id")) {
+            mCurrentCSSModelID = mCurrentCard.model().getLong("id");
+            Timber.i("find new model id css %s", mCurrentCSS);
+            if (localViewSettingStr != null && !localViewSettingStr.isEmpty()) {
+                try {
+                    JSONObject viewSetting = new JSONObject(localViewSettingStr);
+                    JSONObject currentModelSetting = viewSetting.getJSONObject(String.valueOf(mCurrentCSSModelID));
+                    if (currentModelSetting != null) {
+                        mCurrentCSS = convertJson2Css(currentModelSetting, false);
+                    } else {
+                        mCurrentCSS = "";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    mCurrentCSS = "";
+                }
+            }
+        }
+        Timber.i("now theme is dark:%s", dark);
+        if (!dark) {
+            if (!mCurrentCSS.isEmpty()) {
+                Matcher bgMatcher = Pattern.compile("background-color:(.+?);").matcher(mCurrentCSS);
+                Window window = getWindow();
+                if (bgMatcher.find()) {
+                    String fld1 = bgMatcher.group(1).trim();
+                    if (shouldChangeToolbarBgLikeCss2()) {
+                        findViewById(R.id.toolbar).setBackgroundColor(Color.parseColor(fld1));
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            window.setStatusBarColor(Color.parseColor(fld1));
+                        }
+                    }
+                    mCardWebView.setBackgroundColor(Color.parseColor(fld1));
+                    findViewById(R.id.bottom_area_layout).setBackgroundColor(Color.parseColor(fld1));
+                } else {
+                    if (shouldChangeToolbarBgLikeCss2()) {
+                        int[] attrs = new int[] {
+                                R.attr.reviewStatusBarColor,
+                        };
+                        TypedArray ta = obtainStyledAttributes(attrs);
+                        findViewById(R.id.toolbar).setBackground(ta.getDrawable(0));
+                        ta.recycle();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            window.setStatusBarColor(Themes.getColorFromAttr(this, getStatusBarColorAttr()));
+                        }
+                    }
+                    mCardWebView.setBackgroundColor(Color.WHITE);
+                    findViewById(R.id.bottom_area_layout).setBackgroundColor(Color.TRANSPARENT);
+                }
+            } else {
+                if (shouldChangeToolbarBgLikeCss2()) {
+                    int[] attrs = new int[] {
+                            R.attr.reviewStatusBarColor,
+                    };
+
+                    TypedArray ta = obtainStyledAttributes(attrs);
+                    findViewById(R.id.toolbar).setBackground(ta.getDrawable(0));
+                    ta.recycle();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        Window window = getWindow();
+                        window.setStatusBarColor(Themes.getColorFromAttr(this, getStatusBarColorAttr()));
+                    }
+                }
+                mCardWebView.setBackgroundColor(Color.WHITE);
+                findViewById(R.id.bottom_area_layout).setBackgroundColor(Color.TRANSPARENT);
+            }
+        }
+//        if (mCurrentCSS.isEmpty()) {//保存的配置文件没有，则直接找默认的css
+//            mCurrentCSS = mCurrentCard.css().replace("<style>", "").replace("</style>", "");
+//        }
+
         mCardContent = mCardTemplate.replace("::content::", content)
-                .replace("::style::", style).replace("::class::", cardClass);
+                .replace("::style::", style).replace("::class::", cardClass).replace("::style2::", mCurrentCSS).replace("::class2::", sDisplayAnswer ? "ck-back" : "ck-front");
         Timber.d("base url = %s", mBaseUrl);
+        Timber.v("::content:: / %s", content);
+        Timber.v("::style2:: / %s", mCurrentCSS);
+//        Timber.v("::all:: / %s", mCardContent);
+
 
         if (AnkiDroidApp.getSharedPrefs(this).getBoolean("html_javascript_debugging", false)) {
             try {
@@ -2424,6 +3071,11 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         if (!mConfigurationChanged) {
             playSoundsVIP(false);
         }
+    }
+
+
+    protected boolean shouldChangeToolbarBgLikeCss2() {
+        return false;
     }
 
 
@@ -2451,6 +3103,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     protected void onResume() {
         Timber.d("onResume()");
         super.onResume();
+        activityStop = false;
         resumeTimer();
         // Set the context for the Sound manager
         mSoundPlayer.setContext(new WeakReference<Activity>(this));
@@ -2462,9 +3115,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         }
         mTtsEngine = ReadText.initializeTts(this, mFreeVipCount < VIP_FREE_COUNT, false, new ReadTextListener());
         invalidateOptionsMenu();
-        Timber.e("using default tts engine:" + mTtsEngine);
+        Timber.e("using default tts engine:%s", mTtsEngine);
         if (mRefreshVipStateOnResume) {
+
             mRefreshVipStateOnResume = false;
+            mVip = AnkiDroidApp.getSharedPrefs(this).getBoolean(Consts.KEY_IS_VIP, false);
+            mVipUrl = AnkiDroidApp.getSharedPrefs(this).getString(Consts.KEY_VIP_URL, "");
             getAccount().getToken(this, new MyAccount.TokenCallback() {
                 @Override
                 public void onSuccess(String token) {
@@ -2510,6 +3166,10 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                                     }
                                     mVipDay = item.getInt("vip_day");
                                     mVipExpireAt = item.getString("vip_expire_at");
+                                    AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit()
+                                            .putBoolean(Consts.KEY_IS_VIP, mVip)
+                                            .putString(Consts.KEY_VIP_URL, mVipUrl)
+                                            .putString(Consts.KEY_VIP_EXPIRED, mVipExpireAt).apply();
                                     hasRecord = true;
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -2584,11 +3244,22 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             if (synthesizer == null) {
                 initBDTTs();
             }
-//            else if (mReInitBDVoice) {
-//                synthesizer.release();
-//                mainHandler.removeCallbacksAndMessages(null);
-//                initBDTTs();
-//            }
+
+        }
+        if (!pulledConfigFromService) {
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "configs/global", token, false, getServiceConfigCallback);
+                }
+
+
+                @Override
+                public void onFail(String message) {
+
+                }
+            });
+
         }
 //        selectNavigationItem(R.id.nav_browser);
     }
@@ -2695,6 +3366,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
 
     private Handler speakingHandler = new Handler();
+    private Handler switchSpeakEngineHandler = new Handler();
     private Runnable speakingRunnable;
     private int speakingIndex = 0;
 
@@ -2728,11 +3400,13 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 return false;
             });
             speak.getActionView().setOnClickListener(v -> {
+                Timber.i("speak icon pressed,ins speaking:" + mOnlineSpeaking + ",object:" + synthesizer);
                 if (ReadText.isSpeaking()/*||(synthesizer!=null&&synthesizer.isInitied()&&synthesizer.)*/) {
                     ReadText.stopTts();
-                } else if (mOnlineSpeaking && synthesizer != null && synthesizer.isInitied()) {
+                } else if (mOnlineSpeaking/* && synthesizer != null*/) {
                     stopOnlineSpeaking();
                     mSoundPlayer.stopSounds();
+                    mOnlineSpeaking = false;
                 } else {
                     playSoundsVIP(true);
                 }
@@ -2781,55 +3455,6 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         }
         return true;
     }
-
-
-    /**
-     * Plays sounds (or TTS, if configured) for currently shown side of card.
-     *
-     * @param doAudioReplay indicates an anki desktop-like replay call is desired, whose behavior is identical to
-     * pressing the keyboard shortcut R on the desktop
-     */
-//    protected void playSounds(boolean doAudioReplay) {
-//        boolean replayQuestion = getConfigForCurrentCard().optBoolean("replayq", true);
-//
-//        if (getConfigForCurrentCard().optBoolean("autoplay", false) || doAudioReplay) {
-//            // Use TTS if TTS preference enabled and no other sound source
-//            boolean useTTS = mSpeakText &&
-//                    !(sDisplayAnswer && mSoundPlayer.hasAnswer()) && !(!sDisplayAnswer && mSoundPlayer.hasQuestion());
-//            // We need to play the sounds from the proper side of the card
-//            if (!useTTS) { // Text to speech not in effect here
-//                if (doAudioReplay && replayQuestion && sDisplayAnswer) {
-//                    // only when all of the above are true will question be played with answer, to match desktop
-//                    mSoundPlayer.playSounds(SoundSide.QUESTION_AND_ANSWER);
-//                } else if (sDisplayAnswer) {
-//                    mSoundPlayer.playSounds(SoundSide.ANSWER);
-//                    if (mUseTimer) {
-//                        mUseTimerDynamicMS = mSoundPlayer.getSoundsLength(SoundSide.ANSWER);
-//                    }
-//                } else { // question is displayed
-//                    mSoundPlayer.playSounds(SoundSide.QUESTION);
-//                    // If the user wants to show the answer automatically
-//                    if (mUseTimer) {
-//                        mUseTimerDynamicMS = mSoundPlayer.getSoundsLength(SoundSide.QUESTION_AND_ANSWER);
-//                    }
-//                }
-//            } else {
-//                // Text to speech is in effect here
-//                // If the question is displayed or if the question should be replayed, read the question
-//
-//                if (mTtsInitialized) {
-//                    if (!sDisplayAnswer || doAudioReplay && replayQuestion) {
-//                        readCardText(mCurrentCard, SoundSide.QUESTION);
-//                    }
-//                    if (sDisplayAnswer) {
-//                        readCardText(mCurrentCard, SoundSide.ANSWER);
-//                    }
-//                } else {
-//                    mReplayOnTtsInit = true;
-//                }
-//            }
-//        }
-//    }
 
 
     // 主控制类，所有合成控制方法从这个类开始
@@ -2984,42 +3609,22 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
 
     private boolean isNetworkAvailable(@NonNull Context context) {
-        //获取 ConnectivityManager
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        assert connectivityManager != null;
 
-        //如果版本大于 Build.VERSION_CODES.M （23）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-            //获取 NetWork
-            Network network = connectivityManager.getActiveNetwork();
-
-            if (network != null) {
-                //获取 NetworkCapabilities
-                NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
-
-                return (networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
-            }
-
-        } else {
-
-            //获取NetworkInfo
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-            return (networkInfo != null && networkInfo.isConnected());
-        }
-
-        return false;
+        return Connection.isOnline();
     }
+
+
+    private boolean mOfflineSpeakingForOnce = false;
 
 
     private void readCardText(final Card card, final SoundSide cardSide) {
         final String cardSideContent;
-        if ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty())) {
+        if (!cardContentIsEmpty() && ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty()))) {
             mainHandler.postDelayed(() -> {
                 showProgressBar();
-                Toast.makeText(AbstractFlashcardViewer.this,"朗读请求中，网络不佳",Toast.LENGTH_SHORT).show();
+                Toast.makeText(AbstractFlashcardViewer.this, "卡牌加载中，网络不佳", Toast.LENGTH_SHORT).show();
             }, 3000);
+
             nNeedSpeakFinalRenderContent = true;
             if (!fetchingRenderContent) {
                 fetchWebViewRenderContent(mCardWebView);
@@ -3030,7 +3635,8 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         hideProgressBar();
         cardSideContent = cardSide == SoundSide.QUESTION ? mFinalLoadQuestion : mFinalLoadAnswer;//在这里获取最后的内容
         Timber.i("finally i wanna say:%s,showing answer:%s", cardSideContent, sDisplayAnswer);
-        if (AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false)) {
+        //如果不是设置了离线模式且当前没网时，且非强制离线模式，则默认使用在线模式
+        if (AnkiDroidApp.getSharedPrefs(this).getBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false) && !mOfflineSpeakingForOnce) {
             //使用在线语音引擎
             File target = new File(FileUtil.createTmpDir(this), card.getId() + "-" + cardSide + ".wav");
             Timber.i("target audio :%s", target.getAbsolutePath());
@@ -3050,7 +3656,6 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                         .setPositiveButton("切换本地引擎", (dialog, which) -> {
                             dialog.dismiss();
                             AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false).apply();
-
                         })
                         .create();
                 customStyleDialog.show();
@@ -3060,38 +3665,52 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                 @Override
                 public void onSuccess(String token) {
                     mCacheToken = token;
-                    if (mFreeOnlineEngineCount != -10086) {
-                        if (mFreeOnlineEngineCount > 0) {
-                            List<Pair<String, String>> texts = splitAry(cardSideContent, 59, String.valueOf(card.getId()), cardSide);
-                            Map<String, String> params = new HashMap<>();
-                            params.put(SpeechSynthesizer.PARAM_SPEED, String.valueOf(ReadText.getSpeechRate(mCurrentCard.getDid(), mCurrentCard.getOrd()) * 5));
-                            synthesizer.setParams(params);
-                            int result = synthesizer.batchSpeak(texts);
-                            checkResult(result, "speak");
-//                            if (result == 0) {
-//                                consumeOnlineVoiceInfo(token);
+//                    if (mFreeOnlineEngineCount != -10086) {
+//                        if (mFreeOnlineEngineCount > 0) {
+//                            String voice=ReadText.getAzureLanguage(card.getDid(), card.getOrd(), cardSide);
+//                            if (voice.isEmpty()) {
+//                                //选择语言
+//                                CustomStyleDialog d = new CustomStyleDialog.Builder(AbstractFlashcardViewer.this)
+//                                        .setCustomLayout(R.layout.dialog_common_custom_next)
+//                                        .setTitle("首次朗读，请设置语言")
+//                                        .centerTitle()
+//                                        .setMessage("设置语言后，朗读效果更优，还可以选择是否自动朗读。")
+//                                        .setPositiveButton("前往设置", (dialog, which) -> {
+//                                            dialog.dismiss();
+//                                            SpeakSettingActivity.OpenSpeakSetting(card.getId(), card.getDid(), AbstractFlashcardViewer.this);
+//                                        })  .create();
+//                                d.show();
+//                                return;
 //                            }
-                        } else {
-                            CustomStyleDialog customStyleDialog = new CustomStyleDialog.Builder(AbstractFlashcardViewer.this)
-                                    .setCustomLayout(R.layout.dialog_common_custom_next)
-                                    .setTitle("在线朗读次数已用完")
-                                    .centerTitle()
-                                    .setMessage("请前往充值在线朗读次数，学霸用户可以切换离线引擎，不限朗读次数")
-                                    .setPositiveButton("前往充值", (dialog, which) -> {
-                                        dialog.dismiss();
-                                        WebViewActivity.openUrlInApp(AbstractFlashcardViewer.this, String.format(mBuyOnlineEngineUrl, token, BuildConfig.VERSION_NAME), token, REFRESH_VOICE_INFO);
-                                    }).setNegativeButton("使用离线引擎", (dialog, which) -> {
-                                        dialog.dismiss();
-                                        AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit().putBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false).apply();
-                                    })
+                    List<Pair<String, String>> texts = splitAry(cardSideContent, 59, String.valueOf(card.getId()), cardSide);
+                    Map<String, String> params = new HashMap<>();
+                    params.put(SpeechSynthesizer.PARAM_SPEED, String.valueOf(ReadText.getSpeechRate(mCurrentCard.getDid(), mCurrentCard.getOrd()) * 5));
+                    synthesizer.setParams(params);
+                    int result = synthesizer.batchSpeak(texts);
+                    checkResult(result, "speak");
 
-                                    .create();
-
-                            customStyleDialog.show();
-                        }
-                    } else {
-                        updateOnlineVoiceInfo(token);
-                    }
+//
+//                        } else {
+//                            CustomStyleDialog customStyleDialog = new CustomStyleDialog.Builder(AbstractFlashcardViewer.this)
+//                                    .setCustomLayout(R.layout.dialog_common_custom_next)
+//                                    .setTitle("在线朗读次数已用完")
+//                                    .centerTitle()
+//                                    .setMessage("请前往充值在线朗读次数，学霸用户可以切换离线引擎，不限朗读次数")
+//                                    .setPositiveButton("前往充值", (dialog, which) -> {
+//                                        dialog.dismiss();
+//                                        WebViewActivity.openUrlInApp(AbstractFlashcardViewer.this, String.format(mBuyOnlineEngineUrl, token, BuildConfig.VERSION_NAME), token, REFRESH_VOICE_INFO);
+//                                    }).setNegativeButton("使用离线引擎", (dialog, which) -> {
+//                                        dialog.dismiss();
+//                                        AnkiDroidApp.getSharedPrefs(AbstractFlashcardViewer.this).edit().putBoolean(KEY_SELECT_ONLINE_SPEAK_ENGINE, false).apply();
+//                                    })
+//
+//                                    .create();
+//
+//                            customStyleDialog.show();
+//                        }
+//                    } else {
+//                        updateOnlineVoiceInfo(token);
+//                    }
                 }
 
 
@@ -3107,9 +3726,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             speakingHandler.postDelayed(speakingRunnable, 300);
             return;
         }
-
+        mOfflineSpeakingForOnce = false;
         String clozeReplacement = this.getString(R.string.reviewer_tts_cloze_spoken_replacement);
-        ReadText.readCardSide(cardSide, cardSideContent, card.getId(), getDeckIdForCard(card), card.getOrd(), clozeReplacement, useVipSpeechEngine());
+        ReadText.readCardSide(cardSide, cardSideContent, card.getId(), getDeckIdForCard(card), card.getOrd(), clozeReplacement, true);
         speakingHandler.postDelayed(speakingRunnable, 300);
     }
 
@@ -3292,10 +3911,11 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //                mFinalLoadContent = mFinalLoadContent.replaceFirst(mPreFinalLoadContent,"");
                 mFinalLoadAnswer = mFinalLoadAnswer.substring(mFinalLoadQuestion.length());
             }
-            Timber.i("current content :" + mFinalLoadAnswer);
-            Timber.i("pre content :" + mFinalLoadQuestion);
+//            Timber.i("current content :" + mFinalLoadAnswer);
+//            Timber.i("pre content :" + mFinalLoadQuestion);
 //            mFinalLoadQuestion = mFinalLoadAnswer;
-            if (((sDisplayAnswer && !mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && !mFinalLoadQuestion.isEmpty())) && nNeedSpeakFinalRenderContent) {
+            if (mCurrentCard != null && ((sDisplayAnswer && !mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && !mFinalLoadQuestion.isEmpty())) && nNeedSpeakFinalRenderContent) {
+                Timber.i("need speak final render content!");
                 nNeedSpeakFinalRenderContent = false;
                 fetchRenderHandler.removeCallbacksAndMessages(null);
                 mainHandler.post(() -> readCardText(mCurrentCard, sDisplayAnswer ? SoundSide.ANSWER : SoundSide.QUESTION));
@@ -3318,7 +3938,6 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         if (!sDisplayAnswer) {
             mFinalLoadQuestion = "";
         }
-//        Timber.i("fetchWebViewRenderContent:" +mFinalLoadQuestion+""+ mFinalLoadAnswer);
         if (fetchRenderHandler == null) {
             fetchRenderHandler = new Handler();
         }
@@ -3327,12 +3946,16 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             @Override
             public void run() {
                 Timber.i("fetchWebViewRenderContent:" + mFinalLoadQuestion + "" + mFinalLoadAnswer);
-                if ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty())) {
+//                Timber.i("fetchWebViewRenderContent,with html content:" + mCacheContent);
+//                Timber.i("fetchWebViewRenderContent,del html content:" + HtmlUtils.delHTMLTag(mCacheContent));
+                if (!cardContentIsEmpty() && ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty()))) {
                     if (webView != null) {
                         webView.loadUrl("javascript:java_obj.getSource(document.documentElement.innerText);void(0);");
                     }
                     fetchRenderHandler.removeCallbacksAndMessages(null);
-                    fetchRenderHandler.postDelayed(this, 100);
+                    if (!activityStop) {
+                        fetchRenderHandler.postDelayed(this, 100);
+                    }
                 } else {
                     fetchingRenderContent = false;
                 }
@@ -3341,16 +3964,26 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
+    private boolean cardContentIsEmpty() {
+        return HtmlUtils.delHTMLTag(mCacheContent).isEmpty();
+    }
+
+
+    private boolean activityStop;
+
+
     @Override
     protected void onStop() {
         super.onStop();
         if (fetchRenderHandler != null) {
             fetchRenderHandler.removeCallbacksAndMessages(null);
         }
+
     }
 
 
     private void loadContentIntoCard(WebView card, String content) {
+        Timber.i("show me the content before decrypt:%s", content);
         if (card != null) {
             CompatHelper.getCompat().setHTML5MediaAutoPlay(card.getSettings(), getConfigForCurrentCard().optBoolean("autoplay"));
 
@@ -3510,10 +4143,73 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
-    public boolean executeCommand(@ViewerCommandDef int which) {
-        if (isControlBlocked() && which != COMMAND_EXIT) {
-            return false;
+    protected void executeCommandByController(int which) {
+        if (!sDisplayAnswer && (which == 2 || which == 3 || which == 4 || which == 5)) {
+            executeCommand(COMMAND_SHOW_ANSWER);
+        } else {
+//        Timber.i("show me the key code on CommandByController:"+sDisplayAnswer+","+which);
+            if (which == 2 || which == 3 || which == 4 || which == 5) {
+                int buttonNumber = getCol().getSched().answerButtons(mCurrentCard);
+                if (buttonNumber < which - 1) {
+//                    Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                switch (which) {
+                    case 2:
+                        Toast.makeText(this, mEase1.getText(), Toast.LENGTH_SHORT).show();
+                        break;
+                    case 3:
+                        Toast.makeText(this, mEase2.getText(), Toast.LENGTH_SHORT).show();
+                        break;
+                    case 4:
+                        Toast.makeText(this, mEase3.getText(), Toast.LENGTH_SHORT).show();
+                        break;
+                    case 5:
+                        Toast.makeText(this, mEase4.getText(), Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+
+            executeCommand(which);
         }
+    }
+
+//    public static void ShowToast(Context context,String msg){
+//        Toast toast=Toast.makeText(context,msg,Toast.LENGTH_SHORT);
+//        toast.setText(msg);
+//        toast.show();
+//    }
+
+//    private Toast mToast;
+//
+//    private void showTip(final String str) {
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (mToast == null) {
+//                    mToast = Toast.makeText(getApplicationContext(), "",
+//                            Toast.LENGTH_LONG);
+//
+//                    //key parameter
+//                    LinearLayout layout = (LinearLayout) mToast.getView();
+//                    TextView tv = (TextView) layout.getChildAt(0);
+//                    tv.setTextSize(25);
+//                    //
+//                }
+//                //mToast.cancel();
+//                mToast.setGravity(Gravity.CENTER, 0, 0);
+//                mToast.setText(str);
+//                mToast.show();
+//            }
+//        });
+//    }
+
+
+    public boolean executeCommand(@ViewerCommandDef int which) {
+        Timber.i("show me the key code on executeCommand:" + sDisplayAnswer + "," + which + ",is block:" + isControlBlocked());
+//        if (isControlBlocked() && which != COMMAND_EXIT) {
+//            return false;
+//        }
         switch (which) {
             case COMMAND_NOTHING:
                 return true;
@@ -3611,6 +4307,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             case COMMAND_PAGE_DOWN:
                 onPageDown();
                 return true;
+//            case COMMAND_SPEECH_PLAY:
+//                playSoundsVIP(true);
+//                return true;
             case COMMAND_FLIP_CARD:
                 if (!sDisplayAnswer) {
                     displayCardAnswer();
@@ -3618,6 +4317,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                     displayCardQuestion();
                 }
                 return true;
+
             default:
                 Timber.w("Unknown command requested: %s", which);
                 return false;
@@ -3758,13 +4458,20 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         mTimerHandler.removeCallbacks(removeChosenAnswerText);
         longClickHandler.removeCallbacks(longClickTestRunnable);
         longClickHandler.removeCallbacks(startLongClickAction);
-
-        AbstractFlashcardViewer.this.setResult(result);
+        if (getResultIntent() == null) {
+            //intent不为空，代表已经设置了result
+            AbstractFlashcardViewer.this.setResult(result);
+        }
 
         if (saveDeck) {
             UIUtils.saveCollectionInBackground();
         }
         finishWithAnimation(ActivityTransitionAnimation.RIGHT);
+    }
+
+
+    protected Intent getResultIntent() {
+        return null;
     }
 
 

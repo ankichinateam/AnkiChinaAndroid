@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 
 
+import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.Preferences;
 import com.ichi2.anki.R;
@@ -122,7 +123,7 @@ public class BootService extends BroadcastReceiver {
 
     public static void scheduleNotification(Time time, Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences sp = AnkiDroidApp.getSharedPrefs(context);
         // Don't schedule a notification if the due reminders setting is not enabled
         if (Integer.parseInt(sp.getString("minimumCardsDueForNotification", Integer.toString(Preferences.PENDING_NOTIFICATIONS_ONLY))) >= Preferences.PENDING_NOTIFICATIONS_ONLY) {
             return;

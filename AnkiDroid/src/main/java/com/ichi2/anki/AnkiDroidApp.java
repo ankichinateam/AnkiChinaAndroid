@@ -19,6 +19,7 @@
 package com.ichi2.anki;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -26,6 +27,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.LocaleList;
 
@@ -227,14 +229,79 @@ public class AnkiDroidApp extends MultiDexApplication {
         // After we move past API 19, we're good to go.
     }
 
+    private int activityCount = 0;
 
+
+    public boolean isForeground() {
+        return isForeground;
+    }
+
+
+    private boolean isForeground = true;
+
+
+    public boolean isNeedCheckSyncOnResume() {
+        return mNeedCheckSyncOnResume;
+    }
+
+
+    public void setNeedCheckSyncOnResume(boolean mNeedCheckSyncOnResume) {
+        this.mNeedCheckSyncOnResume = mNeedCheckSyncOnResume;
+    }
+
+
+    private boolean mNeedCheckSyncOnResume;
+    ActivityLifecycleCallbacks activityLifecycleCallbacks = new ActivityLifecycleCallbacks() {
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+        }
+
+
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+            if (activityCount == 0) {
+                //app回到前台
+                isForeground = true;
+                Timber.i("isForeground %s", isForeground);
+            }
+            activityCount++;
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+
+        }
+        @Override
+        public void onActivityPaused(Activity activity) {
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+            activityCount--;
+            if (activityCount == 0) {
+                isForeground = false;
+                Timber.i("isForeground %s，timestamp:%d", false,System.currentTimeMillis());
+                setNeedCheckSyncOnResume(true);
+                AnkiDroidApp.getSharedPrefs(activity).edit().putLong(Consts.KEY_LAST_STOP_TIME, System.currentTimeMillis()).apply();
+            }
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+        }
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+        }
+    };
     /**
      * On application creation.
      */
     @Override
     public void onCreate() {
         super.onCreate();
-
+        registerActivityLifecycleCallbacks(activityLifecycleCallbacks);
         if (sInstance != null) {
             Timber.i("onCreate() called multiple times");
             //5887 - fix crash.
@@ -243,6 +310,7 @@ public class AnkiDroidApp extends MultiDexApplication {
                 return;
             }
         }
+
         sInstance = this;
         // Get preferences
         SharedPreferences preferences = getSharedPrefs(this);
@@ -329,6 +397,7 @@ public class AnkiDroidApp extends MultiDexApplication {
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
         lbm.registerReceiver(ns, new IntentFilter(NotificationService.INTENT_ACTION));
     }
+
 
 
     /**

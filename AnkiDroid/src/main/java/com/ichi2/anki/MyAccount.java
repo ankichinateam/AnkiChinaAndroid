@@ -48,6 +48,7 @@ import com.ichi2.libanki.utils.Time;
 import com.ichi2.themes.StyledProgressDialog;
 import com.ichi2.ui.TextInputEditField;
 import com.ichi2.utils.AdaptionUtil;
+import com.ichi2.utils.Permissions;
 import com.ichi2.utils.PhoneFormatCheckUtils;
 import com.umeng.analytics.MobclickAgent;
 
@@ -77,6 +78,8 @@ public class MyAccount extends AnkiActivity {
     private MaterialDialog mProgressDialog;
     Toolbar mToolbar = null;
     private TextInputLayout mAuthCodeLayout;
+
+
     private void switchToState(int newState) {
         switch (newState) {
             case STATE_LOGGED_IN:
@@ -188,15 +191,13 @@ public class MyAccount extends AnkiActivity {
     String anki_password;
 
 
-    private void saveANKIUserInfo(String user_name, String password) {
+    private void saveANKIUserInfo(String user_name, String password, boolean vip, String vipUrl) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getBaseContext());
         Editor editor = preferences.edit();
         anki_username = user_name;
         anki_password = password;
-        editor.putString("anki_username", user_name);
-        editor.putString("anki_password", password);
 
-        editor.apply();
+        editor.putString("anki_username", user_name).putString("anki_password", password).putBoolean(Consts.KEY_IS_VIP, vip).putString(Consts.KEY_VIP_URL, vipUrl).apply();
     }
 
 
@@ -243,14 +244,11 @@ public class MyAccount extends AnkiActivity {
 
     public void getToken(Context context, TokenCallback callback) {
         //获取auth key
-//        if (!cacheToken.isEmpty()) {
-//            callback.onSuccess(cacheToken);
+
+//        if (CollectionHelper.getInstance().getColSafe(context) == null) {
+//            callback.onFail(NO_WRITEABLE_PERMISSION);
 //            return;
 //        }
-        if (CollectionHelper.getInstance().getColSafe(context) == null) {
-            callback.onFail(NO_WRITEABLE_PERMISSION);
-            return;
-        }
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(context);
         if (Consts.loginAnkiWeb()) {
             callback.onFail(NOT_LOGIN_ANKI_CHINA);
@@ -261,6 +259,10 @@ public class MyAccount extends AnkiActivity {
 //        Timber.i("this token will expired:"+expired+",and now is :"+Calendar.getInstance().getTime().toString());
         if (expired == null || expired.isEmpty() || cacheToken == null || cacheToken.isEmpty()) {
             callback.onFail(NO_TOKEN_RECORD);
+            return;
+        }
+        if (!Permissions.hasStorageAccessPermission(context)) {
+            callback.onSuccess(cacheToken);//没存储权限，直接返回记录的token
             return;
         }
 //        long now=Calendar.getInstance().getTimeInMillis();
@@ -304,7 +306,7 @@ public class MyAccount extends AnkiActivity {
 
         if (PhoneFormatCheckUtils.isChinaPhoneLegal(phone) && !"".equalsIgnoreCase(authCode) && authCode.length() == 6) {
             try {
-                org.json.JSONObject jo = new  org.json.JSONObject();
+                org.json.JSONObject jo = new org.json.JSONObject();
                 jo.put("phone", phone);
                 jo.put("code", authCode);
                 jo.put("key", getAuthKey());
@@ -373,8 +375,9 @@ public class MyAccount extends AnkiActivity {
     void stopAuthCodeTimer() {
         continueTimer = false;
         authCodeTimer.removeCallbacksAndMessages(null);
-        if(mSendAuthCode!=null)
-        mSendAuthCode.setText(getString(R.string.auth_hint));
+        if (mSendAuthCode != null) {
+            mSendAuthCode.setText(getString(R.string.auth_hint));
+        }
         timerCount = 60;
     }
 
@@ -390,7 +393,7 @@ public class MyAccount extends AnkiActivity {
         String phone = mPhoneNum.getText().toString().trim(); // trim spaces, issue 1586
         if (!"".equalsIgnoreCase(phone)) {
             try {
-                org.json.JSONObject jo = new  org.json.JSONObject();
+                org.json.JSONObject jo = new org.json.JSONObject();
                 jo.put("phone", phone);
                 Connection.sendCommonPost(sendAuthCodeListener, new Connection.Payload("verification-codes", jo.toString(), Payload.REST_TYPE_POST, HostNumFactory.getInstance(this)));
             } catch (Exception e) {
@@ -406,21 +409,33 @@ public class MyAccount extends AnkiActivity {
     public void logout(Context context) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(context);
         Editor editor = preferences.edit();
-        editor.putString("username", preferences.getString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT,""));
-        editor.putString("hkey", preferences.getString(Consts.KEY_SAVED_ANKI_WEB_HKEY,""));
+        editor.putString("username", preferences.getString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT, ""));
+        editor.putString("hkey", preferences.getString(Consts.KEY_SAVED_ANKI_WEB_HKEY, ""));
         editor.putString("token", "");
 
-        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_PHONE,  "");
-        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_HKEY,"");
-        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_TOKEN,"");
+        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_PHONE, "");
+        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_HKEY, "");
+        editor.putString(Consts.KEY_SAVED_ANKI_CHINA_TOKEN, "");
 
-        Consts.LOGIN_SERVER=preferences.getString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT,"").isEmpty()?Consts.LOGIN_SERVER_NOT_LOGIN:Consts.LOGIN_SERVER_ANKIWEB;
+        editor.remove(Consts.KEY_SYNC_CHINA_SESSION);//退出登录ankichina后需要清楚同步session，同时清空synclog
+        try {
+            getCol().getDb().execute("delete from synclog");
+        } catch (Exception e) {
+            e.printStackTrace();
+//            getCol().getDb().execute("drop table synclog");
+//            getCol().getDb().execute("create table if not exists synclog (" + "    id             integer not null,"
+//                    + "    type             integer not null," + "    mod             integer not null" + ")");
+        }
+
+        Consts.LOGIN_SERVER = preferences.getString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT, "").isEmpty() ? Consts.LOGIN_SERVER_NOT_LOGIN : Consts.LOGIN_SERVER_ANKIWEB;
         editor.putInt(Consts.KEY_ANKI_ACCOUNT_SERVER, Consts.LOGIN_SERVER);
 
         editor.apply();
         HostNumFactory.getInstance(context).reset();
         //  force media resync on deauth
-        getCol(context).getMedia().forceResync();
+        if (Permissions.hasStorageAccessPermission(context)) {
+            getCol(context).getMedia().forceResync();
+        }
         if (context == this) {
             switchToState(STATE_LOG_IN);
         }
@@ -509,8 +524,8 @@ public class MyAccount extends AnkiActivity {
 
         mLoggedIntoMyAccountView = getLayoutInflater().inflate(R.layout.my_account_logged_in, null);
         mUsernameLoggedIn = mLoggedIntoMyAccountView.findViewById(R.id.username_logged_in);
-        Button logoutButton = mLoggedIntoMyAccountView.findViewById(R.id.logout_button);
-        logoutButton.setOnClickListener(v -> logout(this));
+        mLoggedIntoMyAccountView.findViewById(R.id.logout_button).setOnClickListener(v -> logout(this));
+
     }
 
 
@@ -573,6 +588,7 @@ public class MyAccount extends AnkiActivity {
             UIUtils.showSimpleSnackbar(MyAccount.this, R.string.youre_offline, true);
         }
     };
+
     Connection.TaskListener preLoginListener = new Connection.TaskListener() {
 
         @Override
@@ -600,7 +616,7 @@ public class MyAccount extends AnkiActivity {
             if (data.success) {
                 Timber.i("User successfully preLogged in!");
                 try {
-                    org.json.JSONObject result = (( org.json.JSONObject) data.result).getJSONObject("data");
+                    org.json.JSONObject result = ((org.json.JSONObject) data.result).getJSONObject("data");
                     String anki_username = result.getString("anki_username");
                     String anki_password = result.getString("anki_password");
 //                    String anki_username = "zhangsan";
@@ -608,8 +624,10 @@ public class MyAccount extends AnkiActivity {
                     org.json.JSONObject meta = result.getJSONObject("meta");
                     String token = meta.getString("token");
                     String expired_at = meta.getString("expired_at");
+                    boolean isVip = result.getJSONObject("vip_info").getBoolean("is_vip");
+                    String vipUrl = result.getJSONObject("vip_info").getString("vip_url");
                     saveToken(token, expired_at);
-                    saveANKIUserInfo(anki_username, anki_password);
+                    saveANKIUserInfo(anki_username, anki_password, isVip, vipUrl);
                     login();
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -660,7 +678,7 @@ public class MyAccount extends AnkiActivity {
             if (data.success) {
                 Timber.i("send auth code successfully!");
                 try {
-                    org.json.JSONObject result = (( org.json.JSONObject) data.result).getJSONObject("data");
+                    org.json.JSONObject result = ((org.json.JSONObject) data.result).getJSONObject("data");
                     String key = result.getString("key");
                     String expired_at = result.getString("expired_at");
                     saveAuthKey(key, expired_at);

@@ -10,8 +10,8 @@
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 30000900,
-      "versionName": "3.00.9",
+      "versionCode": 30002801,
+      "versionName": "3.00.28",
       "outputFile": "AnkiDroid-release.apk"
     }
   ]

@@ -354,7 +354,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             // Set the expander icon and padding according to whether or not there are any subdecks
 //        RelativeLayout deckLayout = holder.deckLayout;
 //        int rightPadding = (int) deckLayout.getResources().getDimension(R.dimen.deck_picker_right_padding);
-            Timber.d("onBindViewHolder,mHasSubdecks:" + mHasSubdecks);
+//            Timber.d("onBindViewHolder,mHasSubdecks:" + mHasSubdecks);
 //        if (mHasSubdecks) {
 //            int smallPadding = (int) deckLayout.getResources().getDimension(R.dimen.deck_picker_left_padding_small);
 //            deckLayout.setPadding(smallPadding, 0, rightPadding, 0);
@@ -519,6 +519,7 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             }
             // Process sub-decks
+            if(node.getChildren()!=null)
             processNodes(node.getChildren());
         }
     }

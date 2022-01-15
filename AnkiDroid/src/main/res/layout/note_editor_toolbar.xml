@@ -96,9 +96,15 @@
             style="@style/note_editor_toolbar_button" />
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/note_editor_toolbar_button_font_color"
-            android:contentDescription="@string/format_font_size"
+            android:contentDescription="@string/format_font_color"
             app:srcCompat="@drawable/ic_color_lens_black_24dp"
             android:tag="c"
+            style="@style/note_editor_toolbar_button" />
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/note_editor_toolbar_button_cover"
+            android:contentDescription="@string/format_cover"
+            app:srcCompat="@drawable/ic_template_icon_wakong_normal"
+            android:tag="co"
             style="@style/note_editor_toolbar_button" />
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/insert_list"

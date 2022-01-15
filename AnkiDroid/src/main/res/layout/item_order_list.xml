@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/mainItemBackgroundColor"
+    android:paddingTop="13dp"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@drawable/order_item_text_color_selector"
+        android:text="创建时间"/>
+    <TextView
+        android:id="@+id/tv_order"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="@color/theme_light_primary"
+        android:layout_toStartOf="@id/order"
+        android:text="正序"/>
+    <ImageView
+        android:id="@+id/order"
+        android:src="@drawable/icon_order"
+        android:minWidth="19dp"
+        android:minHeight="19dp"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <ImageView
+        android:src="@color/review_top_divider"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="13dp"
+        android:layout_width="match_parent"
+        android:layout_below="@id/name"
+        android:layout_height="1px"/>
+</RelativeLayout>

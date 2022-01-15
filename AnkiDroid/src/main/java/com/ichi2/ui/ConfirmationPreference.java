@@ -19,7 +19,7 @@ package com.ichi2.ui;
 import android.content.Context;
 
 import android.util.AttributeSet;
-
+@SuppressWarnings("deprecation")
 public class ConfirmationPreference extends android.preference.DialogPreference {
 
     private Runnable cancelHandler = () -> { /* do nothing by default */ };

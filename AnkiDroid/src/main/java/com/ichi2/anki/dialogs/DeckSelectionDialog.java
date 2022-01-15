@@ -90,7 +90,7 @@ public class DeckSelectionDialog extends AnalyticsDialogFragment {
 
         RecyclerView recyclerView = dialogView.findViewById(R.id.deck_picker_dialog_list);
         recyclerView.requestFocus();
-        recyclerView.setHasFixedSize(true);
+//        recyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager deckLayoutManager = new LinearLayoutManager(requireActivity());
         recyclerView.setLayoutManager(deckLayoutManager);

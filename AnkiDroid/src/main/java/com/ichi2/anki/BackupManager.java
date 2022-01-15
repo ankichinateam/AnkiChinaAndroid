@@ -329,6 +329,7 @@ public class BackupManager {
     public static boolean removeDir(File dir) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
+            if(files!=null)
             for (File aktFile : files) {
                 removeDir(aktFile);
             }

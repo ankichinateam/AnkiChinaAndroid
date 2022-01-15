@@ -15,7 +15,6 @@
 ~ this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <com.ichi2.widget.SwipeItemLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_marginTop="9dp"
     android:id="@+id/root"
@@ -55,7 +54,7 @@
             android:textColor="?attr/primaryForthTextColor333333"
             android:textSize="21sp"
             android:textStyle="bold"
-            tools:text="Deck name" />
+             />
         <LinearLayout
             android:id="@+id/counts_layout"
             android:layout_width="wrap_content"
@@ -80,7 +79,7 @@
                 style="@style/customFontStyle"
                 android:textColor="?attr/primaryForthTextColor333333"
                 android:textSize="11sp"
-                android:text="32"
+                android:text="0"
                 />
             <ImageView
                 android:layout_width="1dp"
@@ -97,7 +96,7 @@
                 android:textSize="11sp"
                 style="@style/customFontStyle"
                 android:visibility="gone"
-                tools:text="42" />
+               />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -115,7 +114,7 @@
                 android:textColor="?attr/primaryForthTextColor333333"
                 android:layout_marginStart="2dp"
                 android:textSize="11sp"
-                android:text="32"
+                android:text="0"
                 />
         </LinearLayout>
         <ProgressBar
@@ -134,7 +133,7 @@
             android:layout_height="wrap_content">
             <TextView
                 android:id="@+id/handled_percent"
-                android:text="已掌握：50%"
+                android:text="已掌握：0%"
                 android:textSize="11sp"
                 style="@style/customFontStyle"
                 android:textColor="?attr/primary_text_third_color999999"
@@ -147,7 +146,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_alignParentEnd="true"
-                android:text="678/2441"
+                android:text="0/0"
                 style="@style/customFontStyle"
                 android:textColor="?attr/primary_text_third_color999999"
                 android:textSize="11sp"

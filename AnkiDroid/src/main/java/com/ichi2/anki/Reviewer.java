@@ -135,8 +135,10 @@ public class Reviewer extends AbstractFlashcardViewer {
 
     @VisibleForTesting
     protected PeripheralKeymap mProcessor = new PeripheralKeymap(this, this);
-
-
+    @Override
+    protected boolean shouldChangeToolbarBgLikeCss2(){
+        return true;
+    }
 
     /**
      * We need to listen for and handle reschedules / resets very similarly
@@ -302,6 +304,10 @@ public class Reviewer extends AbstractFlashcardViewer {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_layout_config:
+                Timber.i("Reviewer:: Action layout button pressed (from menu)");
+                showLayoutDialog( );
+                break;
             case R.id.action_back:
                 Timber.i("Reviewer:: Action back button pressed (from menu)");
                 if (mShowWhiteboard && mWhiteboard != null && !mWhiteboard.undoEmpty()) {
@@ -363,6 +369,12 @@ public class Reviewer extends AbstractFlashcardViewer {
                     Timber.d("Bury card due to no submenu");
                     dismiss(DismissType.BURY_CARD);
                 }
+                break;
+            case R.id.action_flip_enable:
+                Timber.i("Reviewer:: Flip card button pressed");
+                AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(Consts.KEY_FLIP_CARD,!AnkiDroidApp.getSharedPrefs(this).getBoolean(Consts.KEY_FLIP_CARD,false)).apply();
+                refreshActionBar();
+                if(sDisplayAnswer)displayCardAnswer();else displayCardQuestion();
                 break;
 
             case R.id.action_suspend:
@@ -428,12 +440,17 @@ public class Reviewer extends AbstractFlashcardViewer {
                 break;
             case R.id.action_button_config:
                 Intent i2 = Preferences.getPreferenceSubscreenIntent(this, "com.ichi2.anki.prefs.custom_buttons");
-                startActivityForResultWithAnimation(i2,REFRESH_GESTURE, ActivityTransitionAnimation.FADE);
+                startActivityForResultWithAnimation(i2,REFRESH_TOP_BUTTONS, ActivityTransitionAnimation.FADE);
+
+                break;
+            case R.id.action_controller_config:
+                Intent i4 = Preferences.getPreferenceSubscreenIntent(this, "com.ichi2.anki.prefs.custom_controller_buttons");
+                startActivityForResultWithAnimation(i4,REFRESH_CONTROLLER, ActivityTransitionAnimation.FADE);
 
                 break;
             case R.id.action_gesture:
                 Intent i3 = Preferences.getPreferenceSubscreenIntent(this, "com.ichi2.anki.prefs.gestures");
-                startActivityForResultWithAnimation(i3,REFRESH_TOP_BUTTONS, ActivityTransitionAnimation.FADE);
+                startActivityForResultWithAnimation(i3,REFRESH_GESTURE, ActivityTransitionAnimation.FADE);
 
                 break;
 //            case R.id.action_select_tts:
@@ -705,18 +722,21 @@ public class Reviewer extends AbstractFlashcardViewer {
         }
         if (buryNoteAvailable()) {
 //            bury_icon.setIcon(R.drawable.ic_flip_to_back_white_24px_dropdown);
-            bury_icon.setIcon(ta.getDrawable(3));
+//            bury_icon.setIcon(ta.getDrawable(3));
             bury_icon.setTitle(R.string.menu_bury);
         } else {
-            bury_icon.setIcon(ta.getDrawable(2));
+//            bury_icon.setIcon(ta.getDrawable(2));
             bury_icon.setTitle(R.string.menu_bury_card);
         }
         ta.recycle();
         alpha = (getControlBlocked() != ReviewerUi.ControlBlock.SLOW) ? Themes.ALPHA_ICON_ENABLED_LIGHT : Themes.ALPHA_ICON_DISABLED_LIGHT;
-        bury_icon.getIcon().mutate().setAlpha(alpha);
+//        bury_icon.getIcon().mutate().setAlpha(alpha);
         suspend_icon.getIcon().mutate().setAlpha(alpha);
 
         MenuItemCompat.setActionProvider(menu.findItem(R.id.action_schedule), new ScheduleProvider(this));
+        MenuItem flip = menu.findItem(R.id.action_flip_enable);
+        boolean enableFlip=AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean(Consts.KEY_FLIP_CARD,false);
+        flip.setTitle(enableFlip?R.string.card_flip_enable:R.string.card_flip_disable);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -729,6 +749,57 @@ public class Reviewer extends AbstractFlashcardViewer {
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Timber.i("show me the key code on key up:%s", keyCode);
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                executeCommandByController(mControllerUp);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                executeCommandByController(mControllerDown);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                executeCommandByController(mControllerRight);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                executeCommandByController(mControllerLeft);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBL:
+                executeCommandByController(mControllerLeftPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBR:
+                executeCommandByController(mControllerRightPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_X:
+                executeCommandByController(mControllerX);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_Y:
+                executeCommandByController(mControllerY);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_A:
+                executeCommandByController(mControllerA);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_B:
+                executeCommandByController(mControllerB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L1:
+                executeCommandByController(mControllerLT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R1:
+                executeCommandByController(mControllerRT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L2:
+                executeCommandByController(mControllerLB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R2:
+                executeCommandByController(mControllerRB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_START:
+                executeCommandByController(mControllerMenu);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_MODE:
+                executeCommandByController(mControllerOption);
+                return true;
+        }
         if (answerFieldIsFocused()) {
             return super.onKeyUp(keyCode, event);
         }

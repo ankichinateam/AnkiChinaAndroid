@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.ichi2.ui.KeyBoardListenerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/root_layout"
+	android:fitsSystemWindows="true"
+	android:background="?attr/backgroundColor"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical" >
+
+		<include layout="@layout/toolbar_self_study" />
+
+		<RelativeLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<com.google.android.material.tabs.TabLayout
+				android:id="@+id/tab_layout"
+				app:tabIndicatorHeight="0dp"
+				android:padding="0dp"
+				android:background="?attr/settingItemBackground"
+				app:tabGravity="fill"
+				android:layout_width="match_parent"
+				android:layout_height="48dp"/>
+
+			<androidx.recyclerview.widget.RecyclerView
+				android:layout_below="@id/tab_layout"
+				android:id="@+id/card_browser_list"
+				android:layout_marginTop="9dp"
+				android:layout_marginBottom="52dp"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:divider="?attr/cardBrowserDivider"
+				android:overScrollFooter="@color/transparent"
+				android:layout_marginHorizontal="16dp"
+				android:dividerHeight="0.5dp"
+				android:drawSelectorOnTop="true"
+				android:fastScrollEnabled="true" />
+
+			<FrameLayout
+				android:id="@+id/bottom_area_layout"
+				android:layout_width="match_parent"
+				android:layout_alignParentBottom="true"
+				android:background="?attr/answerButtonBackgroundColor"
+				android:layout_height="wrap_content">
+				<TextView
+					android:id="@+id/confirm"
+					android:layout_width="match_parent"
+					android:layout_height="47dp"
+					android:background="?attr/showAnswerButtonColor"
+					android:padding="0dp"
+					android:gravity="center"
+					android:textStyle="bold"
+					android:visibility="gone"
+					android:text="开始练习"
+					android:textColor="@color/white"
+					android:textSize="17sp" />
+				<RelativeLayout
+					android:id="@+id/rl_multi_mode"
+					android:visibility="gone"
+					android:clickable="true"
+					android:paddingVertical="12dp"
+					android:paddingHorizontal="13dp"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:focusable="true">
+					<CheckBox
+						android:id="@+id/stick"
+						style="@style/CustomCheckboxTheme"
+						android:layout_width="23dp"
+						android:layout_height="23dp" />
+					<TextView
+						android:id="@+id/select_count"
+						android:text="已选0"
+						android:textSize="15sp"
+						android:layout_marginStart="7dp"
+						android:layout_toEndOf="@id/stick"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"/>
+					<TextView
+						android:text="取消"
+						android:id="@+id/cancel"
+						android:textSize="15sp"
+						android:visibility="gone"
+						android:textColor="@color/primary_color"
+						android:layout_alignParentRight="true"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"/>
+					<TextView
+						android:text="移动"
+						android:id="@+id/move"
+						android:textSize="15sp"
+						android:textColor="@color/primary_color"
+						android:layout_alignParentRight="true"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"/>
+					<TextView
+						android:text="删除"
+						android:id="@+id/delete"
+						android:textSize="15sp"
+						android:textColor="@color/primary_color"						android:layout_toStartOf="@id/move"
+						android:layout_marginEnd="23dp"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"/>
+
+				</RelativeLayout>
+			</FrameLayout>
+			<View
+				android:id="@+id/shadeView"
+				android:clickable="true"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:background="#70000000"
+				android:visibility="gone"
+				android:focusable="true" />
+		</RelativeLayout>
+
+
+
+	</LinearLayout>
+	<com.getbase.floatingactionbutton.FloatingActionButton
+		android:id="@+id/add_note_action"
+		android:layout_width="41dp"
+		android:layout_height="41dp"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentRight="true"
+		android:contentDescription="@string/menu_add"
+		android:background="?attr/fab_normal"
+		app:fab_colorNormal="?attr/fab_normal"
+		app:fab_colorPressed="?attr/fab_pressed"
+		android:layout_marginBottom="52dp"
+		app:fab_icon="@drawable/ic_add_white_24dp"/>
+	<include layout="@layout/anki_progress"/>
+</com.ichi2.ui.KeyBoardListenerLayout>

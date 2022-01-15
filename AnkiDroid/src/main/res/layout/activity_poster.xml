@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+     >
+
+    <RelativeLayout
+        android:id="@+id/rootView"
+        android:background="@mipmap/poster_bg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="28dp"
+       >
+        <RelativeLayout
+        android:id="@+id/top_layout"
+        android:layout_marginTop="67dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+<!--        <LinearLayout-->
+<!--            android:layout_marginEnd="17dp"-->
+<!--            android:id="@+id/title"-->
+
+<!--            android:layout_alignParentEnd="true"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content">-->
+<!--            <TextView-->
+<!--                android:text="ANKI中文资源网"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="15sp"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"/>-->
+<!--        </LinearLayout>-->
+            <ImageView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="17dp"
+                android:src="@mipmap/poster_anki_source" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="93dp"
+                android:layout_below="@id/title"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/white_background_round">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:src="@drawable/half_circle" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:src="@mipmap/poster_preferential"
+                    />
+            </RelativeLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:src="@mipmap/poster_emoji_up" />
+    </RelativeLayout>
+        <RelativeLayout
+            android:layout_below="@id/top_layout"
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:paddingTop="21dp"
+                android:paddingBottom="36dp"
+                android:layout_marginBottom="41dp"
+                android:background="@drawable/white_background_round"
+                android:layout_marginHorizontal="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <RelativeLayout
+
+                    android:paddingHorizontal="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/content_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="法硕考研上岸集合"
+                        android:textSize="19sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/content_classify"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="研究生/法律"
+                        android:textColor="#28BEA0"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+                <RelativeLayout
+                    android:layout_marginTop="5dp"
+                    android:paddingHorizontal="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/content_price"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="¥ 99.00"
+                        android:textColor="#EC901D"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/content_price_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toEndOf="@id/content_price"
+                        android:text="/拼团价"
+                        android:textColor="#EC901D"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/content_price_origin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="13dp"
+                        android:layout_toEndOf="@id/content_price_desc"
+                        android:text="原价¥ 169.00"
+                        android:textColor="#999999"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/content_num"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="34567人正在学习"
+                        android:textColor="#999999"
+                        android:textSize="11sp"
+                         />
+                </RelativeLayout>
+                <com.ichi2.ui.WarpLinearLayout
+                    android:id="@+id/tags_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="9dp"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="16dp"
+                    app:gravity="left"
+                    app:horizontal_Space="9dp"
+                    app:isFull="false"
+                    app:vertical_Space="15dp">
+                </com.ichi2.ui.WarpLinearLayout>
+                <ImageView
+                    android:layout_marginTop="17dp"
+                    android:layout_width="match_parent"
+                    android:layout_marginHorizontal="16dp"
+                    android:src="#F5F6F9"
+                    android:layout_height="1px"/>
+                <TextView
+                    android:id="@+id/content_time_remain"
+                    android:layout_marginTop="20dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_gravity="center_horizontal"
+                    android:text="拼团特惠仅剩xx名额\n18:18:24后结束"
+                    android:textColor="@color/primary_color"
+                    android:textSize="26dp" />
+                <TextView
+                    android:id="@+id/content_num_remain"
+                    android:layout_marginTop="9dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_gravity="center_horizontal"
+                    android:text="还差2人，特享团购价"
+                    android:textColor="#222222"
+                    android:textSize="13dp" />
+                <LinearLayout
+                    android:layout_marginTop="12dp"
+                    android:id="@+id/join_list"
+                    android:orientation="horizontal"
+                    android:gravity="bottom"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" >
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_gravity="center_horizontal"
+
+                    android:layout_marginTop="19dp"
+                    android:padding="8dp"
+                    android:id="@+id/qr_code"
+                    android:background="@drawable/dap_corner_bg"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"/>
+                <TextView
+                    android:layout_marginTop="17dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_gravity="center_horizontal"
+                    android:text="长按图片识别二维码\n立即参与拼单"
+                    android:textColor="#999999"
+                    android:textSize="13dp" />
+            </LinearLayout>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:src="@mipmap/poster_emoji_bottom" />
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+</ScrollView>

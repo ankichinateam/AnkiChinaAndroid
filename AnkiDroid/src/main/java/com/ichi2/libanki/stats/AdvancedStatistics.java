@@ -1029,7 +1029,7 @@ public class AdvancedStatistics {
         private final Collection mCol;
 
         public Settings(Context context) {
-            SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
+            SharedPreferences prefs = AnkiDroidApp.getSharedPrefs(context);
             mCol = CollectionHelper.getInstance().getCol(context);
 
             computeNDays = prefs.getInt("advanced_forecast_stats_compute_n_days", 0);

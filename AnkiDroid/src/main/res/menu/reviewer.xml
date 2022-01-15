@@ -7,6 +7,7 @@
         android:icon="?attr/reviewMenuClearIconRef"
         android:visible="false"
         ankidroid:showAsAction="always"/>
+
     <item
         android:id="@+id/action_hide_whiteboard"
         android:title="@string/hide_whiteboard"
@@ -82,17 +83,13 @@
         android:id="@+id/action_edit"
         android:icon="?attr/reviewMenuEditIconRef"
         android:title="@string/cardeditor_title_edit_card"
-        ankidroid:showAsAction="never"/>
+        ankidroid:showAsAction="ifRoom"/>
     <item
         android:id="@+id/action_add_note_reviewer"
         android:title="@string/menu_add_note"
         android:icon="?attr/menuAddIcon"
         ankidroid:showAsAction="never"/>
-    <item
-        android:id="@+id/action_tag"
-        android:icon="?attr/reviewMenuTagIconRef"
-        android:title="@string/menu_edit_tags"
-        ankidroid:showAsAction="never"/>
+
     <item
         android:id="@+id/action_replay"
         android:title="@string/replay_audio"
@@ -121,28 +118,77 @@
         android:icon="?attr/reviewMenuMarkIconRef"
         android:title="@string/menu_mark_note"
         ankidroid:showAsAction="ifRoom"/>
-    <item
-        android:id="@+id/action_schedule"
-        android:title="@string/card_editor_reschedule_card"
-        android:icon="?attr/reviewMenuRescheduleIconRef">
-        <menu/>
-    </item>
+
     <item
         android:id="@+id/action_search_dictionary"
         android:title="@string/menu_select"
         android:visible="false"/>
-    <item
-        android:id="@+id/action_button_config"
-        android:title="@string/top_button_config" />
-    <item
-        android:id="@+id/action_gesture"
-        android:title="手势操作"
-        />
+
     <item
         android:id="@+id/action_open_deck_options"
         android:title="@string/study_options" />
     <item
+        android:id="@+id/action_flip_enable"
+        android:title="@string/card_flip_enable" />
+    <item
         android:id="@+id/action_select_tts"
         android:title="@string/select_tts"
         android:visible="false" />
+    <item
+        android:id="@+id/action_layout_config"
+        android:title="@string/layout_config"
+          />
+    <item
+        android:id="@+id/action_controller_config"
+        android:title="@string/controller_config"
+        />
+
+    <item
+        android:id="@+id/action_tag"
+        android:title="@string/menu_edit_tags"
+        ankidroid:showAsAction="never"/>
+    <item
+        android:id="@+id/action_more"
+        android:title="@string/menu_more"
+          >
+<!--        <item-->
+<!--            android:id="@+id/action_bury"-->
+<!--            android:title="@string/menu_bury"-->
+<!--            android:icon="?attr/reviewMenuFlipIconRef"-->
+<!--            />-->
+<!--        <item-->
+<!--            android:id="@+id/action_tag"-->
+<!--            android:icon="?attr/reviewMenuTagIconRef"-->
+<!--            android:title="@string/menu_edit_tags"-->
+<!--            ankidroid:showAsAction="never"/>-->
+<!--        <item-->
+<!--            android:id="@+id/action_schedule"-->
+<!--            android:title="@string/card_editor_reschedule_card"-->
+<!--            android:icon="?attr/reviewMenuRescheduleIconRef">-->
+<!--            <menu/>-->
+<!--        </item>-->
+<!--        <item-->
+<!--            android:id="@+id/action_button_config"-->
+<!--            android:title="@string/top_button_config" />-->
+<!--        <item-->
+<!--            android:id="@+id/action_gesture"-->
+<!--            android:title="手势操作"-->
+<!--            />-->
+        <menu>
+
+            <item
+                android:id="@+id/action_schedule"
+                android:title="@string/card_editor_reschedule_card"
+                >
+                <menu/>
+            </item>
+            <item
+                android:id="@+id/action_button_config"
+                android:title="@string/top_button_config" />
+            <item
+                android:id="@+id/action_gesture"
+                android:title="手势操作"
+                />
+        </menu>
+    </item>
 </menu>

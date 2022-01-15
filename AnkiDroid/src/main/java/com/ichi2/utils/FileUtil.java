@@ -23,12 +23,13 @@ import static com.ichi2.anki.CollectionHelper.getDefaultAnkiDroidDirectory;
 
 public class FileUtil {
     // 创建一个临时目录，用于复制临时文件，如assets目录下的离线资源文件
+    @SuppressWarnings("deprecation")
     public static String createTmpDir(Context context) {
         String tmpDir = getDefaultAnkiDroidDirectory()+"/"+"AnkiTTS";
         String sampleDir = Environment.getExternalStorageDirectory().toString() + "/" + "AnkiTTS";
         if (!FileUtil.makeDir(tmpDir)) {
             tmpDir = context.getExternalFilesDir(sampleDir).getAbsolutePath();
-            if (tmpDir == null || !FileUtil.makeDir(tmpDir)) {
+            if (!FileUtil.makeDir(tmpDir)) {
                 throw new RuntimeException("create model resources dir failed :" + tmpDir);
             }
         }

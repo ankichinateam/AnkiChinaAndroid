@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ankidroid="http://schemas.android.com/apk/res-auto" >
+    <item
+        android:id="@+id/action_edit"
+        android:icon="?attr/editorIconRef"
+        android:title="编辑"
+        ankidroid:showAsAction="always"/>
+    <item
+        android:id="@+id/screen"
+        android:icon="?attr/filterIconRef"
+        android:title="筛选"
+        ankidroid:showAsAction="always"/>
+
+</menu>

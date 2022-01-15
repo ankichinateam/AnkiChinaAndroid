@@ -18,9 +18,10 @@ package com.ichi2.libanki;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 
+import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.exception.ConfirmModSchemaException;
-
 import com.ichi2.libanki.utils.SystemTime;
 import com.ichi2.libanki.utils.Time;
 import com.ichi2.utils.JSONArray;
@@ -35,46 +36,54 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import timber.log.Timber;
 
-@SuppressWarnings({"PMD.AvoidThrowingRawExceptionTypes","PMD.AvoidReassigningParameters",
-        "PMD.NPathComplexity","PMD.MethodNamingConventions","PMD.ExcessiveMethodLength","PMD.OneDeclarationPerLine",
-        "PMD.SwitchStmtsShouldHaveDefault","PMD.EmptyIfStmt","PMD.SimplifyBooleanReturns","PMD.CollapsibleIfStatements"})
+@SuppressWarnings( {"PMD.AvoidThrowingRawExceptionTypes", "PMD.AvoidReassigningParameters",
+        "PMD.NPathComplexity", "PMD.MethodNamingConventions", "PMD.ExcessiveMethodLength", "PMD.OneDeclarationPerLine",
+        "PMD.SwitchStmtsShouldHaveDefault", "PMD.EmptyIfStmt", "PMD.SimplifyBooleanReturns", "PMD.CollapsibleIfStatements"})
 public class Storage {
+
 
     /* Open a new or existing collection. Path must be unicode */
     public static Collection Collection(Context context, String path) {
         return Collection(context, path, false, false);
     }
 
-
     public static Collection Collection(Context context, String path, boolean server, boolean log) {
         return Collection(context, path, server, log, new SystemTime());
     }
+
+
     public static Collection Collection(Context context, String path, boolean server, boolean log, @NonNull Time time) {
         assert path.endsWith(".anki2");
         File dbFile = new File(path);
         boolean create = !dbFile.exists();
-        // connect
+//        // connect
         DB db = new DB(path);
         try {
             // initialize
             int ver;
-            Timber.i("new collection:"+create);
+            Timber.i("new collection:%s", create);
             if (create) {
-
-                ver = _createDB(db, time);
+                AnkiDroidApp.getSharedPrefs(context).edit().remove(Consts.KEY_SYNC_CHINA_SESSION).apply();
+                ver = _createDB(db, time );
             } else {
                 ver = _upgradeSchema(db, time);
             }
             db.execute("PRAGMA temp_store = memory");
             // add db to col and do any remaining upgrades
-            Collection col = new Collection(context, db, path, server, log, time);
+            Collection col = new Collection(context, db, path, server, log, time );
             if (ver < Consts.SCHEMA_VERSION) {
+                AnkiDroidApp.getSharedPrefs(context).edit().remove(Consts.KEY_SYNC_CHINA_SESSION).apply();
                 _upgrade(col, ver);
             } else if (ver > Consts.SCHEMA_VERSION) {
-                throw new RuntimeException("This file requires a newer version of Anki.");
+                if (ver == 12 && _isVer11(db)) {
+                    //判断数据库版本是否有问题
+                    db.execute("UPDATE col SET ver = 11");
+                } else {
+                    throw new RuntimeException("This file requires a newer version of Anki.");
+                }
             } else if (create) {
                 // add in reverse order so basic is default
-                for (int i = StdModels.stdModels.length-1; i>=0; i--) {
+                for (int i = StdModels.stdModels.length - 1; i >= 0; i--) {
                     StdModels.stdModels[i].add(col);
                 }
                 col.save();
@@ -86,6 +95,48 @@ public class Storage {
             throw e;
         }
     }
+
+
+    private static boolean _isVer11(DB db) {
+        //检查col
+        //检查notes
+        //检查graves
+        //检查revlog
+        //检查synclog
+        //检查cards
+        String[] colNames = new String[] {"id", "crt", "mod", "scm", "ver", "dty", "usn", "ls", "conf", "models", "decks", "dconf", "tags"};
+        String[] notesNames = new String[] {"id", "guid", "mid", "mod", "usn", "tags", "flds", "sfld", "csum", "flags", "data"};
+        String[] cardsNames = new String[] {"id", "nid", "did", "ord", "mod", "usn", "type", "queue", "due", "ivl", "factor", "reps", "lapses", "left", "odue", "odid", "flags", "data"};
+        String[] gravesNames = new String[] {"usn", "oid", "type"};
+        String[] synclogNames = new String[] {"id", "type", "mod"};
+        String[] revlogNames = new String[] {"id", "cid", "usn", "ease", "ivl", "lastIvl", "factor", "time", "type"};
+
+        return tableMatch(db, "col", colNames) && tableMatch(db, "notes", notesNames) && tableMatch(db, "cards", cardsNames) && tableMatch(db, "graves", gravesNames) && tableMatch(db, "synclog", synclogNames) && tableMatch(db, "revlog", revlogNames);
+    }
+
+
+    private static boolean tableMatch(DB db, String tableName, String[] columnNames) {
+        tableName = tableName.toLowerCase();
+        String sql = String.format("PRAGMA table_info('%s')", tableName);
+        try (Cursor cursor = db.getDatabase().query(sql, null)) {
+
+            if (cursor.getCount() == columnNames.length) {
+                int i = 0;
+                while (cursor.moveToNext()) {
+                    if (!columnNames[i].equals(cursor.getString(cursor.getColumnIndex("name")))) {
+                        return false;
+                    }
+                    i++;
+                }
+                return true;
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        return false;
+    }
+
+
 
 
     private static int _upgradeSchema(DB db, @NonNull Time time) {
@@ -195,8 +246,8 @@ public class Storage {
                         if (order >= 5) {
                             order -= 1;
                         }
-                        JSONArray terms = new JSONArray(Arrays.asList(new Object[] { d.getString("search"),
-                                d.getInt("limit"), order }));
+                        JSONArray terms = new JSONArray(Arrays.asList(d.getString("search"),
+                                d.getInt("limit"), order));
                         d.put("terms", new JSONArray());
                         d.getJSONArray("terms").put(0, terms);
                         d.remove("search");
@@ -232,6 +283,12 @@ public class Storage {
                 }
                 col.getDb().execute("update col set ver = 11");
             }
+//            if (ver < 12) {
+//                col.getDb().execute("create table if not exists synclog (" + "    id             integer not null,"
+//                        + "    type             integer not null,"+ "    mod             integer not null" + ")");
+//                col.getDb().execute("update col set ver = 12");
+//                _updateIndices(col.getDb());
+//            }
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
@@ -242,7 +299,7 @@ public class Storage {
         m.put("type", Consts.MODEL_CLOZE);
         // convert first template
         JSONObject t = m.getJSONArray("tmpls").getJSONObject(0);
-        for (String type : new String[] { "qfmt", "afmt" }) {
+        for (String type : new String[] {"qfmt", "afmt"}) {
             t.put(type, t.getString(type).replaceAll("\\{\\{cloze:1:(.+?)\\}\\}", "{{cloze:$1}}"));
         }
         t.put("name", "Cloze");
@@ -314,9 +371,12 @@ public class Storage {
                 + "   time            integer not null," + "   type            integer not null" + ");");
         db.execute("create table if not exists graves (" + "    usn             integer not null,"
                 + "    oid             integer not null," + "    type            integer not null" + ")");
+        db.execute("create table if not exists synclog (" + "    id             integer not null,"
+                + "    type             integer not null," + "    mod             integer not null" + ")");
         db.execute("INSERT OR IGNORE INTO col VALUES(1,0,0," +
                 time.intTimeMS() + "," + Consts.SCHEMA_VERSION +
                 ",0,0,0,'','{}','','','{}')");
+
         if (setColConf) {
             _setColVars(db, time);
         }
@@ -344,6 +404,7 @@ public class Storage {
 
 
     private static void _updateIndices(DB db) {
+        Timber.e("update indices");
         db.execute("create index if not exists ix_notes_usn on notes (usn);");
         db.execute("create index if not exists ix_cards_usn on cards (usn);");
         db.execute("create index if not exists ix_revlog_usn on revlog (usn);");
@@ -351,11 +412,17 @@ public class Storage {
         db.execute("create index if not exists ix_cards_sched on cards (did, queue, due);");
         db.execute("create index if not exists ix_revlog_cid on revlog (cid);");
         db.execute("create index if not exists ix_notes_csum on notes (csum);)");
+        db.execute("create index if not exists ix_synclog on synclog (id,type);)");
+        db.execute("create index if not exists ix_synclog_id on synclog (id);)");
+        db.execute("create index if not exists ix_cards_id on cards (id);)");
+        db.execute("create index if not exists ix_notes_id on notes (id);)");
     }
 
 
     public static void addIndices(DB db) {
         _updateIndices(db);
     }
+
+
 
 }

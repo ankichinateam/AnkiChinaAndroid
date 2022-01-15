@@ -110,7 +110,7 @@ public class TagsDialog extends AnalyticsDialogFragment {
                 .inflate(R.layout.tags_dialog, null, false);
         mTagsListRecyclerView = tagsDialogView.findViewById(R.id.tags_dialog_tags_list);
         mTagsListRecyclerView.requestFocus();
-        mTagsListRecyclerView.setHasFixedSize(true);
+//        mTagsListRecyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager tagsListLayout = new LinearLayoutManager(getActivity());
         mTagsListRecyclerView.setLayoutManager(tagsListLayout);

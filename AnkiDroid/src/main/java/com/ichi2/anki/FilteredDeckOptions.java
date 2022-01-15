@@ -386,6 +386,7 @@ public class FilteredDeckOptions extends AppCompatPreferenceActivity implements 
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:

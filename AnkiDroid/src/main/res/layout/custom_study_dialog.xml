@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:text="增加今日学习量"
             android:textFontWeight="500"
-            android:textColor="?attr/primaryTextColor"
+            android:textColor="?attr/primaryTextColor222222"
             android:textSize="17sp" />
         <TextView
             android:id="@+id/content"
@@ -59,7 +59,7 @@
                 android:textSize="15sp"
                 android:text="10"
                 android:theme="@style/MyEditText"
-                android:textColor="?attr/primaryTextColor"
+                android:textColor="?attr/primaryTextColor222222"
                 android:textColorHint="?attr/primaryTextSecondaryColor"
                 android:textCursorDrawable="@drawable/bg_edittext"
                 android:inputType="number"
@@ -69,7 +69,7 @@
                 android:textSize="13sp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:textColor="?attr/primaryTextColor"
+                android:textColor="?attr/primaryTextColor222222"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </RelativeLayout>
@@ -85,7 +85,7 @@
                 android:textSize="15sp"
                 android:text="10"
                 android:theme="@style/MyEditText"
-                android:textColor="?attr/primaryTextColor"
+                android:textColor="?attr/primaryTextColor222222"
                 android:textColorHint="?attr/primaryTextSecondaryColor"
                 android:textCursorDrawable="@drawable/bg_edittext"
                 android:inputType="number"
@@ -95,7 +95,7 @@
                 android:textSize="13sp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:textColor="?attr/primaryTextColor"
+                android:textColor="?attr/primaryTextColor222222"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </RelativeLayout>

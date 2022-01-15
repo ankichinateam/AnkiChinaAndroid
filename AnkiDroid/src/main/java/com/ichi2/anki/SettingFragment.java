@@ -111,7 +111,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     private TextView mRl_cloud_space;
     private TextView mTv_logout;
     private ImageView mIv_entrance;
-    private SwitchCompat mNightModeSwitch;
+    private SwitchCompat mNightModeSwitch,mAutoSyncSwitch ;
     private static final String NIGHT_MODE_PREFERENCE = "invertedColors";
     private static final int REQUEST_PATH_UPDATE = 1;
     public static final int REQUEST_PREFERENCES_UPDATE = 100;
@@ -147,15 +147,21 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                 mOldTheme = Themes.getCurrentTheme(getContext());
                 getAnkiActivity().startActivityForResultWithAnimation(new Intent(getAnkiActivity(), Preferences.class), REQUEST_PREFERENCES_UPDATE, ActivityTransitionAnimation.FADE);
             });
-            mRoot.findViewById(R.id.rl_sync_set).setOnClickListener(v -> {
-                Timber.i("AnkiDroid directory inaccessible");
-                Intent i = Preferences.getPreferenceSubscreenIntent(getAnkiActivity(), "com.ichi2.anki.prefs.general");
-                getAnkiActivity().startActivityWithAnimation(i, ActivityTransitionAnimation.FADE);
-            });
+//            mRoot.findViewById(R.id.rl_sync_set).setOnClickListener(v -> {
+//                Timber.i("AnkiDroid directory inaccessible");
+//                Intent i = Preferences.getPreferenceSubscreenIntent(getAnkiActivity(), "com.ichi2.anki.prefs.general");
+//                getAnkiActivity().startActivityWithAnimation(i, ActivityTransitionAnimation.FADE);
+//            });
             mNightModeSwitch = mRoot.findViewById(R.id.switch_dark_mode);
             mNightModeSwitch.setChecked(preferences.getBoolean(NIGHT_MODE_PREFERENCE, false));
             mNightModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 applyNightMode(isChecked);
+            });
+
+            mAutoSyncSwitch = mRoot.findViewById(R.id.switch_auto_sync);
+            mAutoSyncSwitch.setChecked(preferences.getBoolean("automaticSyncMode", true));
+            mAutoSyncSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                preferences.edit().putBoolean("automaticSyncMode", isChecked).apply();
             });
             mRoot.findViewById(R.id.rl_dark_mode).setOnClickListener(v -> {
                 Timber.i("Toggling Night Mode");
@@ -262,6 +268,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
 
     //VIP页面地址在登录和非登录态是不一样的，如有APP登录或者登出操作请重新调此接口更新URL
     protected void onRefreshVipState(boolean isVip, String vipUrl, int vipDay, String vipExpireAt) {
+        Timber.i("onRefreshVipState:%s", vipUrl);
         mVip = isVip;
         mVipUrl = vipUrl;
         mVipDay = vipDay;
@@ -390,8 +397,11 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             } else {
                 Timber.e("fetch server space failed, error code %d", response.code());
                 String hintStr = "";
-                mRl_cloud_space.setText(hintStr);
-                mRl_cloud_space.setVisibility(View.GONE);
+                getAnkiActivity().runOnUiThread(() -> {
+                    mRl_cloud_space.setText(hintStr);
+                    mRl_cloud_space.setVisibility(View.GONE);
+                });
+
 
             }
 
@@ -413,7 +423,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
         restartActivityInvalidateBackstack(getAnkiActivity());
     }
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        final SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getContext());
@@ -474,6 +484,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
         } else if (id == R.id.rl_market_like) {
             goAppShop( getAnkiActivity(), BuildConfig.APPLICATION_ID, "");
         } else if (id == R.id.vip_power) {
+            Timber.i("click vip button");
             getAnkiActivity().openVipUrl(mVipUrl);
         } else if (id == R.id.rl_anki_course || id == R.id.rl_team || id == R.id.rl_version || id == R.id.rl_feedback) {
             if (id == R.id.rl_anki_course) {

@@ -58,6 +58,7 @@
         <item>暂停卡牌</item>
         <item>删除笔记</item>
         <item>播放媒体</item>
+<!--        <item>语音朗读</item>-->
         <item>终止学习</item>
         <item>隐藏笔记</item>
         <item>暂停笔记</item>
@@ -68,8 +69,10 @@
         <item>移除标识</item>
         <item>向上翻页</item>
         <item>向下翻页</item>
-
+        <item>上一张</item>
+        <item>下一张</item>
     </string-array>
+
     <string-array name="leech_action_labels">
         <item>暂停卡片</item>
         <item>仅标签</item>

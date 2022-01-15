@@ -491,6 +491,7 @@ public class Whiteboard extends View {
         return mCurrentlyDrawing;
     }
 
+    @SuppressWarnings( {"deprecation", "RedundantSuppression"})
     protected String saveWhiteboard(Time time) throws FileNotFoundException {
 
         Bitmap bitmap = Bitmap.createBitmap(this.getWidth(), this.getHeight(), Bitmap.Config.ARGB_8888);

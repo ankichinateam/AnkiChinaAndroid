@@ -41,6 +41,7 @@ public abstract class AbstractSched {
     protected abstract void reset();
 
     public abstract void _updateCutoff();
+    public abstract AbstractDeckTreeNode updateDeck(Deck deck);
     /** Ensure that the question on the potential next card can be accessed quickly.
      */
     public abstract void preloadNextCard();
@@ -329,4 +330,6 @@ public abstract class AbstractSched {
     /** The button to press to enter "good" on a new card. */
     @VisibleForTesting
     public abstract @Consts.BUTTON_TYPE int getGoodNewButton();
+
+
 }

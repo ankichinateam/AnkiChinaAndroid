@@ -109,10 +109,10 @@ public class ButtonItemAdapter extends RecyclerView.Adapter<ButtonItemAdapter.Bu
                 return;
             }
             if (view instanceof ImageButton) {
-                adapter.buttonCallback.onButtonClicked(items.get(getAdapterPosition()));
+                adapter.buttonCallback.onButtonClicked(items.get(getBindingAdapterPosition()));
             }
             else {
-                adapter.itemCallback.onItemClicked(items.get(getAdapterPosition()));
+                adapter.itemCallback.onItemClicked(items.get(getBindingAdapterPosition()));
             }
         }
     }

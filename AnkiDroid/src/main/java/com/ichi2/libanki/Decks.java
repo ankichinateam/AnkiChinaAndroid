@@ -225,16 +225,25 @@ public class Decks {
         JSONArray ids = decksarray.names();
         for (int i = 0; i < ids.length(); i++) {
             String id = ids.getString(i);
-            Deck o = new Deck(decksarray.getJSONObject(id));
-            long longId = Long.parseLong(id);
-            mDecks.put(longId, o);
+            try{
+                long longId = Long.parseLong(id);
+                Deck o = new Deck(decksarray.getJSONObject(id));
+                mDecks.put(longId, o);
+            }catch (NumberFormatException e){
+                Timber.w("id is not valid");
+            }
+
         }
         mNameMap = NameMap.constructor(mDecks.values());
         JSONObject confarray = new JSONObject(dconf);
         ids = confarray.names();
         for (int i = 0; ids != null && i < ids.length(); i++) {
             String id = ids.getString(i);
-            mDconf.put(Long.parseLong(id), new DeckConfig(confarray.getJSONObject(id)));
+            try{
+                mDconf.put(Long.parseLong(id), new DeckConfig(confarray.getJSONObject(id)));
+            }catch (NumberFormatException e){
+                Timber.w("id is not valid");
+            }
         }
         mChanged = false;
     }
@@ -695,6 +704,7 @@ public class Decks {
 
     public DeckConfig confForDid(long did) {
         Deck deck = get(did, false);
+
         assert deck != null;
         if (deck.has("conf")) {
             DeckConfig conf = getConf(deck.getLong("conf"));
@@ -982,6 +992,7 @@ public class Decks {
      * Select a new branch.
      */
     public void select(long did) {
+        if(mDecks.get(did)==null)return;
         String name = Objects.requireNonNull(mDecks.get(did)).getString("name");
 
         // current deck

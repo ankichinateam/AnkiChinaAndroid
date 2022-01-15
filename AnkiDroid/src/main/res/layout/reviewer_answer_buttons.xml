@@ -70,7 +70,7 @@
             android:layout_width="match_parent"
             android:orientation="vertical"
             android:visibility="gone"
-            android:background="?attr/answerButtonBackgroundColor"
+
             android:layout_height="match_parent">
             <!--            <ImageView-->
             <!--                android:layout_width="match_parent"-->
@@ -88,7 +88,7 @@
                     style="@style/FooterButton"
                     android:background="?attr/againButtonRef"
                     android:layout_marginHorizontal="5.5dp"
-                    android:id="@+id/mark1"
+                    android:id="@+id/again"
                     android:layout_width="0dip"
                     android:layout_height="@dimen/touch_target"
                     android:layout_weight="1"
@@ -96,7 +96,7 @@
 <!--                    <ImageView-->
 <!--                        style="@style/AgainButtonEaseStyle"/>-->
                     <TextView
-                        android:id="@+id/mark1_text"
+                        android:id="@+id/again_text"
                         android:text="再来一次"
                         style="@style/Preview3ButtonTextStyle"
                         android:drawableStart="@null"
@@ -185,7 +185,6 @@
             android:layout_width="match_parent"
             android:orientation="vertical"
             android:visibility="gone"
-            android:background="?attr/answerButtonBackgroundColor"
             android:layout_height="match_parent">
 <!--            <ImageView-->
 <!--                android:layout_width="match_parent"-->

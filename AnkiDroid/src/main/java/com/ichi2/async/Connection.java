@@ -21,7 +21,10 @@ package com.ichi2.async;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.PowerManager;
 
 import com.ichi2.anki.AnkiDroidApp;
@@ -597,18 +600,34 @@ public class Connection extends BaseAsyncTask<Connection.Payload, Object, Connec
         super.publishProgress(id, up, down);
     }
 
-
+    @SuppressWarnings("deprecation")
     public static boolean isOnline() {
         if (sAllowSyncOnNoConnection) {
             return true;
         }
         ConnectivityManager cm = (ConnectivityManager) AnkiDroidApp.getInstance().getApplicationContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm != null) {
-            android.net.NetworkInfo netInfo = cm.getActiveNetworkInfo();
-            return (netInfo != null) && netInfo.isConnected();
+        if (cm == null) {
+            return false;
         }
-        return false;
+        /* NetworkInfo is deprecated in API 29 so we have to check separately for higher API Levels */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Network network = cm.getActiveNetwork();
+            if (network == null) {
+                return false;
+            }
+            NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
+            if (networkCapabilities == null) {
+                return false;
+            }
+            boolean isInternetSuspended = !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED);
+            return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                    && !isInternetSuspended;
+        } else {
+            android.net.NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+            return networkInfo != null && networkInfo.isConnected();
+        }
     }
 
 

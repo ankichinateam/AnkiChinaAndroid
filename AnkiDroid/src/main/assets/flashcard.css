@@ -18,7 +18,10 @@ body.ankidroid_dark_mode {
 }
 
 #content {
-  margin: 0.5em;
+  padding: 0.5em;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
 }
 
 /* For the typed/correct answer comparison. The typePrompt and typeOff

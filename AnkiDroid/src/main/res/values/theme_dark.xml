@@ -65,6 +65,8 @@
         <item name="fileBagRef">@mipmap/home_card_group_normal_dark</item>
         <!-- Menu item list -->
         <item name="syncIconRef">@drawable/ic_sync_white_24dp</item>
+        <item name="filterIconRef">@drawable/card_browser_filter_icon_dark</item>
+        <item name="editorIconRef">@drawable/card_browser_editor_icon_dark</item>
         <!-- Review Menu item list -->
         <item name="reviewMenuUndoIconRef">@drawable/review_menu_undo_selector_dark</item>
         <item name="reviewMenuSpeakIconRef">@mipmap/nav_bar_aloud_normal</item>
@@ -112,7 +114,7 @@
         <item name="primaryTextSecondaryColor">@color/white</item>
         <item name="answerButtonBackgroundColor">#1C1C1C</item>
 
-        <item name="primaryTextColor">@color/white</item>
+        <item name="primaryTextColor222222">@color/white</item>
         <item name="primaryForthTextColor333333">@color/white</item>
         <item name="primaryBaseColor">@color/white</item>
         <item name="primaryMirrorColor">@color/black</item>

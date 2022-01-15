@@ -28,7 +28,7 @@ import com.ichi2.anki.UIUtils;
 
 import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.JSONException;
-
+@SuppressWarnings("deprecation")
 public class StepsPreference extends android.preference.EditTextPreference {
 
     private final boolean mAllowEmpty;

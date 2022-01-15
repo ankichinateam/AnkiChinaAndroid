@@ -26,7 +26,7 @@ import android.widget.Toast;
 import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.MetaDB;
 import com.ichi2.anki.R;
-
+@SuppressWarnings("deprecation")
 public class CustomDialogPreference extends android.preference.DialogPreference implements DialogInterface.OnClickListener {
     private Context mContext;
 
@@ -56,7 +56,7 @@ public class CustomDialogPreference extends android.preference.DialogPreference 
                 editor.commit();
             } else {
                 // Main Preferences :: Reset Languages
-                if (MetaDB.resetLanguages(mContext)&&MetaDB.resetSpeech(mContext)) {
+                if (MetaDB.resetLanguages(mContext)&&MetaDB.resetSpeech(mContext)&&MetaDB.resetAzureLanguages(mContext)) {
 
                     Toast successReport = Toast.makeText(this.getContext(),
                             AnkiDroidApp.getAppResources().getString(R.string.reset_confirmation), Toast.LENGTH_SHORT);

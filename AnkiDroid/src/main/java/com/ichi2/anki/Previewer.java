@@ -21,9 +21,11 @@ package com.ichi2.anki;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Utils;
@@ -34,6 +36,11 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import timber.log.Timber;
+
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_NEXT_CARD;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_NOTHING;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_PRE_CARD;
+import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_SHOW_ANSWER;
 
 /**
  * The previewer intent must supply an array of cards to show and the index in the list from where
@@ -68,7 +75,7 @@ public class Previewer extends AbstractFlashcardViewer {
             mReloadRequired = savedInstanceState.getBoolean("reloadRequired");
             mNoteChanged = savedInstanceState.getBoolean("noteChanged");
         }
-
+//        Timber.i("cardlist:"+mCardList+",length:"+mCardList.length+","+mIndex);
         if (mCardList==null||mCardList.length == 0 || mIndex < 0 || mIndex > mCardList.length - 1) {
             Timber.e("Previewer started with empty card list or invalid index");
             finishWithoutAnimation();
@@ -110,8 +117,11 @@ public class Previewer extends AbstractFlashcardViewer {
                 return newCardList.indexOf(mCardList[i]);
             }
         }
-
-        throw new IllegalStateException("newCardList was empty");
+        if (newCardList.isEmpty()) {
+            finishWithoutAnimation();
+        }
+        return -1;
+//        throw new IllegalStateException("newCardList was empty");
     }
 
 
@@ -214,11 +224,11 @@ public class Previewer extends AbstractFlashcardViewer {
     }
 
 
-    @Override
-    public boolean executeCommand(int which) {
-        /* do nothing */
-        return false;
-    }
+//    @Override
+//    public boolean executeCommand(int which) {
+//        /* do nothing */
+//        return false;
+//    }
 
 
     @Override
@@ -259,7 +269,7 @@ public class Previewer extends AbstractFlashcardViewer {
         }
     };
 
-    private View.OnClickListener mToggleAnswerHandler = new View.OnClickListener() {
+    private final View.OnClickListener mToggleAnswerHandler = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if (mShowingAnswer) {
@@ -291,11 +301,81 @@ public class Previewer extends AbstractFlashcardViewer {
         mPreviewNextCard.setAlpha(nextBtnDisabled ? 0.38F : 1);
     }
 
-    @NonNull
-    private Intent getResultIntent() {
+
+    protected Intent getResultIntent() {
         Intent intent = new Intent();
         intent.putExtra("reloadRequired", mReloadRequired);
         intent.putExtra("noteChanged", mNoteChanged);
         return intent;
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Timber.i("show me the key code on key up:%s", keyCode);
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_DPAD_UP:
+                executeCommandByController(mControllerUp);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                executeCommandByController(mControllerDown);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                executeCommandByController(mControllerRight);
+                return true;
+            case KeyEvent.KEYCODE_DPAD_LEFT:
+                executeCommandByController(mControllerLeft);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBL:
+                executeCommandByController(mControllerLeftPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_THUMBR:
+                executeCommandByController(mControllerRightPad);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_X:
+                executeCommandByController(mControllerX);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_Y:
+                executeCommandByController(mControllerY);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_A:
+                executeCommandByController(mControllerA);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_B:
+                executeCommandByController(mControllerB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L1:
+                executeCommandByController(mControllerLT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R1:
+                executeCommandByController(mControllerRT);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_L2:
+                executeCommandByController(mControllerLB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_R2:
+                executeCommandByController(mControllerRB);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_START:
+                executeCommandByController(mControllerMenu);
+                return true;
+            case KeyEvent.KEYCODE_BUTTON_MODE:
+                executeCommandByController(mControllerOption);
+                return true;
+        }
+
+        return super.onKeyUp(keyCode, event);
+    }
+
+    protected void executeCommandByController(int which) {
+        switch (which) {
+            case COMMAND_PRE_CARD:
+                mSelectScrollHandler.onClick(mPreviewPrevCard);
+                break;
+            case COMMAND_NEXT_CARD:
+                mSelectScrollHandler.onClick(mPreviewNextCard);
+                break;
+            default:executeCommand(which);
+        }
+
     }
 }

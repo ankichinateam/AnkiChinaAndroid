@@ -253,6 +253,7 @@ public class CardTemplatePreviewer extends AbstractFlashcardViewer {
         }
 
         displayCardQuestion();
+        Timber.i("display card question while showing answer:%s", mShowingAnswer);
         if (mShowingAnswer) {
             displayCardAnswer();
         }

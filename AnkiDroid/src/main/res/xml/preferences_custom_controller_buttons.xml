@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/pref_cat_general"
+    android:summary="@string/pref_cat_general_summ">
+    <PreferenceCategory android:title="连接蓝牙游戏手柄后，可以通过手柄进行远程回答，手指脱离屏幕和键盘，更极致的刷卡体验"
+       >
+
+    </PreferenceCategory>
+    <PreferenceCategory android:title="所有回答按钮首次按下都能显示答案，第二次进行回答">
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_cat_actions" >
+        <ListPreference
+            android:defaultValue="2"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="A"
+            android:title="A" />
+        <ListPreference
+            android:defaultValue="3"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="B"
+            android:title="B" />
+        <ListPreference
+            android:defaultValue="4"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="X"
+            android:title="X" />
+        <ListPreference
+            android:defaultValue="5"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="Y"
+            android:title="Y" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="方向键">
+        <ListPreference
+            android:defaultValue="30"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="up"
+            android:title="▲" />
+        <ListPreference
+            android:defaultValue="31"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="down"
+            android:title="▼" />
+        <ListPreference
+            android:defaultValue="8"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="left"
+            android:title="◀" />
+        <ListPreference
+            android:defaultValue="9"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="right"
+            android:title="▶" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="其他按键">
+        <ListPreference
+            android:defaultValue="20"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="lt"
+            android:title="左肩键" />
+        <ListPreference
+            android:defaultValue="13"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="rt"
+            android:title="右肩键" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="leftPad"
+            android:title="左摇杆" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="rightPad"
+            android:title="右摇杆" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="lb"
+            android:title="左扳机键" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="rb"
+            android:title="右扳机键" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="option"
+            android:title="选项" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/gestures_labels"
+            android:entryValues="@array/gestures_values"
+            android:key="menu"
+            android:title="菜单" />
+    </PreferenceCategory>
+</PreferenceScreen>

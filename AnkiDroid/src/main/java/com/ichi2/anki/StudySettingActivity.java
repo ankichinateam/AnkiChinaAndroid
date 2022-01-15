@@ -90,7 +90,7 @@ public class StudySettingActivity extends AnkiActivity implements View.OnClickLi
 
             int[] attrs = new int[] {
                     R.attr.reviewStatusBarColor,
-                    R.attr.primaryTextColor,
+                    R.attr.primaryTextColor222222,
             };
             TypedArray ta = obtainStyledAttributes(attrs);
             toolbar.setBackground(ta.getDrawable(0));
@@ -298,9 +298,16 @@ public class StudySettingActivity extends AnkiActivity implements View.OnClickLi
                                 if (s.toString().isEmpty()) {
                                     ((CustomStyleDialog) dialog).getSingleEditorModeHintView().setText("未来每天学习量=新卡数x6");
                                 } else {
-                                    int num = Integer.parseInt(s.toString()) * 6;
-                                    int time = num * 10 / 60;
-                                    ((CustomStyleDialog) dialog).getSingleEditorModeHintView().setText(String.format("学习一段时间后，未来每天新卡+复习卡约%s张，大约需%s分钟", num, time));
+                                    try{
+                                        int num = Integer.parseInt(s.toString()) * 6;
+                                        int time = num * 10 / 60;
+                                        ((CustomStyleDialog) dialog).getSingleEditorModeHintView().setText(String.format("学习一段时间后，未来每天新卡+复习卡约%s张，大约需%s分钟", num, time));
+                                    }catch (Exception e) {
+                                        e.printStackTrace();
+                                        UIUtils.showThemedToast(StudySettingActivity.this, "请填写0至9999之间的数值",
+                                                false);
+                                    }
+
                                 }
                             }
 
@@ -868,6 +875,7 @@ public class StudySettingActivity extends AnkiActivity implements View.OnClickLi
             }else {
                 deckPreferenceHack.saveAndUpdateValues(true);
                   if (selectMindMode == 0) {
+
                     return;
                 } else if (selectMindMode == 1) {
                     deckPreferenceHack.mOptions.getJSONObject("new").put("delays", convertToJSON("1 5 10"));

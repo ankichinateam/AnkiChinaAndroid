@@ -21,6 +21,8 @@
 
 package com.ichi2.anki;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -48,7 +50,9 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ActionMenuView;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -82,6 +86,7 @@ import com.ichi2.libanki.Deck;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.sched.AbstractDeckTreeNode;
+import com.ichi2.libanki.sync.AnkiChinaSyncer;
 import com.ichi2.ui.BadgeDrawableBuilder;
 import com.ichi2.ui.SettingItem;
 import com.ichi2.utils.OKHttpUtil;
@@ -102,6 +107,7 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
@@ -112,10 +118,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import timber.log.Timber;
 
 import static com.ichi2.anki.AnkiActivity.REQUEST_REVIEW;
+import static com.ichi2.anki.DeckPicker.REQUEST_STORAGE_PERMISSION;
 import static com.ichi2.anki.SelfStudyActivity.ALL_DECKS_ID;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.LOAD_COLLECTION_COMPLETE;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.LOAD_DECK_COUNTS;
@@ -150,6 +159,24 @@ public class DeckPickerFragment extends AnkiFragment {
     }
 
 
+    View mSyncMenuItemActionView;
+
+
+    public void onSync(boolean syncing) {
+        Timber.i("on syncing:"+syncing+",loading view is init:"+mSyncMenuItem);
+        if (mSyncMenuItem != null) {
+            if (syncing) {
+                mSyncMenuItemActionView = mSyncMenuItem.getActionView();
+                mSyncMenuItem
+                        .setActionView(R.layout.actionbar_indeterminate_progress);
+            } else {
+                mSyncMenuItem.setActionView(mSyncMenuItemActionView);
+            }
+        }
+
+    }
+
+
     private SwipeRefreshLayout mPullToSyncWrapper;
 
     private TextView mReviewSummaryTextView;
@@ -173,6 +200,8 @@ public class DeckPickerFragment extends AnkiFragment {
 
     private boolean initOnResume = true;
 
+//    private boolean mSyncOnStart = true;
+
 
     @Override
     public void onResume() {
@@ -188,17 +217,49 @@ public class DeckPickerFragment extends AnkiFragment {
         if (mTabLayout != null) {
             mTabLayout.selectTab(mTabLayout.getTabAt(0));
         }
+        if(!Permissions.hasStorageAccessPermission(getContext())){
+            return;
+        }else {
+            mPullToSyncWrapper.setVisibility(View.VISIBLE);
+            mToolbar.setVisibility(View.VISIBLE);
+            mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.GONE);
+        }
         if (getAnkiActivity().colIsOpen() && initOnResume) {
             initOnResume = false;
 //            selectNavigationItem(R.id.nav_decks);
             if (mDueTree == null) {
                 updateDeckList(true);
             }
-            updateDeckList();
         }
+//        else {
+//            //            int index = -1;
+////            Timber.i("mDueTree size:"+mDeckListAdapter.getDeckList().size());
+////            for (int i = 0; i < mDeckListAdapter.getDeckList().size(); i++) {
+////                if (getCol().getDecks().current().getLong("id") == mDeckListAdapter.getDeckList().get(i).getDid()) {
+////                    index = i;
+////                    Timber.i("mDueTree current did:"+getCol().getDecks().current().getLong("id"));
+////                }
+////            }
+////            if (index > -1) {
+////                mDeckListAdapter.getDeckList().add(index,getCol().getSched().updateDeck(getCol().getDecks().get(mDeckListAdapter.getDeckList().get(index).getDid())));
+////                mDeckListAdapter.getDeckList().remove(index + 1);
+//////                mDeckListAdapter.getDeckList().remove()
+//////                mDeckListAdapter.notifyItemChanged(index);
+////                mDeckListAdapter.notifyDataSetChanged();
+////
+////            }
+//
+//        }
+        updateDeckList();
+
+
         /** Complete task and enqueue fetching nonessential data for
          * startup. */
         CollectionTask.launchCollectionTask(LOAD_COLLECTION_COMPLETE);
+//        if (mSyncOnStart && Consts.loginAnkiChina()) {
+//            mSyncOnStart = false;
+//            getAnkiActivity().sync();
+//        }
         setHasOptionsMenu(true);
     }
 
@@ -212,13 +273,14 @@ public class DeckPickerFragment extends AnkiFragment {
 
     //VIP页面地址在登录和非登录态是不一样的，如有APP登录或者登出操作请重新调此接口更新URL
     protected void onRefreshVipState(boolean isVip, String vipUrl, int vipDay, String vipExpireAt) {
-        Timber.e("on refresh vip state:"+isVip);
+        Timber.e("on refresh vip state:" + isVip);
         mVip = isVip;
         mVipUrl = vipUrl;
         mVipDay = vipDay;
         mVipExpireAt = vipExpireAt;
-        if(mVipLogo!=null)
-        mVipLogo.setImageResource(mVip ? R.mipmap.supre_xueba_logo_normal : R.mipmap.super_heroes_normal);
+        if (mVipLogo != null) {
+            mVipLogo.setImageResource(mVip ? R.mipmap.supre_xueba_logo_normal : R.mipmap.super_heroes_normal);
+        }
 //        mToolbar.setNavigationIcon(ResourcesCompat.getDrawable(getAnkiActivity().getResources(),mVip?R.mipmap.supre_xueba_vip_kaitong_normal:R.mipmap.supre_xueba_logo_normal,null) );
 //        final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
 //        int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, displayMetrics);
@@ -310,23 +372,20 @@ public class DeckPickerFragment extends AnkiFragment {
         Timber.i("on create view in deck picker fragment");
         mRoot = inflater.inflate(R.layout.deck_picker, container, false);
         mToolbar = mRoot.findViewById(R.id.toolbar);
-        if (mToolbar != null) {
-//            mToolbar.inflateMenu(R.menu.deck_picker);
-            setHasOptionsMenu(true);
-//            getAnkiActivity().setSupportActionBar(mToolbar);
-//            getAnkiActivity().getSupportActionBar().setTitle(null);
-//            TypedValue value = new TypedValue();
-//            getContext().getTheme().resolveAttribute(R.attr.problemRef, value, true);
-//            mToolbar.setNavigationIcon(value.resourceId);
-//            mToolbar.setNavigationIcon(ResourcesCompat.getDrawable(getAnkiActivity().getResources(), R.mipmap.supre_xueba_logo_normal, null));
-//            mToolbar.setContentInsetStartWithNavigation(40);
+        mPullToSyncWrapper = mRoot.findViewById(R.id.pull_to_sync_wrapper);
+        if (!Permissions.hasStorageAccessPermission(getAnkiActivity())) {
+            mPullToSyncWrapper.setVisibility(View.GONE);
+            mToolbar.setVisibility(View.GONE);
+            mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.VISIBLE);
+            mRoot.findViewById(R.id.hint_button).setOnClickListener(v -> ActivityCompat.requestPermissions(getAnkiActivity(), new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_STORAGE_PERMISSION));
+//            return mRoot;
 
+        }
+        if (mToolbar != null) {
+            setHasOptionsMenu(true);
             mToolbar.setNavigationIcon(null);
             mToolbar.setTitle("");
-//            final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-//            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, displayMetrics);
-//            mToolbar.setPadding(padding, 0, 0, 0);
-            // Decide which action to take when the navigation button is tapped.
             mTabLayout = mToolbar.findViewById(R.id.tab_layout);
             mVipLogo = mToolbar.findViewById(R.id.vip_logo);
             mVipLogo.setOnClickListener(v -> onNavigationPressed());
@@ -348,40 +407,27 @@ public class DeckPickerFragment extends AnkiFragment {
                     }
                 }
 
+
                 @Override
                 public void onTabUnselected(TabLayout.Tab tab) {
 
                 }
+
 
                 @Override
                 public void onTabReselected(TabLayout.Tab tab) {
 
                 }
             });
-//            mToolbar.setNavigationOnClickListener(v -> onNavigationPressed());
-//            TextView title = mToolbar.findViewById(R.id.toolbar_title);
-//            title.setOnClickListener(v -> getAnkiActivity().openCardBrowser());
-//            title.setVisibility(View.VISIBLE);
-//            title.setText("卡牌浏览器");
         }
         // check, if tablet layout
         mStudyoptionsFrame = mRoot.findViewById(R.id.studyoptions_fragment);
         if (mFragmented) {
             loadStudyOptionsFragment(false);
         }
-//        mDeckPickerContent = mRoot.findViewById(R.id.deck_picker_content);
         mRecyclerView = mRoot.findViewById(R.id.files);
-//        mNoDecksPlaceholder = mRoot.findViewById(R.id.no_decks_placeholder);
-//        mDeckPickerContent.setVisibility(View.GONE);
         mRecyclerViewLayoutManager = new LinearLayoutManager(getAnkiActivity());
         mRecyclerView.setLayoutManager(mRecyclerViewLayoutManager);
-//        mRecyclerView.addOnItemTouchListener(new SwipeItemLayout.OnSwipeItemTouchListener(getAnkiActivity()));
-//        TypedArray ta = getContext().obtainStyledAttributes(new int[] {R.attr.deckDivider});
-//        Drawable divider = ta.getDrawable(0);
-//        ta.recycle();
-//        DividerItemDecoration dividerDecorator = new DividerItemDecoration(getAnkiActivity(), mRecyclerViewLayoutManager.getOrientation());
-//        dividerDecorator.setDrawable(divider);
-//        mRecyclerView.addItemDecoration(dividerDecorator);
         View view = mFragmented ? mRoot.findViewById(R.id.deckpicker_view) : mRoot.findViewById(R.id.root_layout);
         boolean hasDeckPickerBackground = false;
         try {
@@ -403,7 +449,6 @@ public class DeckPickerFragment extends AnkiFragment {
         mDeckListAdapter.setMarketClickListener(v -> getAnkiActivity().openSourceMarket());
 
         mRecyclerView.setAdapter(mDeckListAdapter);
-        mPullToSyncWrapper = mRoot.findViewById(R.id.pull_to_sync_wrapper);
 
         mPullToSyncWrapper.setDistanceToTriggerSync(SWIPE_TO_SYNC_TRIGGER_DISTANCE);
         mPullToSyncWrapper.setOnRefreshListener(() -> {
@@ -413,14 +458,14 @@ public class DeckPickerFragment extends AnkiFragment {
 //            getAnkiActivity().sync();
         });
         mPullToSyncWrapper.getViewTreeObserver().addOnScrollChangedListener(() ->
-        mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
+                mPullToSyncWrapper.setEnabled(mRecyclerViewLayoutManager.findFirstCompletelyVisibleItemPosition() == 0));
 
         // Setup the FloatingActionButtons, should work everywhere with min API >= 15
         mActionsMenu = mRoot.findViewById(R.id.add_content_menu);
         mActionsMenu.findViewById(R.id.fab_expand_menu_button).setContentDescription(getString(R.string.menu_add));
 //        configureFloatingActionsMenu();
 
-        mReviewSummaryTextView = (TextView) mRoot.findViewById(R.id.today_stats_text_view);
+        mReviewSummaryTextView = mRoot.findViewById(R.id.today_stats_text_view);
 //        mRoot.findViewById(R.id.tv_resource).setOnClickListener(v -> getAnkiActivity().openSourceMarket());
 
         mShortAnimDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
@@ -432,6 +477,7 @@ public class DeckPickerFragment extends AnkiFragment {
 
         return mRoot;
     }
+
 
 
     public DeckPicker getAnkiActivity() {
@@ -533,7 +579,14 @@ public class DeckPickerFragment extends AnkiFragment {
     }
 
 
+    MenuItem mSyncMenuItem;
+
+
     private void initMenu(Menu menu) {
+        if (menu != null && menu.findItem(R.id.action_sync) != null) {
+            mSyncMenuItem = menu.findItem(R.id.action_sync);
+            onSync(AnkiChinaSyncer.SYNCING);
+        }
         if (CollectionHelper.getInstance().getColSafe(getAnkiActivity()) == null) {
 //            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
 //                    REQUEST_STORAGE_PERMISSION);
@@ -555,11 +608,11 @@ public class DeckPickerFragment extends AnkiFragment {
 
 
         // I haven't had an exception here, but it feels getAnkiActivity() may be flaky
-        try {
-            displaySyncBadge(menu);
-        } catch (Exception e) {
-            Timber.w(e, "Error Displaying Sync Badge");
-        }
+//        try {
+//            displaySyncBadge(menu);
+//        } catch (Exception e) {
+//            Timber.w(e, "Error Displaying Sync Badge");
+//        }
     }
 
 
@@ -579,12 +632,49 @@ public class DeckPickerFragment extends AnkiFragment {
 
     private void onNavigationPressed() {
         Timber.i("onNavigationPressed");
-//        WebViewActivity.openUrlInApp(getAnkiActivity(),mVipUrl,  "");
         if (mVipUrl == null || mVipUrl.isEmpty()) {
             getAnkiActivity().getVipInfo();
         } else {
             getAnkiActivity().openVipUrl(mVipUrl);
         }
+
+//        getAnkiActivity().getAccount().getToken(getAnkiActivity(), new MyAccount.TokenCallback() {
+//            @Override
+//            public void onSuccess(String token) {
+//                RequestBody formBody = new FormBody.Builder()
+//                        .add("phone", "13126359689")
+//                        .build();
+//                OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/deleteServerData", formBody, token, "", new OKHttpUtil.MyCallBack() {
+//                    @Override
+//                    public void onFailure(Call call, IOException e) {
+//
+//                    }
+//
+//
+//                    @Override
+//                    public void onResponse(Call call, String token, Object arg1, Response response) {
+//                        if (response.isSuccessful()) {
+//                            try {
+//                                final com.ichi2.utils.JSONObject object = new com.ichi2.utils.JSONObject(response.body().string());
+//                                Timber.i("object:%s", object.toString());
+//
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//                        } else {
+//                            Timber.e("deleteServerData error, code %d", response.code());
+//                        }
+//                    }
+//                });
+//
+//            }
+//
+//
+//            @Override
+//            public void onFail(String message) {
+//
+//            }
+//        });
     }
 
 
@@ -664,8 +754,10 @@ public class DeckPickerFragment extends AnkiFragment {
                 return true;
 
             case R.id.action_sync:
-                Timber.i("DeckPicker:: Sync button pressed");
-                getAnkiActivity().sync();
+                Timber.i("DeckPicker:: Sync button pressed，sync state：%s", AnkiChinaSyncer.SYNCING);
+                if (!AnkiChinaSyncer.SYNCING) {
+                    getAnkiActivity().sync(true);
+                }
                 return true;
 
             case R.id.action_import:
@@ -1032,6 +1124,7 @@ public class DeckPickerFragment extends AnkiFragment {
 
 
     public void updateDeckList(boolean quick) {
+//        CollectionHelper.getInstance().closeCollection(true,"refresh");
         TaskListener listener = updateDeckListListener();
         CollectionTask.TASK_TYPE taskType = quick ? LOAD_DECK_QUICK : LOAD_DECK_COUNTS;
         CollectionTask.launchCollectionTask(taskType, listener);
@@ -1120,11 +1213,14 @@ public class DeckPickerFragment extends AnkiFragment {
             Timber.e(e, "RuntimeException setting time remaining");
         }
 
-        long current = getCol().getDecks().current().optLong("id");
-        if (mFocusedDeck != current) {
-            scrollDecklistToDeck(current);
-            mFocusedDeck = current;
+        if(getCol().getDecks().current()!=null){
+            long current = getCol().getDecks().current().optLong("id");
+            if (mFocusedDeck != current) {
+                scrollDecklistToDeck(current);
+                mFocusedDeck = current;
+            }
         }
+
     }
 
 
@@ -1139,6 +1235,7 @@ public class DeckPickerFragment extends AnkiFragment {
 
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onAttachFragment(@NonNull Fragment childFragment) {
         super.onAttachFragment(childFragment);
         if (!mFragmented) {
@@ -1147,6 +1244,9 @@ public class DeckPickerFragment extends AnkiFragment {
         }
 
     }
+
+
+
 
 
     private void openReviewer() {

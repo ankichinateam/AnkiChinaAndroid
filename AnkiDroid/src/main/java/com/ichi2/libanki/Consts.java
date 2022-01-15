@@ -16,10 +16,12 @@
 
 package com.ichi2.libanki;
 
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy.*;
 
 import androidx.annotation.IntDef;
+import timber.log.Timber;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
@@ -157,7 +159,9 @@ public class Consts {
     // deck schema & syncing vars
     public static final int SCHEMA_VERSION = 11;
     public static final int SYNC_ZIP_SIZE = (int) (2.5 * 1024 * 1024);
+    public static final int SYNC_ZIP_SIZE_CHINA = (int) (50 * 1024 * 1024);
     public static final int SYNC_ZIP_COUNT = 25;
+    public static final int SYNC_ZIP_COUNT_CHINA = 200;
     public static int LOGIN_SERVER = 0;
     public static int PRE_LOGIN_SERVER = 0;
     public static final int LOGIN_SERVER_NOT_LOGIN = 0;
@@ -177,6 +181,7 @@ public class Consts {
 
 
     public static boolean loginAnkiChina() {
+        Timber.i("i am login in ankichina?%s", (LOGIN_SERVER == LOGIN_SERVER_ANKICHINA));
         return LOGIN_SERVER == LOGIN_SERVER_ANKICHINA;
     }
 
@@ -197,34 +202,44 @@ public class Consts {
     public static final String KEY_SELECT_ONLINE_SPEAK_ENGINE = "KEY_SELECT_ONLINE_SPEAK_ENGINE";
     public static final String KEY_SHOW_TTS_ICON = "KEY_SHOW_TTS_ICON";
     public static final String KEY_IS_VIP = "KEY_IS_VIP";
+    public static final String KEY_VIP_URL = "KEY_VIP_URL";
     public static final String KEY_REST_ONLINE_SPEAK_COUNT = "KEY_REST_ONLINE_SPEAK_COUNT";
     public static final String KEY_VIP_EXPIRED = "KEY_VIP_EXPIRED";
+    public static final String KEY_LOCAL_LAYOUT_CONFIG = "KEY_LOCAL_LAYOUT_CONFIG";
+    public static final String KEY_FLIP_CARD = "KEY_FLIP_CARD";
 //    public static final String KEY_MAIN_AD_ENABLE = "KEY_MAIN_AD_ENABLE";
     public static final String KEY_ANKI_ACCOUNT_SERVER = "KEY_ANKI_ACCOUNT_SERVER";
-
+    public static final String KEY_SELF_STUDYING_LIST = "KEY_SELF_STUDYING_LIST";
+    public static final String KEY_SELF_STUDYING_LIST_INDEX = "KEY_SELF_STUDYING_LIST_INDEX";
+    public static final String KEY_SYNC_CHINA_SESSION = "KEY_SYNC_CHINA_SESSION";
+    public static final String KEY_LAST_STOP_TIME = "KEY_LAST_STOP_TIME";
+    public static final String KEY_LAST_HINT_WHILE_NO_SPACE_TO_SYNC="KEY_LAST_HINT_WHILE_NO_SPACE_TO_SYNC";
+    public static final String KEY_BE_VIP_HINT_COUNT="KEY_BE_VIP_HINT_COUNT";
     public static final String KEY_SAVED_ANKI_CHINA_PHONE = "KEY_SAVED_ANKI_CHINA_PHONE";
     public static final String KEY_SAVED_ANKI_CHINA_HKEY = "KEY_SAVED_ANKI_CHINA_HKEY";
     public static final String KEY_SAVED_ANKI_CHINA_TOKEN = "KEY_SAVED_ANKI_CHINA_TOKEN";
+    public static final String KEY_SAVED_MODEL_KEY = "KEY_SAVED_MODEL_KEY";
 
     public static final String KEY_SAVED_ANKI_WEB_ACCOUNT = "KEY_SAVED_ANKI_WEB_ACCOUNT";
     public static final String KEY_SAVED_ANKI_WEB_HKEY = "KEY_SAVED_ANKI_WEB_HKEY";
     public static final String KEY_SAVED_ANKI_WEB_PASSWORD = "KEY_SAVED_ANKI_WEB_PASSWORD";
     public static final String SYNC_BASE = "https://sync%s.ankiweb.net/";
-    public static final String SYNC_BASE_CHINA = "";//同步地址
+    public static final String SYNC_BASE_CHINA = "";
     public static final String ANKI_CHINA_BASE = "";//正式域名
     public static final String BAIDU_AI_TOKEN_URL = "https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=seccGbksRb8hS4ipbzRxROhO&client_secret=xN1EnbXI91j8PSpOZ9lDU0jb3j0fGU86";//获取token
     public static final String BAIDU_AI_SPEAK_URL = "https://tsn.baidu.com/text2audio";//获取语音mp3
-    public static final String API_VERSION = "";
-    //    public static final String SYNC_MEDIA_BASE = "https://sync.ankiweb.net/msync/";
+    public static final String API_VERSION = "api/v1/";
+     //    public static final String SYNC_MEDIA_BASE = "https://sync.ankiweb.net/msync/";
     public static final String SYNC_MEDIA_BASE = "";
     public static final Integer DEFAULT_HOST_NUM = null;
-    public static final int SYNC_VER = 9;
+    /* Note: 10 if using Rust backend, 9 if using Java. Set in BackendFactory.getInstance */
+     public static int SYNC_VER = 9;
     public static final long UPLOAD_LIMIT_BANDWIDTH_BYTE = 20971520;
     public static final long DOWNLOAD_LIMIT_BANDWIDTH_BYTE = 20971520 / 8;
     //    public static final long UPLOAD_LIMIT_BANDWIDTH_BYTE = 100000;
 //    public static final long DOWNLOAD_LIMIT_BANDWIDTH_BYTE = 100000;
     public static final String HELP_SITE = "http://ankisrs.net/docs/manual.html";
-    public static final String URL_UPGRADE_CLOUD_SPACE = "";
+    public static final String URL_UPGRADE_CLOUD_SPACE = "https://www.ankichinas.com";
     public static final String URL_INSTRUCTION = "https://www.yuque.com/ankichina/lm007v";
     public static final String URL_ANKI_COURSE = "https://www.zhihu.com/question/28335314/answer/1491665578";
     public static final String URL_VOLUNTEER = "https://zhuanlan.zhihu.com/p/258620777";

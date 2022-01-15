@@ -35,11 +35,11 @@
                 android:textStyle="bold"
                 android:layout_marginStart="5dp"
                 android:textSize="11sp" />
-            <ImageView
-                android:src="@color/review_top_divider"
-                android:layout_marginStart="5dp"
-                android:layout_width="1dp"
-                android:layout_height="10dp"/>
+<!--            <ImageView-->
+<!--                android:src="@color/review_top_divider"-->
+<!--                android:layout_marginStart="5dp"-->
+<!--                android:layout_width="1dp"-->
+<!--                android:layout_height="10dp"/>-->
             <TextView
                 android:text="学"
                 android:textSize="11sp"
@@ -56,11 +56,11 @@
                 android:textStyle="bold"
                 android:textColor="?attr/primaryForthTextColor333333"
                 android:textSize="11sp" />
-            <ImageView
-                android:src="@color/review_top_divider"
-                android:layout_marginStart="5dp"
-                android:layout_width="1dp"
-                android:layout_height="10dp"/>
+<!--            <ImageView-->
+<!--                android:src="@color/review_top_divider"-->
+<!--                android:layout_marginStart="5dp"-->
+<!--                android:layout_width="1dp"-->
+<!--                android:layout_height="10dp"/>-->
             <TextView
                 android:text="复"
                 android:textSize="11sp"

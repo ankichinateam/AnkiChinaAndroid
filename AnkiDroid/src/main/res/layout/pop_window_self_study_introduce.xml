@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="主动练习"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textStyle="bold"
         android:textSize="23sp"
           />
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="正常的学习计划是由算法安排，你不知道每天学什么，主动练习是可以利用丰富的筛选条件和强大的搜索功能实现自定义学习内容，进行针对性练习。"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="15sp"
         />
     <TextView
@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:text="记忆程度"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="17sp"
         android:textStyle="bold"
         />
@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="通过分析你历史的学习情况，将卡牌的记忆程度分成了疑难、学习中、未学习、已掌握、暂停的5种"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="15sp"
         />
     <TextView
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:text="回答情况"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="17sp"
         android:textStyle="bold"
         />
@@ -54,7 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="根据你31天内对卡片回答按钮的选择，分成了忘记、困难、一般、简单4种卡牌（注：新卡的 简单 = 一般、一般 = 困难）"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="15sp"
         />
     <TextView
@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:text="标记颜色"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="17sp"
         android:textStyle="bold"
         />
@@ -71,7 +71,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="卡片标记需要人工打上，可以根据你人工打上的标记，进行针对性学习"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="15sp"
         />
     <TextView
@@ -79,7 +79,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:text="自定义"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="17sp"
         android:textStyle="bold"
         />
@@ -88,7 +88,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="提供了搜索和更多筛选条件，根据你的需要进行针对性学习"
-        android:textColor="?attr/primaryTextColor"
+        android:textColor="?attr/primaryTextColor222222"
         android:textSize="15sp"
         />
 </LinearLayout>

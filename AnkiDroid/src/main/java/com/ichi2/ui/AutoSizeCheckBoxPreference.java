@@ -31,6 +31,7 @@ import androidx.annotation.RequiresApi;
 
 // extending androidx.preference didn't work:
 // java.lang.ClassCastException: com.ichi2.ui.AutoSizeCheckBoxPreference cannot be cast to android.preference.Preference
+@SuppressWarnings("deprecation")
 public class AutoSizeCheckBoxPreference extends android.preference.CheckBoxPreference {
     @SuppressWarnings("unused")
     public AutoSizeCheckBoxPreference(Context context) {

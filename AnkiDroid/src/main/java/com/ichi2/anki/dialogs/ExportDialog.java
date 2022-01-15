@@ -3,6 +3,9 @@ package com.ichi2.anki.dialogs;
 
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 
 import com.afollestad.materialdialogs.DialogAction;
@@ -14,7 +17,7 @@ public class ExportDialog extends AnalyticsDialogFragment {
 
     public interface ExportDialogListener {
 
-        void exportApkg(String path, Long did, boolean includeSched, boolean includeMedia);
+        void exportApkg(String path, Long did, boolean includeSched, boolean includeMedia,boolean exportCard,boolean exportApkg);
         void dismissAllDialogFragments();
     }
 
@@ -27,8 +30,12 @@ public class ExportDialog extends AnalyticsDialogFragment {
     private ExportDialogListener listener;
     private final int INCLUDE_SCHED = 0;
     private final int INCLUDE_MEDIA = 1;
+    private final int EXPORT_APKG = 2;
+    private final int EXPORT_CARD = 3;
     private boolean mIncludeSched = false;
     private boolean mIncludeMedia = false;
+    private boolean mExportCard = false;
+    private boolean mExportApkg = true;
 
 
     /**
@@ -64,15 +71,19 @@ public class ExportDialog extends AnalyticsDialogFragment {
         Resources res = getResources();
         final Long did = getArguments().getLong("did", -1L);
         Integer[] checked;
+        final String[] items;
         if (did != -1L) {
             mIncludeSched = false;
-            checked = new Integer[]{};
+            checked = new Integer[]{EXPORT_APKG};
+            items = new String[] {res.getString(R.string.export_include_schedule),
+                     res.getString(R.string.export_include_media), "Apkg格式", "Card格式"};
         } else {
             mIncludeSched = true;
-            checked = new Integer[]{ INCLUDE_SCHED };
+            checked = new Integer[]{ INCLUDE_SCHED};
+            items = new String[] {res.getString(R.string.export_include_schedule),
+                    res.getString(R.string.export_include_media)};
         }
-        final String[] items = { res.getString(R.string.export_include_schedule),
-                res.getString(R.string.export_include_media) };
+
 
         MaterialDialog.Builder builder = new MaterialDialog.Builder(getActivity())
                 .title(R.string.export)
@@ -83,28 +94,41 @@ public class ExportDialog extends AnalyticsDialogFragment {
                 .items(items)
                 .alwaysCallMultiChoiceCallback()
                 .itemsCallbackMultiChoice(checked,
-                        new MaterialDialog.ListCallbackMultiChoice() {
-                            @Override
-                            public boolean onSelection(MaterialDialog materialDialog,
-                                                       Integer[] integers, CharSequence[] charSequences) {
-                                mIncludeMedia = false;
-                                mIncludeSched = false;
-                                for (Integer integer : integers) {
-                                    switch (integer) {
-                                        case INCLUDE_SCHED:
-                                            mIncludeSched = true;
-                                            break;
-                                        case INCLUDE_MEDIA:
-                                            mIncludeMedia = true;
-                                            break;
-                                    }
+                        (materialDialog, integers, charSequences) -> {
+                            mIncludeMedia = false;
+                            mIncludeSched = false;
+                            mExportApkg = false;
+                            mExportCard = false;
+                            for (Integer integer : integers) {
+                                switch (integer) {
+                                    case INCLUDE_SCHED:
+                                        mIncludeSched = true;
+                                        break;
+                                    case INCLUDE_MEDIA:
+                                        mIncludeMedia = true;
+                                        break;
+                                    case EXPORT_CARD:
+                                        mExportCard = true;
+//                                        mExportApkg = false;
+                                        break;
+                                    case EXPORT_APKG:
+                                        mExportApkg = true;
+//                                        mExportCard = false;
+                                        break;
                                 }
-                                return true;
                             }
+                            return true;
                         })
                 .onPositive((dialog, which) -> {
-
-                            listener.exportApkg(null, did != -1L ? did : null, mIncludeSched, mIncludeMedia);
+                            if(mExportApkg&&mExportCard){
+                                Toast.makeText(getContext(),"不能同时导出Apkg和Card格式",Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            if(did != -1L&&!mExportApkg&&!mExportCard){
+                                Toast.makeText(getContext(),"请至少选择一种导出格式",Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            listener.exportApkg(null, did != -1L ? did : null, mIncludeSched, mIncludeMedia,mExportCard,mExportApkg);
                     dismissAllDialogFragments();
                 })
                 .onNegative((dialog, which) -> dismissAllDialogFragments());

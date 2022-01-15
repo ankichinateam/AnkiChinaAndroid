@@ -14,44 +14,59 @@
 
 package com.ichi2.anki;
 
-import android.database.ContentObserver;
+import android.annotation.SuppressLint;
+import android.app.Dialog;
 
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
 
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.dialogs.AsyncDialogFragment;
 import com.ichi2.anki.dialogs.ImportDialog;
-import com.ichi2.async.CollectionTask;
 import com.ichi2.async.TaskData;
 import com.ichi2.async.TaskListener;
 import com.ichi2.async.TaskListenerWithContext;
 import com.ichi2.libanki.importer.AnkiPackageImporter;
 import com.ichi2.themes.StyledProgressDialog;
 import com.ichi2.themes.Themes;
+import com.ichi2.utils.JSONArray;
+import com.ichi2.utils.JSONObject;
+import com.umeng.socialize.ShareAction;
+import com.umeng.socialize.UMShareListener;
+import com.umeng.socialize.bean.SHARE_MEDIA;
+import com.umeng.socialize.media.UMImage;
+import com.umeng.socialize.media.UMWeb;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,7 +76,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -80,7 +94,7 @@ import timber.log.Timber;
 import static com.ichi2.anim.ActivityTransitionAnimation.LEFT;
 import static com.ichi2.anki.DeckPicker.SHOW_STUDYOPTIONS;
 import static com.ichi2.anki.dialogs.ImportDialog.DIALOG_IMPORT_ADD_CONFIRM;
-import static com.ichi2.async.CollectionTask.TASK_TYPE.UNDO;
+import static com.umeng.socialize.utils.DeviceConfigInternal.context;
 
 public class WebViewActivity extends AnkiActivity {
     public static void openUrlInApp(AnkiActivity context, String url, String token, String title, int requestCode) {
@@ -126,9 +140,9 @@ public class WebViewActivity extends AnkiActivity {
     private WebView webView;
 
 
-
-
+    @SuppressLint( {"AddJavascriptInterface", "SetJavaScriptEnabled"})
     @Override
+    @SuppressWarnings("deprecation")
     protected void onCreate(Bundle savedInstanceState) {
         Themes.setThemeLegacy(this);
         super.onCreate(savedInstanceState);
@@ -164,7 +178,7 @@ public class WebViewActivity extends AnkiActivity {
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath(), fileName);
             final ProgressResponseBody.ProgressListener listener = (bytesRead, contentLength1, done) -> {
                 //计算百分比并更新ProgressBar
-                if(contentLength1!=0){
+                if (contentLength1 != 0) {
                     final int percent = (int) (100 * bytesRead / contentLength1);
                     mProgressDialog.setProgress(percent);
                 }
@@ -180,7 +194,7 @@ public class WebViewActivity extends AnkiActivity {
             OkHttpClient client = new OkHttpClient.Builder()
                     .addNetworkInterceptor(chain -> {
                         Response response = chain.proceed(chain.request());
-                         return response.newBuilder()
+                        return response.newBuilder()
                                 .body(new ProgressResponseBody(response.body(), listener))
                                 .build();
                     })
@@ -238,11 +252,11 @@ public class WebViewActivity extends AnkiActivity {
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView view, String url) {
                         Timber.i("shouldOverrideUrlLoading:%s", url);
-                        if(url.startsWith("openexternalbrowser://url=")){
+                        if (url.startsWith("openexternalbrowser://url=")) {
 //                            startThirdpartyApp("https://www.baidu.com");
-                            openUrl(Uri.parse(url.replace("openexternalbrowser://url=","")));
-                        }else  if (urlCanLoad(url.toLowerCase())) {  // 加载正常网页
-                            view.loadUrl(url,map);
+                            openUrl(Uri.parse(url.replace("openexternalbrowser://url=", "")));
+                        } else if (urlCanLoad(url.toLowerCase())) {  // 加载正常网页
+                            view.loadUrl(url, map);
                         } else {  // 打开第三方应用或者下载apk等
                             startThirdpartyApp(url);
                         }
@@ -259,11 +273,23 @@ public class WebViewActivity extends AnkiActivity {
                     return true;
                 }
             }
+//                JSONObject jsonObject=new JSONObject();
+//                JSONArray platform=new JSONArray();
+//                platform.put()
+//                showShareDialog();
             return false;
         });
-        webView.loadUrl(getIntent().getStringExtra("url"));
+
+        webView.addJavascriptInterface(new JavaScriptFunction(), "AnkiDroidJS");
+        map.put("Referer", "https://file.ankichinas.cn");
+        webView.loadUrl(getIntent().getStringExtra("url"), map);
+
     }
-    Map<String, String > map = new HashMap<>() ;
+
+
+    Map<String, String> map = new HashMap<>();
+
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -272,10 +298,13 @@ public class WebViewActivity extends AnkiActivity {
         }
     }
 
+
     private long exitTime;
+
+
     public void onBackPressed() {
         //如果可以返回上一级，而不是直接退出应用程序
-        if (webView!=null&&webView.canGoBack()) {
+        if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {
             if ((System.currentTimeMillis() - exitTime) > 2000) {
@@ -290,7 +319,6 @@ public class WebViewActivity extends AnkiActivity {
         }
 
     }
-
 
 
     @Override
@@ -371,11 +399,9 @@ public class WebViewActivity extends AnkiActivity {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript("window.localStorage.setItem('" + key + "','" + token + "');", null);
         } else {
-            webView.loadUrl("javascript:localStorage.setItem('" + key + "','" + token + "');",map);
+            webView.loadUrl("javascript:localStorage.setItem('" + key + "','" + token + "');", map);
         }
     }
-
-
 
 
     @Override
@@ -514,5 +540,184 @@ public class WebViewActivity extends AnkiActivity {
         }
 
     }
+
+
+
+    public class JavaScriptFunction {
+
+        private final Gson mGson = new Gson();
+
+
+        @JavascriptInterface
+        public void socialShare(String jsonParams) {
+            Timber.i("start social share：" + jsonParams);
+            try {
+//                jsonParams = {
+//                        "platform":["QQ","SINA","WEIXIN","WEIXIN_CIRCLE","TEAM_POSTER"],
+//                "title":"标题",
+//                        "desc":"描述",
+//                        "link":"链接地址",
+//                        "thumb":"缩略图"
+//              }
+                JSONObject root = new JSONObject(jsonParams);
+                showShareDialog(jsonParams);
+            } catch (Exception e) {
+                Timber.w(e);
+            }
+
+        }
+
+
+        @JavascriptInterface
+        public String getAppVersion() {
+            return BuildConfig.VERSION_NAME;
+        }
+
+    }
+
+
+
+    private static final String PLATFORM_QQ = "QQ";
+    private static final String PLATFORM_WEIXIN = "WEIXIN";
+    //    private static final String PLATFORM_SINA = "SINA";
+    private static final String PLATFORM_URL = "COPY_LINK";
+    private static final String PLATFORM_WEIXIN_CIRCLE = "WEIXIN_CIRCLE";
+    private static final String PLATFORM_TEAM_POSTER = "TEAM_POSTER";
+
+    private Dialog mShareDialog;
+    private LinearLayout mPlatformWetchat, mPlatformWetchatCircle, mPlatformQQ, mPlatformUrl, mPlatformImage;
+
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    private void showShareDialog(String jsonParams) {
+        JSONObject root = new JSONObject(jsonParams);
+        JSONArray platform = root.getJSONArray("platform");
+        String title = root.getString("title");
+        String desc = root.getString("desc");
+        String link = root.getString("link");
+        String thumb = root.getString("thumb");
+
+
+        if (mShareDialog == null) {
+            mShareDialog = new Dialog(this, R.style.DialogTheme2);
+            //2、设置布局
+            View view = View.inflate(this, R.layout.dialog_share, null);
+            mShareDialog.setContentView(view);
+            Window window = mShareDialog.getWindow();
+//            addMenuBottomDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            //设置弹出位置
+            window.setGravity(Gravity.BOTTOM);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+//            WindowManager.LayoutParams lps = window.getAttributes();
+//            lps.verticalMargin = 0.1f;
+//            window.setAttributes(lps);
+//            //设置弹出动画
+////        window.setWindowAnimations(R.style.main_menu_animStyle);
+//            //设置对话框大小
+//            final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            mShareDialog.findViewById(R.id.close).setOnClickListener(v -> mShareDialog.dismiss());
+            mPlatformWetchat = mShareDialog.findViewById(R.id.ll_weixin);
+            mPlatformWetchatCircle = mShareDialog.findViewById(R.id.ll_weixin_circle);
+            mPlatformQQ = mShareDialog.findViewById(R.id.ll_qq);
+            mPlatformUrl = mShareDialog.findViewById(R.id.ll_link);
+            mPlatformImage = mShareDialog.findViewById(R.id.ll_poster);
+
+            mPlatformWetchat.setOnClickListener(view1 -> {
+                mShareDialog.dismiss();
+                shareUrl(link, title, desc, thumb, SHARE_MEDIA.WEIXIN);
+            });
+            mPlatformWetchatCircle.setOnClickListener(view1 -> {
+                mShareDialog.dismiss();
+                shareUrl(link, title, desc, thumb, SHARE_MEDIA.WEIXIN_CIRCLE);
+            });
+            mPlatformQQ.setOnClickListener(view1 -> {
+                mShareDialog.dismiss();
+                shareUrl(link, title, desc, thumb, SHARE_MEDIA.QQ);
+            });
+            mPlatformUrl.setOnClickListener(view1 -> {
+                mShareDialog.dismiss();
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                // 创建普通字符型ClipData
+                ClipData mClipData = ClipData.newPlainText("Anki记忆卡", link);
+                // 将ClipData内容放到系统剪贴板里。
+                cm.setPrimaryClip(mClipData);
+                Toast.makeText(this, "已复制链接到剪贴板", Toast.LENGTH_SHORT).show();
+            });
+
+        }
+        if (mShareDialog.isShowing()) {
+            mShareDialog.dismiss();
+            return;
+        }
+        mPlatformWetchat.setVisibility(View.GONE);
+        mPlatformWetchatCircle.setVisibility(View.GONE);
+        mPlatformQQ.setVisibility(View.GONE);
+        mPlatformUrl.setVisibility(View.GONE);
+        mPlatformImage.setVisibility(View.GONE);
+
+        for (int i = 0; i < platform.length(); i++) {
+            String platformName = platform.getString(i);
+            if (platformName.equals(PLATFORM_QQ)) {
+                mPlatformQQ.setVisibility(View.VISIBLE);
+            }
+            if (platformName.equals(PLATFORM_WEIXIN)) {
+                mPlatformWetchat.setVisibility(View.VISIBLE);
+            }
+            if (platformName.equals(PLATFORM_URL)) {
+                mPlatformUrl.setVisibility(View.VISIBLE);
+            }
+            if (platformName.equals(PLATFORM_WEIXIN_CIRCLE)) {
+                mPlatformWetchatCircle.setVisibility(View.VISIBLE);
+            }
+            if (platformName.equals(PLATFORM_TEAM_POSTER)) {
+                mPlatformImage.setVisibility(View.VISIBLE);
+                JSONObject team_info = root.getJSONObject("team_info");
+                mPlatformImage.setOnClickListener(view1 -> {
+                    mShareDialog.dismiss();
+                    Intent intent = new Intent(this, PosterActivity.class);
+                    intent.putExtra("poster", team_info.toString());
+                    startActivityWithoutAnimation(intent);
+                });
+            }
+        }
+        if(!isFinishing()&&!isDestroyed())
+        mShareDialog.show();
+    }
+
+
+    public void shareUrl(String url, String title, String desc, String thumb, SHARE_MEDIA share_media) {
+        UMWeb web = new UMWeb(url);
+        web.setTitle(title);
+        web.setThumb(new UMImage(this, thumb));
+        web.setDescription(desc);
+        new ShareAction(this).withMedia(web)
+                .setPlatform(share_media)
+                .setCallback(new UMShareListener() {
+                    @Override
+                    public void onStart(SHARE_MEDIA share_media) {
+
+                    }
+
+
+                    @Override
+                    public void onResult(SHARE_MEDIA share_media) {
+
+                    }
+
+
+                    @Override
+                    public void onError(SHARE_MEDIA share_media, Throwable throwable) {
+
+                    }
+
+
+                    @Override
+                    public void onCancel(SHARE_MEDIA share_media) {
+
+                    }
+                }).share();
+    }
+
 
 }

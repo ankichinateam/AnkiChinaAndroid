@@ -61,7 +61,14 @@
             android:name="subscreen"
             android:value="com.ichi2.anki.prefs.gestures" />
     </header>
-
+<!--    <header-->
+<!--        android:fragment="com.ichi2.anki.Preferences$SettingsFragment"-->
+<!--        android:summary="@string/pref_cat_controller_summ"-->
+<!--        android:title="@string/pref_cat_controller">-->
+<!--        <extra-->
+<!--            android:name="subscreen"-->
+<!--            android:value="com.ichi2.anki.prefs.custom_controller_buttons" />-->
+<!--    </header>-->
     <!-- Advanced Preferences -->
     <header
         android:fragment="com.ichi2.anki.Preferences$SettingsFragment"

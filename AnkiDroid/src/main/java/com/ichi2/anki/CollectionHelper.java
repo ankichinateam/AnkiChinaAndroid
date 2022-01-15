@@ -18,6 +18,8 @@ package com.ichi2.anki;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Environment;
 
 import android.text.format.Formatter;
@@ -58,6 +60,7 @@ public class CollectionHelper {
      */
     private boolean mCollectionLocked;
 
+
     @Nullable
     public static Long getCollectionSize(Context context) {
         try {
@@ -69,12 +72,17 @@ public class CollectionHelper {
         }
     }
 
+
     public synchronized void lockCollection() {
         mCollectionLocked = true;
     }
+
+
     public synchronized void unlockCollection() {
         mCollectionLocked = false;
     }
+
+
     public synchronized boolean isCollectionLocked() {
         return mCollectionLocked;
     }
@@ -89,6 +97,7 @@ public class CollectionHelper {
         public static CollectionHelper INSTANCE = new CollectionHelper();
     }
 
+
     /**
      * @return Singleton instance of the helper class
      */
@@ -100,12 +109,15 @@ public class CollectionHelper {
 
     /**
      * Get the single instance of the {@link Collection}, creating it if necessary  (lazy initialization).
+     *
      * @param context context which can be used to get the setting for the path to the Collection
      * @return instance of the Collection
      */
     public synchronized Collection getCol(Context context) {
         return getCol(context, new SystemTime());
     }
+
+
     public synchronized Collection getCol(Context context, @NonNull Time time) {
         // Open collection
         if (!colIsOpen()) {
@@ -126,7 +138,10 @@ public class CollectionHelper {
         return mCollection;
     }
 
-    /** Collection time if possible, otherwise real time.*/
+
+    /**
+     * Collection time if possible, otherwise real time.
+     */
     public synchronized Time getTimeSafe(Context context) {
         try {
             return getCol(context).getTime();
@@ -135,9 +150,11 @@ public class CollectionHelper {
         }
     }
 
+
     /**
      * Call getCol(context) inside try / catch statement.
      * Send exception report and return null if there was an exception.
+     *
      * @param context
      * @return
      */
@@ -150,8 +167,10 @@ public class CollectionHelper {
         }
     }
 
+
     /**
      * Close the {@link Collection}, optionally saving
+     *
      * @param save whether or not save before closing
      */
     public synchronized void closeCollection(boolean save, String reason) {
@@ -161,6 +180,7 @@ public class CollectionHelper {
         }
     }
 
+
     /**
      * @return Whether or not {@link Collection} and its child database are open.
      */
@@ -169,29 +189,34 @@ public class CollectionHelper {
                 mCollection.getDb().getDatabase() != null && mCollection.getDb().getDatabase().isOpen();
     }
 
+
     /**
      * Create the AnkiDroid directory if it doesn't exist and add a .nomedia file to it if needed.
-     *
+     * <p>
      * The AnkiDroid directory is a user preference stored under the "deckPath" key, and a sensible
      * default is chosen if the preference hasn't been created yet (i.e., on the first run).
-     *
+     * <p>
      * The presence of a .nomedia file indicates to media scanners that the directory must be
      * excluded from their search. We need to include this to avoid media scanners including
      * media files from the collection.media directory. The .nomedia file works at the directory
      * level, so placing it in the AnkiDroid directory will ensure media scanners will also exclude
      * the collection.media sub-directory.
      *
-     * @param path  Directory to initialize
+     * @param path Directory to initialize
      * @throws StorageAccessException If no write access to directory
      */
     public static synchronized void initializeAnkiDroidDirectory(String path) throws StorageAccessException {
         // Create specified directory if it doesn't exit
         File dir = new File(path);
         if (!dir.exists() && !dir.mkdirs()) {
-            throw new StorageAccessException("Failed to create AnkiDroid directory " + path);
+//            throw new StorageAccessException("Failed to create AnkiDroid directory " + path);
+            Timber.e("Failed to create AnkiDroid directory %s", path);
+            return;
         }
         if (!dir.canWrite()) {
-            throw new StorageAccessException("No write access to AnkiDroid directory " + path);
+            Timber.e("No write access to AnkiDroid directory %s", path);
+            return;
+//            throw new StorageAccessException("No write access to AnkiDroid directory " + path);
         }
         // Add a .nomedia file to it if it doesn't exist
         File nomedia = new File(dir, ".nomedia");
@@ -199,15 +224,18 @@ public class CollectionHelper {
             try {
                 nomedia.createNewFile();
             } catch (IOException e) {
-                throw new StorageAccessException("Failed to create .nomedia file", e);
+                Timber.e("Failed to create .nomedia file" );
+                //                throw new StorageAccessException("Failed to create .nomedia file", e);
             }
         }
     }
 
+
     /**
      * Try to access the current AnkiDroid directory
-     * @return whether or not dir is accessible
+     *
      * @param context to get directory with
+     * @return whether or not dir is accessible
      */
     public static boolean isCurrentAnkiDroidDirAccessible(Context context) {
         try {
@@ -223,20 +251,22 @@ public class CollectionHelper {
      * Get the absolute path to a directory that is suitable to be the default starting location
      * for the AnkiDroid folder. This is a folder named "AnkiDroid" at the top level of the
      * external storage directory.
+     *
      * @return the folder path
      */
+    @SuppressWarnings("deprecation")
     public static String getDefaultAnkiDroidDirectory() {
-        if(new File(Environment.getExternalStorageDirectory(), "AnkiChina").exists()){
+        if (new File(Environment.getExternalStorageDirectory(), "AnkiChina").exists()) {
             return new File(Environment.getExternalStorageDirectory(), "AnkiChina").getAbsolutePath();
         }
-        if(new File(Environment.getExternalStorageDirectory(), "AnkiDroid").exists()){
+        if (new File(Environment.getExternalStorageDirectory(), "AnkiDroid").exists()) {
             return new File(Environment.getExternalStorageDirectory(), "AnkiDroid").getAbsolutePath();
         }
         return new File(Environment.getExternalStorageDirectory(), "AnkiChina").getAbsolutePath();
     }
 
+
     /**
-     *
      * @return the path to the actual {@link Collection} file
      */
     public static String getCollectionPath(Context context) {
@@ -247,22 +277,103 @@ public class CollectionHelper {
     /**
      * @return the absolute path to the AnkiDroid directory.
      */
-    public static String getCurrentAnkiDroidDirectory(Context context) {
+    @SuppressWarnings("deprecation")
+    public static synchronized String getCurrentAnkiDroidDirectory(Context context) {
         SharedPreferences preferences = android.preference.PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
-        return PreferenceExtensions.getOrSetString(
+        String path = PreferenceExtensions.getOrSetString(
                 preferences,
                 "deckPath",
                 CollectionHelper::getDefaultAnkiDroidDirectory);
+        boolean installedAnki = checkAppInstalled(context, "com.ichi2.anki");
+        Timber.i("anki is installed:%s,current path:%s", installedAnki, path);
+        if (path.endsWith("AnkiDroid") && !installedAnki) {
+            File file = new File(path);
+            if(!file.exists()){
+                //如果ankidroid文件夹不存在，那就直接使用ankichina文件夹，并自动修改设置里的文件夹地址为ankichina，不需要做其他动作
+                Timber.i("ankidroid dir is not exists");
+                File tempAnkiChina = new File(Environment.getExternalStorageDirectory(), "AnkiChina");
+                preferences.edit().putString("deckPath", tempAnkiChina.getAbsolutePath()).apply();
+                return tempAnkiChina.getAbsolutePath();
+            }
+            //文件名是ankidroid且未安装原版anki，该文件夹可能会被删除，所以改名
+            //1、判断本地是否有ankichina，如果有，需要将ankichina改名为ankichinabak，如果bak已存在，则改为bak0/1/2..，最多到bak9，如果bak9也已存在，则不做动作，直接退出
+            //2、将ankidroid改名为ankichina
+            File originAnkiChina = new File(Environment.getExternalStorageDirectory(), "AnkiChina");
+            if (originAnkiChina.exists()) {
+                //可能因为各种原因本地已经有ankichina，重命名
+                File tempAnkiChinaBak = getNotExistAnkiChinaBakFile();
+                if (tempAnkiChinaBak == null) {
+                    //备份太多了，可能存在问题，不做处理
+                    return path;
+                }
+                boolean bakAnkiChina = originAnkiChina.renameTo(tempAnkiChinaBak);
+                Timber.i("back up anki china result:%s", bakAnkiChina);
+                if (!bakAnkiChina) {
+                    //已有的ankichina改名失败，只能不做动作了
+                    return path;
+                }
+            }
+
+
+            File tempAnkiChina = new File(Environment.getExternalStorageDirectory(), "AnkiChina");
+            boolean changeNameResult = file.renameTo(tempAnkiChina);
+            Timber.i("change ankidroid name to ankichina result:%s", changeNameResult);
+            if (changeNameResult) {
+                preferences.edit().putString("deckPath", tempAnkiChina.getAbsolutePath()).apply();
+                return tempAnkiChina.getAbsolutePath();
+            }
+        }
+        return path;
     }
+
+    @SuppressWarnings("deprecation")
+    private static File getNotExistAnkiChinaBakFile() {
+        File tempAnkiChinaBak = new File(Environment.getExternalStorageDirectory(), "AnkiChinaBak");
+        if (tempAnkiChinaBak.exists()) {
+            for (int i = 0; i < 10; i++) {
+                //最多不超过11个anki备份
+                File temp = new File(Environment.getExternalStorageDirectory(), "AnkiChinaBak" + i);
+                if (!temp.exists()) {
+                    return temp;
+                }
+            }
+        }else {
+            return tempAnkiChinaBak;
+        }
+        return null;
+
+    }
+
+
+    private static boolean checkAppInstalled(Context context, String pkgName) {
+        if (pkgName == null || pkgName.isEmpty()) {
+            return false;
+        }
+        PackageInfo packageInfo;
+        try {
+            packageInfo = context.getPackageManager().getPackageInfo(pkgName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            packageInfo = null;
+            e.printStackTrace();
+        }
+        if (packageInfo == null) {
+            return false;
+        } else {
+            return true;//true为安装了，false为未安装
+        }
+    }
+
 
     /**
      * Get parent directory given the {@link Collection} path.
+     *
      * @param path path to AnkiDroid collection
      * @return path to AnkiDroid folder
      */
     private static String getParentDirectory(String path) {
         return new File(path).getParentFile().getAbsolutePath();
     }
+
 
     /**
      * This currently stores either:
@@ -281,11 +392,13 @@ public class CollectionHelper {
         @Nullable
         private final Long mFreeSpace;
 
+
         private CollectionIntegrityStorageCheck(long requiredSpace, long freeSpace) {
             this.mFreeSpace = freeSpace;
             this.mRequiredSpace = requiredSpace;
             this.mErrorMessage = null;
         }
+
 
         private CollectionIntegrityStorageCheck(@NonNull String errorMessage) {
             this.mRequiredSpace = null;
@@ -293,14 +406,17 @@ public class CollectionHelper {
             this.mErrorMessage = errorMessage;
         }
 
+
         private static CollectionIntegrityStorageCheck fromError(String errorMessage) {
             return new CollectionIntegrityStorageCheck(errorMessage);
         }
+
 
         private static String defaultRequiredFreeSpace(Context context) {
             long oneHundredFiftyMB = 150 * 1000 * 1000; //tested, 1024 displays 157MB. 1000 displays 150
             return Formatter.formatShortFileSize(context, oneHundredFiftyMB);
         }
+
 
         public static CollectionIntegrityStorageCheck createInstance(Context context) {
 
@@ -321,16 +437,18 @@ public class CollectionHelper {
 
             if (freeSpace == -1) {
                 Timber.w("Error obtaining free space for '%s'", collectionFile.getPath());
-                String readableFileSize  = Formatter.formatFileSize(context, requiredSpaceInBytes);
+                String readableFileSize = Formatter.formatFileSize(context, requiredSpaceInBytes);
                 return fromError(context.getResources().getString(R.string.integrity_check_insufficient_space, readableFileSize));
             }
 
             return new CollectionIntegrityStorageCheck(requiredSpaceInBytes, freeSpace);
         }
 
+
         public boolean shouldWarnOnIntegrityCheck() {
             return this.mErrorMessage != null || fileSystemDoesNotHaveSpaceForBackup();
         }
+
 
         private boolean fileSystemDoesNotHaveSpaceForBackup() {
             //only to be called when mErrorMessage == null
@@ -365,9 +483,11 @@ public class CollectionHelper {
         }
     }
 
-    /** Fetches additional collection data not required for
+
+    /**
+     * Fetches additional collection data not required for
      * application startup
-     *
+     * <p>
      * Allows mandatory startup procedures to return early, speeding up startup. Less important tasks are offloaded here
      * No-op if data is already fetched
      */

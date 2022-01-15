@@ -8,7 +8,7 @@ import android.widget.TimePicker;
 
 import com.ichi2.compat.CompatHelper;
 
-
+@SuppressWarnings("deprecation")
 public class TimePreference extends android.preference.DialogPreference {
     public static final String DEFAULT_VALUE = "00:00";
 

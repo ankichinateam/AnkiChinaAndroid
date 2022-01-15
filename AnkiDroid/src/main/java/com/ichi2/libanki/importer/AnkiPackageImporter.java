@@ -26,6 +26,7 @@ import com.ichi2.anki.exception.ImportExportException;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Storage;
 import com.ichi2.libanki.Utils;
+import com.ichi2.utils.AESUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -54,6 +55,12 @@ public class AnkiPackageImporter extends Anki2Importer {
         File tempDir = new File(new File(mCol.getPath()).getParent(), "tmpzip");
         Collection tmpCol; //self.col into Anki.
         Timber.d("Attempting to import package %s", mFile);
+        String tmpApkgPath="";
+        if(mFile.endsWith(".card")){
+            tmpApkgPath=mFile.replace(".card",".apkg");
+            AESUtil.decryptionFile(mFile,tmpApkgPath);
+            mFile=tmpApkgPath;
+        }
         try {
             // We extract the zip contents into a temporary directory and do a little more
             // validation than the desktop client to ensure the extracted collection is an apkg.
@@ -172,6 +179,9 @@ public class AnkiPackageImporter extends Anki2Importer {
             }
         }
         publishProgress(100, 100, 100);
+//        if(!tmpApkgPath.isEmpty()){
+//            new File(tmpApkgPath).delete();
+//        }
     }
 
     @Override

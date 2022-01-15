@@ -19,7 +19,7 @@
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
 			android:text="选择服务器"
-			android:textColor="?attr/primaryTextColor"
+			android:textColor="?attr/primaryTextColor222222"
 			android:textSize="17sp"
 			android:textStyle="bold" />
 		<LinearLayout
@@ -35,7 +35,7 @@
 				android:layout_gravity="center"
 				android:text="这是弹窗"
 				android:visibility="gone"
-				android:textColor="?attr/primaryTextColor"
+				android:textColor="?attr/primaryTextColor222222"
 				android:textSize="15sp" />
 			<LinearLayout
 				android:id="@+id/ll_edit_content"

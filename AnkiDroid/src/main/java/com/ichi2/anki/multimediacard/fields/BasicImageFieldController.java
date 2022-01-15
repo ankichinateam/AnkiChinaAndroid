@@ -739,6 +739,7 @@ public class BasicImageFieldController extends FieldControllerBase implements IF
      *
      * @return string[] 0: file path (null if does not exist), 1: display name (null if does not exist)
      */
+    @SuppressWarnings("deprecation")
     private @NonNull Pair<String, String> getImageInfoFromContentResolver(Context context, Uri uri, String selection) {
         Timber.d("getImagePathFromContentResolver() %s", uri);
         String[] filePathColumns = {

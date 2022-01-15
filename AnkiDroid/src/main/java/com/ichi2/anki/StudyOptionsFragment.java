@@ -169,13 +169,10 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         } else {
             mCacheID = getCol().getDecks().selected();
         }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                firstLoadDeck=false;
-                refreshInterface(true);
+        new Handler().postDelayed(() -> {
+            firstLoadDeck=false;
+            refreshInterface(true);
 
-            }
         },firstLoadDeck?0:500);
 //        updateDeckList();
         /** Complete task and enqueue fetching nonessential data for
@@ -220,7 +217,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             if (mFragmented || !CompatHelper.isLollipop()) {
                 // Calling notifyDataSetChanged() will update the color of the selected deck.
                 // getAnkiActivity() interferes with the ripple effect, so we don't do it if lollipop and not tablet view
-                mDeckListAdapter.notifyDataSetChanged();
+                mDeckListAdapter.notifyDataSetChangedAll();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -374,6 +371,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     child.put("conf", confID);
                     getCol().getDecks().save(child);
                 }
+                mCol.save();
             }
         }
     }
@@ -658,30 +656,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         Deck deck = getCol().getDecks().current();
         long id = deck.optLong("id");
         TreeMap<String, Long> children = getCol().getDecks().children(id);
-        for (Deck parent : getCol().getDecks().parents(id)) {
-            parent.put("collapsed", false);//祖先节点全部打开
-            getCol().getDecks().save(parent);
-        }
-//        if (mInitCollapsedStatus||isInitStruct()) {
-//            //默认要打开自己
-//            deck.put("collapsed", false);
-//            getCol().getDecks().save(deck);
-//            return;
-//        }
-//        TreeMap<String, Long> children = getCol().getDecks().children(id);
-//        Set<String> childKeys = children.keySet();
-//        for (String str : childKeys) {
-//            //孩子节点全部打开
-////            Timber.d("my child name:%s，%s", str, children.get(str));
-//            getCol().getDecks().get(children.get(str)).put("collapsed", false);
-//            getCol().getDecks().save(getCol().getDecks().get(children.get(str)));
-//        }
-//        if (children.size() > 0) {
-//            mHasSubDecks = true;
-//            deck.put("collapsed", false);
-//            getCol().getDecks().save(deck);
-//        } else {
-//            mHasSubDecks = false;
+//        for (Deck parent : getCol().getDecks().parents(id)) {
+//            parent.put("collapsed", false);//祖先节点全部打开
+//            getCol().getDecks().save(parent);
 //        }
         mHasSubDecks=children.size() > 0;
         mNoSubDeckHint.setText(mHasSubDecks ? "" : "暂无子记忆库");
@@ -765,16 +742,6 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //        }
 //    }
 
-
-    @Override
-    public void onAttachFragment(@NonNull Fragment childFragment) {
-        super.onAttachFragment(childFragment);
-        if (!mFragmented) {
-            Window window = getAnkiActivity().getWindow();
-            window.setFormat(PixelFormat.RGBA_8888);
-        }
-
-    }
 
 
     /**
@@ -912,6 +879,10 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString() + " must implement StudyOptionsListener");
         }
+        if (!mFragmented) {
+            Window window = getAnkiActivity().getWindow();
+            window.setFormat(PixelFormat.RGBA_8888);
+        }
     }
 
 
@@ -928,6 +899,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
      *                      deck has no options associated with it yet and should use a default
      *                      set of values.
      */
+    @SuppressWarnings("deprecation")
     private void openFilteredDeckOptions(boolean defaultConfig) {
         Intent i = new Intent(getActivity(), FilteredDeckOptions.class);
         i.putExtra("defaultConfig", defaultConfig);
@@ -1145,7 +1117,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         }
     }
 
-
+    @SuppressWarnings("deprecation")
     private void openReviewerInternal() {
         mInitCollapsedStatus = false;
         Intent reviewer = new Intent(getActivity(), Reviewer.class);
@@ -1355,7 +1327,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         }
     };
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
@@ -1629,7 +1601,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         }
     }
 
-
+    @SuppressWarnings("deprecation")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -1948,7 +1920,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                         mDeckListAdapter.mTextETA = "-";
                     }
 
-                    mDeckListAdapter.notifyDataSetChanged();
+                    mDeckListAdapter.notifyDataSetChangedAll();
                     // Rebuild the options menu
                     configureToolbar();
                 }

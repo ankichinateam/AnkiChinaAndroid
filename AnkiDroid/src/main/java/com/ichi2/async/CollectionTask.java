@@ -21,6 +21,7 @@ package com.ichi2.async;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 
 import com.google.gson.stream.JsonReader;
 import com.ichi2.anki.AnkiDroidApp;
@@ -660,6 +661,7 @@ public class CollectionTask extends BaseAsyncTask<TaskData, TaskData, TaskData> 
 
     private TaskData doInBackgroundLoadSpecificDeckCounts(TaskData param) {
         Timber.d("doInBackgroundLoadDeckCounts");
+
         Collection col = getCol();
        long did=param==null?ALL_DECKS_ID:param.getLong();
         try {
@@ -1300,6 +1302,7 @@ public class CollectionTask extends BaseAsyncTask<TaskData, TaskData, TaskData> 
         }
         int column1Index = (Integer) param.getObjArray()[3];
         int column2Index = (Integer) param.getObjArray()[4];
+        Timber.d("ready to search:"+query+","+order);
         List<Long> searchResult_ = col.findCards(query, order, this);
         int resultSize = searchResult_.size();
         List<CardBrowser.CardCache> searchResult = new ArrayList<>(resultSize);
@@ -1621,11 +1624,16 @@ public class CollectionTask extends BaseAsyncTask<TaskData, TaskData, TaskData> 
         Long did = (Long) data[2];
         boolean includeSched = (Boolean) data[3];
         boolean includeMedia = (Boolean) data[4];
+        boolean exportApkg = (Boolean) data[5];
+        boolean exportCard = (Boolean) data[6];
+
 
         try {
             AnkiPackageExporter exporter = new AnkiPackageExporter(col);
             exporter.setIncludeSched(includeSched);
             exporter.setIncludeMedia(includeMedia);
+            exporter.setExportCard(exportCard);
+            exporter.setExportApkg(exportApkg);
             exporter.setDid(did);
             exporter.exportInto(apkgPath, mContext);
         } catch (FileNotFoundException e) {
@@ -1641,7 +1649,7 @@ public class CollectionTask extends BaseAsyncTask<TaskData, TaskData, TaskData> 
             Timber.e(e, "ImportExportException in doInBackgroundExportApkg");
             return new TaskData(e.getMessage(), true);
         }
-        return new TaskData(apkgPath);
+        return new TaskData(exportCard?apkgPath.replace(".apkg",".card"):apkgPath);
     }
 
 

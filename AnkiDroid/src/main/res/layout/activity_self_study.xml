@@ -10,7 +10,12 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:orientation="vertical" >
-
+		<ImageView
+			android:id="@+id/invisible_top"
+			android:background="?attr/mainItemBackgroundColor"
+			android:layout_width="match_parent"
+			android:visibility="gone"
+			android:layout_height="?attr/actionBarSize" />
 		<include layout="@layout/toolbar_self_study" />
 
 		<RelativeLayout
@@ -134,11 +139,5 @@
 		app:fab_colorPressed="?attr/fab_pressed"
 		android:layout_marginBottom="52dp"
 		app:fab_icon="@drawable/ic_add_white_24dp"/>
-<!--		fab:fab_colorNormal="?attr/fab_normal"-->
-<!--		fab:fab_icon="@drawable/ic_add_white_24dp"-->
-<!--		fab:fab_title="@string/menu_add"-->
-<!--		fab:fab_size="mini"-->
-<!--		fab:fab_colorPressed="?attr/fab_pressed"-->
-
 	<include layout="@layout/anki_progress"/>
 </com.ichi2.ui.KeyBoardListenerLayout>

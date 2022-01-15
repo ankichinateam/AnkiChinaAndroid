@@ -24,7 +24,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import com.ichi2.anki.AnkiDroidApp;
-
+@SuppressWarnings("deprecation")
 public class NumberRangePreference extends android.preference.EditTextPreference {
 
     private final int mMin;

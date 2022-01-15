@@ -830,7 +830,7 @@ public class Utils {
     private static void writeToFileImpl(InputStream source, String destination) throws IOException {
         File f = new File(destination);
         try {
-            Timber.d("Creating new file... = %s", destination);
+//            Timber.d("Creating new file... = %s", destination);
             f.createNewFile();
 
             @SuppressLint("DirectSystemCurrentTimeMillisUsage")
@@ -839,14 +839,14 @@ public class Utils {
             @SuppressLint("DirectSystemCurrentTimeMillisUsage")
             long endTimeMillis = System.currentTimeMillis();
 
-            Timber.d("Finished writeToFile!");
+//            Timber.d("Finished writeToFile!");
             long durationSeconds = (endTimeMillis - startTimeMillis) / 1000;
             long sizeKb = sizeBytes / 1024;
             long speedKbSec = 0;
             if (endTimeMillis != startTimeMillis) {
                 speedKbSec = sizeKb * 1000 / (endTimeMillis - startTimeMillis);
             }
-            Timber.d("Utils.writeToFile: Size: %d Kb, Duration: %d s, Speed: %d Kb/s", sizeKb, durationSeconds, speedKbSec);
+//            Timber.d("Utils.writeToFile: Size: %d Kb, Duration: %d s, Speed: %d Kb/s", sizeKb, durationSeconds, speedKbSec);
         } catch (IOException e) {
             throw new IOException(f.getName() + ": " + e.getLocalizedMessage(), e);
         }

@@ -1,10 +1,8 @@
 
 package com.ichi2.anki;
 
-import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -23,7 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.browser.customtabs.CustomTabsIntent;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
@@ -35,7 +32,6 @@ import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.ParcelFileDescriptor;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,7 +42,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.analytics.UsageAnalytics;
@@ -58,10 +53,10 @@ import com.ichi2.anki.dialogs.DialogHandler;
 import com.ichi2.anki.dialogs.ExportDialog;
 import com.ichi2.anki.dialogs.ImportDialog;
 import com.ichi2.anki.dialogs.SimpleMessageDialog;
-import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.exception.DeckRenameException;
 import com.ichi2.async.CollectionLoader;
 import com.ichi2.async.CollectionTask;
+import com.ichi2.async.Connection;
 import com.ichi2.async.TaskData;
 import com.ichi2.async.TaskListener;
 import com.ichi2.async.TaskListenerWithContext;
@@ -70,33 +65,42 @@ import com.ichi2.compat.customtabs.CustomTabActivityHelper;
 import com.ichi2.compat.customtabs.CustomTabsFallback;
 import com.ichi2.compat.customtabs.CustomTabsHelper;
 import com.ichi2.libanki.Collection;
+import com.ichi2.libanki.Consts;
 import com.ichi2.libanki.Decks;
+import com.ichi2.libanki.Model;
 import com.ichi2.libanki.Utils;
-import com.ichi2.libanki.importer.AnkiPackageImporter;
+import com.ichi2.libanki.sync.AnkiChinaSyncer;
 import com.ichi2.libanki.utils.TimeUtils;
-import com.ichi2.themes.StyledProgressDialog;
 import com.ichi2.themes.Themes;
+import com.ichi2.ui.CustomStyleDialog;
 import com.ichi2.utils.AdaptionUtil;
 import com.ichi2.utils.ImportUtils;
+import com.ichi2.utils.JSONException;
+import com.ichi2.utils.OKHttpUtil;
 import com.umeng.analytics.MobclickAgent;
+
+import com.ichi2.utils.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 
+import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import timber.log.Timber;
 
 import static com.ichi2.anki.DeckPicker.BE_VIP;
 import static com.ichi2.anki.DeckPicker.CONFIRM_PRIVATE_STRATEGY;
-import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE;
+import static com.ichi2.anki.DeckPicker.REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML;
 import static com.ichi2.anki.DeckPicker.REQUEST_BROWSE_CARDS;
-import static com.ichi2.anki.MyAccount.NOT_LOGIN_ANKI_CHINA;
-import static com.ichi2.anki.MyAccount.NO_TOKEN_RECORD;
 import static com.ichi2.anki.MyAccount.NO_WRITEABLE_PERMISSION;
 import static com.ichi2.anki.MyAccount.TOKEN_IS_EXPIRED;
-import static com.ichi2.anki.SelfStudyActivity.ALL_DECKS_ID;
 import static com.ichi2.anki.SelfStudyActivity.TAB_MAIN_STATE;
 import static com.ichi2.anki.SelfStudyActivity.saveLastDeckId;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.DELETE_DECK;
@@ -129,22 +133,28 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         this.mActivityName = getClass().getSimpleName();
     }
 
+
     public void openCardBrowser(long deckId) {
         saveLastDeckId(deckId);
         Intent intent = new Intent(this, SelfStudyActivity.class);
-        intent.putExtra("type",TAB_MAIN_STATE);
+        intent.putExtra("type", TAB_MAIN_STATE);
         startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
     }
+
+
     public void openCardBrowser() {
         Intent intent = new Intent(this, SelfStudyActivity.class);
-        intent.putExtra("type",TAB_MAIN_STATE);
+        intent.putExtra("type", TAB_MAIN_STATE);
         startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
     }
+
+
     public void openOldCardBrowser() {
         Intent intent = new Intent(this, CardBrowser.class);
         startActivityForResultWithAnimation(intent, REQUEST_BROWSE_CARDS, ActivityTransitionAnimation.LEFT);
 
     }
+
 
     MyAccount _myAccount;
 
@@ -167,32 +177,18 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
                 if (url != null && !url.isEmpty()) {
                     WebViewActivity.openUrlInApp(AnkiActivity.this, String.format(url, token, BuildConfig.VERSION_NAME), token, BE_VIP);
                 }
-//                openUrl(Uri.parse(getResources().getString(R.string.shared_decks_url, token)));
             }
 
 
             @Override
             public void onFail(String message) {
-//                if (message.equals(NOT_LOGIN_ANKI_CHINA)) {
-//
-//
-////                        Toast.makeText(getAnkiActivity(), "Anki Web账号登录，无需扩容", Toast.LENGTH_SHORT).show();
-////                            UIUtils.showSimpleSnackbar(getAnkiActivity(), "Anki Web账号登录，无需扩容", true);
-//                    return;
-//                } else if (message.equals(NO_TOKEN_RECORD)) {
-//
-//                }
                 Toast.makeText(AnkiActivity.this, "当前未使用Anki记忆卡账号登录，无法获得超级学霸功能", Toast.LENGTH_SHORT).show();
                 Intent myAccount = new Intent(AnkiActivity.this, MyAccount.class);
                 myAccount.putExtra("notLoggedIn", true);
-                startActivityForResultWithAnimation(myAccount, REFRESH_LOGIN_STATE, ActivityTransitionAnimation.FADE);
-//                startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
+                startActivityForResultWithAnimation(myAccount, REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML, ActivityTransitionAnimation.FADE);
                 handleGetTokenFailed(message);
-//                WebViewActivity.openUrlInApp(DeckPicker.this,String.format(url+"app-inner=yes&app-token=%s&app-version=%s", "",BuildConfig.VERSION_NAME),"");
-
             }
         });
-
     }
 
 
@@ -256,7 +252,40 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         editor.putLong("serverRestSpace", space);
         editor.apply();
     }
+    protected CustomStyleDialog mBeVipDialog;
+    protected String mVipUrl;
+    protected void showNoSpaceDialog() {
+        runOnUiThread(() -> {
+            if ((mBeVipDialog==null||!mBeVipDialog.isShowing())&&System.currentTimeMillis() - AnkiDroidApp.getSharedPrefs(AnkiActivity.this).getLong(Consts.KEY_LAST_HINT_WHILE_NO_SPACE_TO_SYNC, 0) > 3600 * 1000 * 24 * 15) {
+                int hintCount = AnkiDroidApp.getSharedPrefs(AnkiActivity.this).getInt(Consts.KEY_BE_VIP_HINT_COUNT, 0);
+                mBeVipDialog = new CustomStyleDialog.Builder(AnkiActivity.this)
+                        .setCustomLayout(R.layout.dialog_common_custom_next)
+                        .setTitle("自动同步失败！")
+                        .centerTitle()
+                        .setMessage("升级为超级学霸用户，以继续同步，成为学霸可自动云备份防丢失，多端互通学习！")
+                        .setPositiveButton("前往升级", (dialog, which) -> {
+                            dialog.dismiss();
+                            openVipUrl(mVipUrl);
+                        }).setNegativeButton(hintCount >= 2 ? "15天内不提醒" : "取消", (dialog, which) -> {
+                            dialog.dismiss();
+                            if (hintCount >= 2) {
+                                AnkiDroidApp.getSharedPrefs(AnkiActivity.this).edit().putLong(Consts.KEY_LAST_HINT_WHILE_NO_SPACE_TO_SYNC, System.currentTimeMillis()).apply();
+                            } else {
+                                AnkiDroidApp.getSharedPrefs(AnkiActivity.this).edit().putInt(Consts.KEY_BE_VIP_HINT_COUNT, AnkiDroidApp.getSharedPrefs(AnkiActivity.this).getInt(Consts.KEY_BE_VIP_HINT_COUNT, 0) + 1).apply();
+                            }
 
+                        })
+                        .create();
+                mBeVipDialog.setOnDismissListener(dialog -> {
+                });
+                mBeVipDialog.show();
+            } else {
+                Toast.makeText(AnkiActivity.this, "云空间不足，同步失败", Toast.LENGTH_SHORT).show();
+
+            }
+
+        });
+    }
 
     public long getServerRestSpace() {
         if (serverRestSpace > -1) {
@@ -311,11 +340,16 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     }
 
 
+
+
+
     @Override
     protected void onStop() {
         Timber.i("AnkiActivity::onStop - %s", mActivityName);
         super.onStop();
+//        AnkiDroidApp.getInstance()
         mCustomTabActivityHelper.unbindCustomTabsService(this);
+
     }
 
 
@@ -328,18 +362,129 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+
+    }
+
+
+    @Override
     protected void onResume() {
         Timber.i("AnkiActivity::onResume - %s", mActivityName);
         super.onResume();
-
         ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(SIMPLE_NOTIFICATION_ID);
         // Show any pending dialogs which were stored persistently
         mHandler.readMessage();
-        if ( AnkiDroidApp.getSharedPrefs(this).contains(CONFIRM_PRIVATE_STRATEGY)){
+        if (AnkiDroidApp.getSharedPrefs(this).contains(CONFIRM_PRIVATE_STRATEGY)) {
             UsageAnalytics.sendAnalyticsScreenView(this);
             MobclickAgent.onResume(this);
         }
+        Timber.i("differ from last stop time %d", (System.currentTimeMillis() - AnkiDroidApp.getSharedPrefs(this).getLong(Consts.KEY_LAST_STOP_TIME, System.currentTimeMillis())));
+        Timber.i("is syncing %s ,is need sync %s", AnkiChinaSyncer.SYNCING,AnkiDroidApp.getInstance().isNeedCheckSyncOnResume());
+        if (!AnkiChinaSyncer.SYNCING && Consts.loginAnkiChina() && AnkiDroidApp.getInstance().isNeedCheckSyncOnResume() && (System.currentTimeMillis() - AnkiDroidApp.getSharedPrefs(this).getLong(Consts.KEY_LAST_STOP_TIME, System.currentTimeMillis()) > 3600 * 1000)) {
+            getAccount().getToken(this, new MyAccount.TokenCallback() {
+                @Override
+                public void onSuccess(String token) {
+//                    syncChina(token);
+                    SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(AnkiActivity.this);
+                    String hkey = preferences.getString("hkey", "");
+                    if (hkey.length() != 0 && preferences.getBoolean("automaticSyncMode", false) &&
+                            Connection.isOnline()  ) {
+                        Timber.i("  Automatic Sync China");
+                        syncChina(token);
+                    }
+                }
 
+
+                @Override
+                public void onFail(String message) {
+
+                }
+            });
+        }
+        AnkiDroidApp.getInstance().setNeedCheckSyncOnResume(false);
+    }
+
+
+
+//    private final OKHttpUtil.MyCallBack checkRestServerSpaceListener = new OKHttpUtil.MyCallBack() {
+//        @Override
+//        public void onFailure(Call call, IOException e) {
+//
+//        }
+//
+//
+//        @Override
+//        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+////            Timber.i("http get result:%s,body:%s", response.toString() ,response.body()==null?"":response.body().string());
+//            if (response.isSuccessful()) {
+//                try {
+//                    org.json.JSONObject result = (new org.json.JSONObject(response.body().string())).getJSONObject("data");
+//                    Timber.i("fetch server space result:%s ", result.toString());
+//                    long total = result.getLong("origin_size");
+//                    long used = result.getLong("origin_used_size");
+//                    String totalStr = result.getString("size");
+//                    String usedStr = result.getString("used_size");
+//                    String hint = String.format("%s/%s", usedStr, totalStr);
+//                    long rest = total - used;
+//                    Timber.i("fetch server space result:%d,%d,%d", total, used, rest);
+//                    saveServerRestSpace(rest);
+//                    if (rest <= 0) {
+//                            showNoSpaceDialog();
+//                        return;
+//                    }
+//                    //获取剩余空间
+//                    runOnUiThread(() ->syncChina(token) );
+//                } catch (org.json.JSONException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    };
+
+
+    protected void syncChina(String token) {
+        if(getServerRestSpace()<=0){
+            showNoSpaceDialog();
+            return;
+        }
+        AnkiChinaSyncer syncer = new AnkiChinaSyncer(AnkiActivity.this, token, new AnkiChinaSyncer.OnSyncCallback() {
+            @Override
+            public void onError(int code, String message) {
+                onSyncChinaError(code, message);
+            }
+
+
+            @Override
+            public void onCompletedAll() {
+                onSyncCompletedAll();
+            }
+
+
+            @Override
+            public void onCompletedData() {
+                onSyncCompletedData();
+            }
+        });
+        syncer.sync();
+        onSyncChinaStart();
+    }
+
+    protected void onSyncChinaStart() {
+        Timber.i("on syncing:onSyncChinaStart");
+    }
+    protected void onSyncChinaError(int code, String message) {
+        Timber.i("on syncing:onSyncChinaError");
+    }
+
+
+    protected void onSyncCompletedAll() {
+        Timber.i("on syncing:onSyncCompletedAll");
+    }
+
+
+    protected void onSyncCompletedData() {
+        Timber.i("on syncing:onSyncCompletedData");
     }
 
 
@@ -1021,7 +1166,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
 
     @Override
-    public void exportApkg(String filename, Long did, boolean includeSched, boolean includeMedia) {
+    public void exportApkg(String filename, Long did, boolean includeSched, boolean includeMedia,boolean exportCard,boolean exportApkg) {
         File exportDir = new File(getExternalCacheDir(), "export");
         exportDir.mkdirs();
         File exportPath;
@@ -1042,12 +1187,14 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
             exportPath = new File(exportDir, newFileName);
         }
         // add input arguments to new generic structure
-        Object[] inputArgs = new Object[5];
+        Object[] inputArgs = new Object[7];
         inputArgs[0] = getCol();
         inputArgs[1] = exportPath.getPath();
         inputArgs[2] = did;
         inputArgs[3] = includeSched;
         inputArgs[4] = includeMedia;
+        inputArgs[5] = exportApkg;
+        inputArgs[6] = exportCard;
         try {
             CollectionTask.launchCollectionTask(EXPORT_APKG, exportListener(), new TaskData(inputArgs));
         } catch (Exception e) {
@@ -1080,7 +1227,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
             UIUtils.showThemedToast(this, getResources().getString(R.string.apk_share_error), false);
             return;
         }
-        Intent shareIntent = ShareCompat.IntentBuilder.from(this)
+        Intent shareIntent = new ShareCompat.IntentBuilder(this)
                 .setType("application/apkg")
                 .setStream(uri)
                 .setSubject(getString(R.string.export_email_subject, attachment.getName()))
@@ -1345,6 +1492,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     @Override
     public void importReplace(String importPath) {
         try {
+            AnkiDroidApp.getSharedPrefs(this).edit().remove(Consts.KEY_SYNC_CHINA_SESSION).apply();
             CollectionTask.launchCollectionTask(IMPORT_REPLACE, importReplaceListener(), new TaskData(importPath));
         } catch (Exception e) {
             e.printStackTrace();
@@ -1384,6 +1532,164 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
         }
     }
 
+
+    protected boolean pulledConfigFromService = false;
+    protected boolean pulledKeyFromService = false;
+    //本地和网络保存的是json，使用时要转化为css使用
+    protected final OKHttpUtil.MyCallBack getServiceConfigCallback = new OKHttpUtil.MyCallBack() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+
+        @Override
+        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+            if (response.isSuccessful()) {
+                pulledConfigFromService = true;//只获取一次就够了
+                try {
+                    JSONObject result = (new JSONObject(response.body().string())).getJSONObject("data");
+                    Timber.i("fetch service config result:%s ", result.toString());
+                    JSONObject remoteViewSettings = null;
+                    SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(AnkiActivity.this);
+                    String localSetting = preferences.getString(Consts.KEY_LOCAL_LAYOUT_CONFIG, "");
+                    try {
+                        remoteViewSettings = result.getJSONObject("models_view_settings");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+//                    if (localSetting != null && !localSetting.isEmpty()) {
+//                        localSetting=localSetting.replace("\\","");
+//                    }
+                    if (remoteViewSettings == null) {
+                        if (localSetting != null && !localSetting.isEmpty()) {
+                            //服务端无记录，本地有记录，则直接上传本地记录到服务端
+
+                            Timber.i("upload view setting %s", localSetting);
+                            RequestBody formBody = new FormBody.Builder()
+                                    .add("models_view_settings", localSetting)
+                                    .build();
+
+                            OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/conf", formBody, token, "", null);
+                            remoteViewSettings = new JSONObject(localSetting);//还是要和本地model做对比
+                        } else {
+                            //都是空，啥也别干了
+                        }
+                        return;
+                    }
+                    Timber.i("show me the local view setting %s", localSetting);
+                    JSONObject localViewSettings = localSetting == null || localSetting.isEmpty() ? remoteViewSettings : new JSONObject(localSetting);
+                    //遍历model
+                    List<Long> needRemoveFromService = new ArrayList<>();//记录本地已经没了的model fixme：可能服务端有，需结合同步来操作
+                    Iterator<String> remoteModels = remoteViewSettings.keys();
+
+                    while (remoteModels.hasNext()) {
+                        String remoteModelId = remoteModels.next();
+                        long modelID = -1;
+                        try {
+                            modelID = Long.parseLong(remoteModelId);
+                        } catch (Exception e) {
+                            continue;//只遍历model id
+                        }
+
+                        JSONObject remote = remoteViewSettings.getJSONObject(remoteModelId);
+                        long serviceUpdateAt = remote.getLong("updated_at");
+                        boolean needRemove = true;
+                        for (Model model : getCol().getModels().all()) {
+                            if (model.getLong("id") == modelID) {
+                                needRemove = false;//标记本地没有改model，但在服务端却有该model id的值，如果是同步过后的话，需要清理掉服务端不存在的model id
+                            }
+                        }
+                        if (needRemove) {
+                            needRemoveFromService.add(modelID);
+                            if ((boolean) arg1) {
+                                //是否需要根据本地model来判断该view_setting该不该删除
+                                //如果该节点是要删除的，那么不用和本地记录做比较了，跳过等待删除即可
+                                continue;
+                            }
+                        }
+
+
+                        //和本地的记录比较
+                        try {
+                            if (localViewSettings.getString(remoteModelId) != null) {
+                                //本地有记录
+                                JSONObject child = localViewSettings.getJSONObject(remoteModelId);
+                                long localUpdateAt = child.getLong("updated_at");
+                                if (localUpdateAt > serviceUpdateAt) {
+                                    //上传本地配置到服务器
+                                    remoteViewSettings.put(remoteModelId, child);
+                                    return;
+                                } else if (localUpdateAt < serviceUpdateAt) {
+                                    //下载服务端配置到本地
+                                    localViewSettings.put(remoteModelId, remote);
+                                }
+                            }
+                        } catch (Exception e) {
+//                            e.printStackTrace();
+                            //本地没该记录，直接保存
+                            localViewSettings.put(remoteModelId, remote);
+                        }
+
+                    }
+                    if ((boolean) arg1) {
+                        for (long id : needRemoveFromService) {
+                            localViewSettings.remove(String.valueOf(id));
+                            remoteViewSettings.remove(String.valueOf(id));
+                        }
+                    }
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString(Consts.KEY_LOCAL_LAYOUT_CONFIG, localViewSettings.toString());
+                    editor.apply();
+                    if (localSetting != null && !localSetting.isEmpty()) {
+                        //和本地记录有过对比，可能需要更新远程记录
+                        Timber.i("upload view setting %s", localViewSettings.toString());
+                        RequestBody formBody = new FormBody.Builder()
+                                .add("models_view_settings", localViewSettings.toString())
+                                .build();
+                        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "users/conf", formBody, token, "", null);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Timber.e("fetch service config failed, error code %d", response.code());
+            }
+        }
+    };
+    protected final OKHttpUtil.MyCallBack getServiceKeyCallback = new OKHttpUtil.MyCallBack() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+
+        @Override
+        public void onResponse(Call call, String token, Object arg1, Response response) throws IOException {
+            if (response.isSuccessful()) {
+                pulledKeyFromService = true;//只获取一次就够了
+                try {
+                    JSONObject result = (new JSONObject(response.body().string())).getJSONObject("data");
+                    Timber.i("fetch service key result:%s ", result.toString());
+                    if(result!=JSONObject.NULL){
+//                        JSONObject models=result.getJSONObject("models");
+                        if(result.getJSONObject("models")!=JSONObject.NULL){
+                            AnkiDroidApp.getSharedPrefs(AnkiActivity.this).edit().putString(Consts.KEY_SAVED_MODEL_KEY,result.getJSONObject("models").toString()).apply();
+                        }else {
+                            AnkiDroidApp.getSharedPrefs(AnkiActivity.this).edit().remove(Consts.KEY_SAVED_MODEL_KEY).apply();
+                        }
+                     }else {
+                        AnkiDroidApp.getSharedPrefs(AnkiActivity.this).edit().remove(Consts.KEY_SAVED_MODEL_KEY).apply();
+
+                    }
+                } catch ( Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Timber.e("fetch service key failed, error code %d", response.code());
+            }
+        }
+    };
 
 }
 

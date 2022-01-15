@@ -22,7 +22,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:text="每天新卡上限"
-            android:textColor="?attr/primaryTextColor"
+            android:textColor="?attr/primaryTextColor222222"
             android:textSize="13sp" />
     </RelativeLayout>
     <TextView
