@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -44,6 +45,7 @@ import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -55,6 +57,7 @@ import androidx.core.view.ActionProvider;
 import androidx.core.view.MenuItemCompat;
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.dialogs.ConfirmationDialog;
 import com.ichi2.anki.multimediacard.AudioView;
@@ -77,6 +80,7 @@ import com.ichi2.utils.Permissions;
 import com.ichi2.widget.WidgetStatus;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 
 import timber.log.Timber;
 
@@ -425,6 +429,18 @@ public class Reviewer extends AbstractFlashcardViewer {
                 refreshActionBar();
                 break;
 
+            case R.id.action_toggle_remark:
+                boolean enable = AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean("enable_remark", true);
+                if (enable) {
+                    mRemark.setVisibility(View.GONE);
+                    item.setTitle("启用助记");
+                } else {
+                    mRemark.setVisibility(View.VISIBLE);
+                    item.setTitle("禁用助记");
+                }
+                AnkiDroidApp.getSharedPrefs(getBaseContext()).edit().putBoolean("enable_remark", !enable).apply();
+                break;
+
             case R.id.action_toggle_whiteboard:
                 toggleWhiteboard();
                 break;
@@ -649,6 +665,13 @@ public class Reviewer extends AbstractFlashcardViewer {
         }
         int alpha_undo = (undoEnabled && getControlBlocked() != ReviewerUi.ControlBlock.SLOW) ? Themes.ALPHA_ICON_ENABLED_LIGHT : Themes.ALPHA_ICON_DISABLED_LIGHT;
         undoIcon.setEnabled(undoEnabled).getIcon().mutate().setAlpha(alpha_undo);
+
+        MenuItem toggleRemark = menu.findItem(R.id.action_toggle_remark);
+        if (AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean("enable_remark", true)) {
+            toggleRemark.setTitle("禁用助记");
+        } else {
+            toggleRemark.setTitle("启用助记");
+        }
 
         MenuItem toggle_whiteboard_icon = menu.findItem(R.id.action_toggle_whiteboard);
         MenuItem hide_whiteboard_icon = menu.findItem(R.id.action_hide_whiteboard);

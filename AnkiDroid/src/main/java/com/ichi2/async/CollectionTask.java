@@ -611,7 +611,7 @@ public class CollectionTask extends BaseAsyncTask<TaskData, TaskData, TaskData> 
         Collection col = getCol();
         AbstractSched sched = col.getSched();
         Card oldCard = param.getCard();
-        @Consts.BUTTON_TYPE int ease = param.getInt();
+        int ease = param.getInt();
         Card newCard = null;
         Timber.i(oldCard != null ? "Answering card" : "Obtaining card");
         try {

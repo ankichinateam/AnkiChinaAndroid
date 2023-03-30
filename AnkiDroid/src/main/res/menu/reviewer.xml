@@ -62,13 +62,14 @@
     </item>
     <item
         android:id="@+id/action_back"
-         
         android:title="返回上一张"/>
     <item
         android:id="@+id/action_speak_setting"
         android:title="朗读设置"
         />
-
+    <item
+        android:id="@+id/action_toggle_remark"
+        android:title="禁用助记" />
     <item
         android:id="@+id/action_save_whiteboard"
         android:title="@string/save_whiteboard"

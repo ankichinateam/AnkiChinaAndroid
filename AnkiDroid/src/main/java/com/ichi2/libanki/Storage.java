@@ -141,6 +141,8 @@ public class Storage {
 
     private static int _upgradeSchema(DB db, @NonNull Time time) {
         Timber.i("_upgradeSchema db");
+        db.execute("create table if not exists remarks (" + "    id             integer primary key,"
+                + "    cid             integer not null,"+ "    content             text not null," + "    mod             integer not null" + ")");
         int ver = db.queryScalar("SELECT ver FROM col");
         if (ver == Consts.SCHEMA_VERSION) {
             return ver;
@@ -373,6 +375,8 @@ public class Storage {
                 + "    oid             integer not null," + "    type            integer not null" + ")");
         db.execute("create table if not exists synclog (" + "    id             integer not null,"
                 + "    type             integer not null," + "    mod             integer not null" + ")");
+        db.execute("create table if not exists remarks (" + "    id             integer primary key,"
+                + "    cid             integer not null,"+ "    content             text not null," + "    mod             integer not null" + ")");
         db.execute("INSERT OR IGNORE INTO col VALUES(1,0,0," +
                 time.intTimeMS() + "," + Consts.SCHEMA_VERSION +
                 ",0,0,0,'','{}','','','{}')");
@@ -414,6 +418,7 @@ public class Storage {
         db.execute("create index if not exists ix_notes_csum on notes (csum);)");
         db.execute("create index if not exists ix_synclog on synclog (id,type);)");
         db.execute("create index if not exists ix_synclog_id on synclog (id);)");
+        db.execute("create index if not exists ix_remarks_cid on remarks (cid);)");
         db.execute("create index if not exists ix_cards_id on cards (id);)");
         db.execute("create index if not exists ix_notes_id on notes (id);)");
     }

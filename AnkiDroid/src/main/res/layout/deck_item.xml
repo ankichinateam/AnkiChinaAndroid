@@ -123,7 +123,7 @@
             android:layout_width="match_parent"
             android:layout_height="6dp"
             android:minHeight="6dp"
-            android:progressDrawable="@drawable/deckpicker_progress_bar"
+            android:progressDrawable="@drawable/deckpicker_studied_progress_bar"
             android:max="10000"
             android:progress="50"
             />

@@ -27,11 +27,13 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.text.Spanned;
 
 import androidx.annotation.NonNull;
 import android.os.StatFs;
 
+import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.AnkiFont;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
@@ -1102,5 +1104,83 @@ public class Utils {
             }
         }
         return changed;
+    }
+
+    public static String UUID;
+    static {
+        UUID=getUUid();
+    }
+    public static String getUUid() {
+        /*The Android ID
+         * 通常被认为不可信，因为它有时为null。开发文档中说明了：这个ID会改变如果进行了出厂设置。
+         * 并且，如果某个Andorid手机被Root过的话，这个ID也可以被任意改变。
+         * */
+        String m_szAndroidID = android.provider.Settings.Secure.getString(AnkiDroidApp.getInstance().getContentResolver(),
+                android.provider.Settings.Secure.ANDROID_ID);
+        /*The IMEI: 仅仅只对Android手机有效:
+         * 采用此种方法，需要在AndroidManifest.xml中加入一个许可：android.permission.READ_PHONE_STATE，并且用户应当允许安装此应用。
+         * 作为手机来讲，IMEI是唯一的，它应该类似于 359881030314356（除非你有一个没有量产的手机（水货）
+         * 它可能有无效的IMEI，如：0000000000000）
+         * 安卓7.0如果用户禁止READ_PHONE_STATE权限，将会导致应用崩溃*/
+        //        TelephonyManager TelephonyMgr = (TelephonyManager) APP.getInstance().getSystemService(TELEPHONY_SERVICE);
+        //        String m_szImei = TelephonyMgr.getDeviceId();
+        //        LogUtil.e("params451", "手机IMEI： " + m_szImei);
+
+        /*
+         *Android系统2.3版本以上可以获取硬件Serial Number
+         * 优点：非手机设备也可以通过该接口获取ID。
+         * */
+        String serial = null;
+        try {
+            //API>=9 使用serial号
+            serial = android.os.Build.class.getField("SERIAL").get(null).toString();
+            //            return new UUID(m_szDevIDShort.hashCode(), serial.hashCode()).toString();
+        } catch (Exception exception) {
+            serial = "serial"; // serial需要一个初始化，随便一个初始化
+        }
+        /*
+         * 有一些特殊的情况，一些如平板电脑的设置没有通话功能，或者你不愿加入READ_PHONE_STATE许可。
+         * 而你仍然想获得唯一序列号之类的东西。这时你可以通过取出ROM版本、制造商、CPU型号、以及其他硬件信息来实现这一点。
+         * 这样计算出来的ID不是唯一的（因为如果两个手机应用了同样的硬件以及Rom 镜像）。
+         * 但应当明白的是，出现类似情况的可能性基本可以忽略。要实现这一点，你可以使用Build类:
+         * */
+        String m_szDevIDShort = "35" +
+                Build.BOARD.length() % 10 +
+                Build.BRAND.length() % 10 +
+                Build.CPU_ABI.length() % 10 +
+                Build.DEVICE.length() % 10 +
+                Build.DISPLAY.length() % 10 +
+                Build.HOST.length() % 10 +
+                Build.ID.length() % 10 +
+                Build.MANUFACTURER.length() % 10 +
+                Build.MODEL.length() % 10 +
+                Build.PRODUCT.length() % 10 +
+                Build.TAGS.length() % 10 +
+                Build.TYPE.length() % 10 +
+                Build.USER.length() % 10; //13 digits
+
+        String m_szLongID = serial + m_szDevIDShort + m_szAndroidID;
+        //md5加密生成唯一uuid
+        MessageDigest m = null;
+        try {
+            m = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        m.update(m_szLongID.getBytes(), 0, m_szLongID.length());
+        // get md5 bytes
+        byte p_md5Data[] = m.digest();
+        // create a hex string
+        String m_szUniqueID = new String();
+        for (int i = 0; i < p_md5Data.length; i++) {
+            int b = (0xFF & p_md5Data[i]);
+            // if it is a single digit, make sure it have 0 in front (proper padding)
+            if (b <= 0xF)
+                m_szUniqueID += "0";
+            // add number to string
+            m_szUniqueID += Integer.toHexString(b);
+        }   // hex string to uppercase
+        m_szUniqueID = m_szUniqueID.toUpperCase();
+        return m_szUniqueID;
     }
 }

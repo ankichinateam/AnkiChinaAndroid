@@ -53,7 +53,9 @@ public class BackupManager {
     public final static String BROKEN_DECKS_SUFFIX = "broken";
 
 
-    /** Number of hours after which a backup new backup is created */
+    /**
+     * Number of hours after which a backup new backup is created
+     */
     private static final int BACKUP_INTERVAL = 5;
 
 
@@ -99,7 +101,7 @@ public class BackupManager {
     @SuppressWarnings("PMD.NPathComplexity")
     private static boolean performBackupInBackground(final String colPath, int interval, boolean force, @NonNull Time time) {
         SharedPreferences prefs = AnkiDroidApp.getSharedPrefs(AnkiDroidApp.getInstance().getBaseContext());
-        if (prefs.getInt("backupMax", 8) == 0 && !force) {
+        if (prefs.getInt("backupMax", 15) == 0 && !force) {
             Timber.w("backups are disabled");
             return false;
         }
@@ -107,7 +109,7 @@ public class BackupManager {
         File[] deckBackups = getBackups(colFile);
         int len = deckBackups.length;
         if (len > 0 && deckBackups[len - 1].lastModified() == colFile.lastModified()) {
-            Timber.d("performBackup: No backup necessary due to no collection changes");
+            Timber.i("performBackup: No backup necessary due to no collection changes");
             return false;
         }
 
@@ -126,7 +128,7 @@ public class BackupManager {
             }
         }
         if (lastBackupDate != null && lastBackupDate.getTime() + interval * 3600000L > time.intTimeMS() && !force) {
-            Timber.d("performBackup: No backup created. Last backup younger than 5 hours");
+            Timber.i("performBackup: No backup created. Last backup younger than 5 hours");
             return false;
         }
 
@@ -142,7 +144,7 @@ public class BackupManager {
         // Abort backup if destination already exists (extremely unlikely)
         final File backupFile = new File(getBackupDirectory(colFile.getParentFile()), backupFilename);
         if (backupFile.exists()) {
-            Timber.d("performBackup: No new backup created. File already exists");
+            Timber.i("performBackup: No new backup created. File already exists");
             return false;
         }
 
@@ -155,7 +157,7 @@ public class BackupManager {
 
         // Don't bother trying to do backup if the collection is too small to be valid
         if (colFile.length() < MIN_BACKUP_COL_SIZE) {
-            Timber.d("performBackup: No backup created as the collection is too small to be valid");
+            Timber.i("performBackup: No backup created as the collection is too small to be valid");
             return false;
         }
 
@@ -199,6 +201,7 @@ public class BackupManager {
         return getFreeDiscSpace(path) >= (MIN_FREE_SPACE * 1024 * 1024);
     }
 
+
     /**
      * Get free disc space in bytes from path to Collection
      */
@@ -230,7 +233,7 @@ public class BackupManager {
         String execString = "sqlite3 " + deckPath + " .dump | sqlite3 " + deckPath + ".tmp";
         Timber.i("repairCollection - Execute: %s", execString);
         try {
-            String[] cmd = { "/system/bin/sh", "-c", execString };
+            String[] cmd = {"/system/bin/sh", "-c", execString};
             Process process = Runtime.getRuntime().exec(cmd);
             process.waitFor();
 
@@ -295,7 +298,7 @@ public class BackupManager {
         ArrayList<File> deckBackups = new ArrayList<>();
         for (File aktFile : files) {
             if (aktFile.getName().replaceAll("^(.*)-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}.(apkg|colpkg)$", "$1")
-                    .equals(colFile.getName().replace(".anki2",""))) {
+                    .equals(colFile.getName().replace(".anki2", ""))) {
                 deckBackups.add(aktFile);
             }
         }
@@ -329,9 +332,10 @@ public class BackupManager {
     public static boolean removeDir(File dir) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
-            if(files!=null)
-            for (File aktFile : files) {
-                removeDir(aktFile);
+            if (files != null) {
+                for (File aktFile : files) {
+                    removeDir(aktFile);
+                }
             }
         }
         return dir.delete();

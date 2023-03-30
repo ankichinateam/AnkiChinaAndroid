@@ -25,6 +25,7 @@ import android.graphics.drawable.Drawable;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import timber.log.Timber;
 
@@ -269,10 +270,30 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private String mNewCard, mNeedReviewCard, mCost;
 
 
-    public void updateHeaderData(String newCard, String needReviewCard, String cost) {
-        mNewCard = newCard;
-        mNeedReviewCard = needReviewCard;
-        mCost = cost;
+    public void updateHeaderData( ) {
+
+        //            Integer eta = mDeckListAdapter.getEta();
+        Integer newCard = getNewCard();
+        Integer needReviewCard =  getReviewCard();
+//            Resources res = getResources();
+//            if (getCol().cardCount() != -1) {
+//                String time = "-";
+//                String unit = "";
+//                if (eta != -1 && eta != null) {
+////                    time = Utils.timeQuantityTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+//                    time = Utils.timeQuantityNumTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+//                    unit = Utils.timeQuantityUnitTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+//                }
+        int eta = (newCard + needReviewCard) * 10 / 60;
+        if ((newCard + needReviewCard) % 60 != 0) {
+            eta++;
+        }
+//        updateHeaderData(newCard, "" + needReviewCard, String.valueOf(eta));
+
+
+        mNewCard =  "" + newCard;
+        mNeedReviewCard =  "" + needReviewCard;
+        mCost = String.valueOf(eta);
         notifyItemChanged(0);
     }
 
@@ -418,13 +439,15 @@ public class DeckAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 //新卡已学完，显示已掌握
                 percent = (data[0] + data[1] + data[2] <= 0) ? 0 : (data[0] / (data[0] + data[1] + data[2]) * 100);
                 holder.handled_num.setText(String.format(Locale.CHINA, "%.0f/%.0f", data[0], (data[0] + data[1] + data[2])));
-
                 holder.handled_percent.setText((String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%");
+                holder.studyProgress.setProgressDrawable(mContext.getDrawable(R.drawable.deckpicker_handled_progress_bar));
             }else {
                 percent = (data[0] + data[1] + data[2] <= 0) ? 0 : ((data[0]+ data[1]) / (data[0] + data[1] + data[2]) * 100);
                 holder.handled_num.setText(String.format(Locale.CHINA, "%.0f/%.0f", data[0]+ data[1], (data[0] + data[1] + data[2])));
 
                 holder.handled_percent.setText((String.format(Locale.CHINA, "已学 %.1f", percent)) + "%");
+                holder.studyProgress.setProgressDrawable(mContext.getDrawable(R.drawable.deckpicker_studied_progress_bar));
+
             }
 
             holder.studyProgress.setMax(100 * 100);

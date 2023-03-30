@@ -21,6 +21,7 @@
             android:textSize="17sp"
             android:textStyle="bold" />
         <RelativeLayout
+            android:id="@+id/rl_over_sea_server"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="11dp"
@@ -28,7 +29,6 @@
             android:paddingVertical="9dp">
 
             <RelativeLayout
-                android:id="@+id/rl_over_sea_server"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true">

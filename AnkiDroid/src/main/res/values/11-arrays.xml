@@ -153,6 +153,7 @@
     </string-array>
     <string-array name="self_study_items_mark">
         <item>全选</item>
+        <item>无色</item>
         <item>红色</item>
         <item>橙色</item>
         <item>绿色</item>

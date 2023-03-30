@@ -27,6 +27,7 @@ import android.text.TextUtils;
 import android.util.Pair;
 
 import com.ichi2.anki.AnkiDroidApp;
+import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
 import com.ichi2.anki.UIUtils;
 //import com.ichi2.anki.analytics.UsageAnalytics;
@@ -998,7 +999,15 @@ public class Collection {
     public int cardCount(String ids) {
         return mDb.queryScalar("SELECT count() FROM cards WHERE did IN " + ids);
     }
-
+    public int cardCountInOneDeck(long id) {
+        return mDb.queryScalar("SELECT count() FROM cards WHERE did = " + id);
+    }
+    public int notesCount() {
+        return mDb.queryScalar("SELECT count() FROM notes");
+    }
+    public int remarksCount() {
+        return mDb.queryScalar("SELECT count() FROM remarks");
+    }
     /**
      * Bulk delete cards by ID.
      */
@@ -1014,7 +1023,9 @@ public class Collection {
         List<Long> nids = mDb.queryLongList("SELECT nid FROM cards WHERE id IN " + sids);
         // remove cards
         _logRem(ids, Consts.REM_CARD);
+
         mDb.execute("DELETE FROM cards WHERE id IN " + sids);
+        mDb.execute("DELETE FROM remarks WHERE cid IN " + sids);//删除笔记就删除助记
         // then notes
         if (!notes) {
         	return;
@@ -2016,6 +2027,36 @@ public class Collection {
 
     public Decks getDecks() {
         return mDecks;
+    }
+    public ArrayList<Remark> getRemarks() {
+        ArrayList<Remark> list=new ArrayList<>();
+        Cursor cur = null;
+        try {
+            cur = mDb.getDatabase().query("select remarks.id,remarks.cid,remarks.content,remarks.mod from remarks ", null);
+            Timber.i("get remarks size: %d", cur.getCount());
+            while (cur.moveToNext()) {
+                try {
+                    JSONObject object=new JSONObject();
+                    object.put("id",cur.getLong(0));
+                    object.put("cid",cur.getLong(1));
+                    object.put("content",cur.getString(2));
+                    object.put("mod",cur.getLong(3));
+                    Remark remark=new Remark(object);
+                    list.add(remark);
+                } catch (IllegalStateException ex) {
+                    // DEFECT: Theory that is this an OOM is discussed in #5852
+                    // We store one exception to stop excessive logging
+                    Timber.i(ex,  "query remark error");
+
+                }
+            }
+
+        } finally {
+            if (cur != null && !cur.isClosed()) {
+                cur.close();
+            }
+        }
+        return list;
     }
 
 

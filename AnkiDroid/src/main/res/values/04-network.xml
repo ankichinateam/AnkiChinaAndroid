@@ -58,7 +58,8 @@
     <string name="password">密码</string>
     <string name="invite_hint">获取邀请码:关注微信公众号 "Anki记忆卡", 回复 "邀请码" 获取。关注流程：打开微信->搜索"Anki记忆卡"</string>
     <string name="auth_hint">获取验证码</string>
-    <string name="count_hint" >秒后重试</string>
+    <string name="re_get_auth_hint">重新获取</string>
+    <string name="count_hint" >s</string>
 
     <string name="invite_code" >邀请码</string>
     <string name="password_repeat">确认密码</string>
@@ -134,13 +135,14 @@
     <string name="sync_media_db_error">媒体同步失败，因为当前数据库已损坏。建议检查媒体。</string>
     <string name="sync_media_error">同步媒体数据出错。</string>
     <string name="no_enough_server_space">本次要上传%.2fGB,云空间剩余%.2fGB,请升级到更高的容量，再进行同步！</string>
-    <string name="please_upgrade_cloud_space">你的云空间不足，请升级！</string>
+    <string name="please_upgrade_cloud_space">您未开通同步服务，请升级！</string>
     <string name="sync_media_error_check">同步媒体文件时出错。建议检查媒体文件。</string>
     <!-- Please run ‘Check database’ before syncing -->
     <string name="sync_basic_check_failed">请在同步前运行“%s”</string>
     <string name="sync_sanity_local">本地</string>
     <string name="sync_sanity_remote">远程</string>
     <string name="force_full_sync_title">强制完全同步</string>
+    <string name="clear_local_data_title">清除本地数据</string>
     <string name="force_full_sync_summary">在下一次同步时, 强制单方向的改变.</string>
     <string name="full_sync_confirmation">请求的改变需要在下次同步你的集合时上传整个数据库. 如果你还有在其他设备上未同步的复习或者其他改变, 他们将会丢失, 是否继续?</string>
     <string name="full_sync_confirmation_upgrade">因先前安装的Anki版本中Bug的原因，我们建议强制完全同步一次。</string>

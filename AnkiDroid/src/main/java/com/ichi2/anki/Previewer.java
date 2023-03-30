@@ -19,6 +19,7 @@
 package com.ichi2.anki;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -27,6 +28,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.ichi2.async.CollectionTask;
+import com.ichi2.async.TaskData;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Utils;
 import com.ichi2.themes.Themes;
@@ -41,6 +45,7 @@ import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_NEXT_CARD;
 import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_NOTHING;
 import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_PRE_CARD;
 import static com.ichi2.anki.cardviewer.ViewerCommand.COMMAND_SHOW_ANSWER;
+import static com.ichi2.async.CollectionTask.TASK_TYPE.DISMISS;
 
 /**
  * The previewer intent must supply an array of cards to show and the index in the list from where
@@ -159,9 +164,66 @@ public class Previewer extends AbstractFlashcardViewer {
             case R.id.action_edit:
                 editCard();
                 return true;
+
+            case R.id.action_toggle_remark:
+                boolean enable = AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean("enable_remark", true);
+                if (enable) {
+                    mRemark.setVisibility(View.GONE);
+                    item.setTitle("启用助记");
+                } else {
+                    mRemark.setVisibility(View.VISIBLE);
+                    item.setTitle("禁用助记");
+                }
+                AnkiDroidApp.getSharedPrefs(getBaseContext()).edit().putBoolean("enable_remark", !enable).apply();
+                return true;
+
+            case R.id.action_delete:
+                Timber.i("Reviewer:: Delete note button pressed");
+                showDeleteNoteDialog();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+
+    @Override
+    protected void showDeleteNoteDialog() {
+        Resources res = getResources();
+        new MaterialDialog.Builder(this)
+                .title(res.getString(R.string.delete_card_title))
+                .iconAttr(R.attr.dialogErrorIcon)
+                .content(res.getString(R.string.delete_note_message,
+                        Utils.stripHTML(mCurrentCard.q(true))))
+                .positiveText(res.getString(R.string.dialog_positive_delete))
+                .negativeText(res.getString(R.string.dialog_cancel))
+                .onPositive((dialog, which) -> {
+                    Timber.i("AbstractFlashcardViewer:: OK button pressed to delete note %d", mCurrentCard.getNid());
+                    mSoundPlayer.stopSounds();
+                    blockControls(false);
+                    CollectionTask.launchCollectionTask(DISMISS, mDismissCardHandler,
+                            new TaskData(new Object[] {mCurrentCard, Collection.DismissType.DELETE_NOTE}));
+                    mNoteChanged = true;
+                    if (mCardList.length > 1) {
+                        long temp[] = new long[mCardList.length - 1];
+                        for (int i = 0, k = 0; i < mCardList.length; i++) {
+                            if (i != mIndex) {
+                                temp[k++] = mCardList[i];
+                            }
+                        }
+                        if (mIndex > temp.length - 1) {
+                            mIndex = temp.length - 1;
+                        }
+                        mCardList = temp;
+                        mCurrentCard = getCol().getCard(mCardList[mIndex]);
+                        displayCardQuestion();
+                    } else {
+                        finishWithoutAnimation();
+                    }
+                    Toast.makeText(Previewer.this, "成功删除卡牌", Toast.LENGTH_SHORT).show();
+
+                })
+                .build().show();
     }
 
 
@@ -182,6 +244,13 @@ public class Previewer extends AbstractFlashcardViewer {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.previewer, menu);
+        MenuItem toggleRemark = menu.findItem(R.id.action_toggle_remark);
+        if (AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean("enable_remark", true)) {
+            toggleRemark.setTitle("禁用助记");
+        } else {
+            toggleRemark.setTitle("启用助记");
+        }
+
         return super.onCreateOptionsMenu(menu);
     }
 

@@ -72,7 +72,7 @@ public class Auth {
 
     private Properties load(Context context) {
         try {
-            InputStream is = context.getAssets().open("auth.properties");
+            InputStream is = context.getAssets().open("auth.properties2-2");
             Properties prop = new Properties();
             prop.load(is);
             is.close();

@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
@@ -280,7 +281,7 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
                 });
                 mBeVipDialog.show();
             } else {
-                Toast.makeText(AnkiActivity.this, "云空间不足，同步失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AnkiActivity.this, "未开通同步服务，同步失败", Toast.LENGTH_SHORT).show();
 
             }
 
@@ -336,7 +337,8 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
     protected void onStart() {
         Timber.i("AnkiActivity::onStart - %s", mActivityName);
         super.onStart();
-        mCustomTabActivityHelper.bindCustomTabsService(this);
+        if(AnkiDroidApp.getSharedPrefs(this).contains(CONFIRM_PRIVATE_STRATEGY))
+            mCustomTabActivityHelper.bindCustomTabsService(this);
     }
 
 
@@ -465,6 +467,12 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
             public void onCompletedData() {
                 onSyncCompletedData();
             }
+
+
+            @Override
+            public void onSyncingMedia(double percent) {
+                onSyncingMediaPercent(percent);
+            }
         });
         syncer.sync();
         onSyncChinaStart();
@@ -485,6 +493,9 @@ public class AnkiActivity extends AppCompatActivity implements SimpleMessageDial
 
     protected void onSyncCompletedData() {
         Timber.i("on syncing:onSyncCompletedData");
+    }
+    protected void onSyncingMediaPercent(double percent) {
+        Timber.i("onSyncingMedia:%s",percent);
     }
 
 

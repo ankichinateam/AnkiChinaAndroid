@@ -19,8 +19,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -29,15 +32,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.material.textfield.TextInputLayout;
 import com.ichi2.anim.ActivityTransitionAnimation;
 import com.ichi2.anki.web.HostNumFactory;
 import com.ichi2.async.Connection;
 import com.ichi2.async.Connection.Payload;
 import com.ichi2.libanki.Consts;
 import com.ichi2.themes.StyledProgressDialog;
-import com.ichi2.ui.TextInputEditField;
 import com.ichi2.utils.AdaptionUtil;
+import com.ichi2.utils.FormatCheckUtils;
 
 import androidx.appcompat.widget.Toolbar;
 import timber.log.Timber;
@@ -50,13 +52,13 @@ public class MyAccount2 extends AnkiActivity {
     private View mLoggedIntoMyAccountView;
 
     private EditText mUsername;
-    private TextInputEditField mPassword;
+    private EditText mPassword;
 
     private TextView mUsernameLoggedIn;
 
     private MaterialDialog mProgressDialog;
     Toolbar mToolbar = null;
-    private TextInputLayout mPasswordLayout;
+//    private TextInputLayout mPasswordLayout;
 
 
     private void switchToState(int newState) {
@@ -84,6 +86,12 @@ public class MyAccount2 extends AnkiActivity {
 
 
         supportInvalidateOptionsMenu();  // Needed?
+    }
+
+
+    @Override
+    protected boolean isStatusBarTransparent() {
+        return true;
     }
 
 
@@ -130,7 +138,7 @@ public class MyAccount2 extends AnkiActivity {
         editor.putString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT, mUsername.getText().toString().trim());
         editor.putString(Consts.KEY_SAVED_ANKI_WEB_HKEY, hkey);
         editor.putInt(Consts.KEY_ANKI_ACCOUNT_SERVER, Consts.LOGIN_SERVER_ANKIWEB);
-        Consts.LOGIN_SERVER=Consts.LOGIN_SERVER_ANKIWEB;
+        Consts.LOGIN_SERVER = Consts.LOGIN_SERVER_ANKIWEB;
         editor.apply();
     }
 
@@ -155,14 +163,14 @@ public class MyAccount2 extends AnkiActivity {
     public void logout(Context context) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(context);
         Editor editor = preferences.edit();
-        editor.putString("username", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE,""));//优先切换为另一个账号的登陆状态
-        editor.putString("hkey", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_HKEY,""));
-        editor.putString("token", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_TOKEN,""));
+        editor.putString("username", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE, ""));//优先切换为另一个账号的登陆状态
+        editor.putString("hkey", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_HKEY, ""));
+        editor.putString("token", preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_TOKEN, ""));
 
         editor.putString(Consts.KEY_SAVED_ANKI_WEB_ACCOUNT, "");
         editor.putString(Consts.KEY_SAVED_ANKI_WEB_HKEY, "");
 
-        Consts.LOGIN_SERVER=preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE,"").isEmpty()?Consts.LOGIN_SERVER_NOT_LOGIN:Consts.LOGIN_SERVER_ANKICHINA;
+        Consts.LOGIN_SERVER = preferences.getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE, "").isEmpty() ? Consts.LOGIN_SERVER_NOT_LOGIN : Consts.LOGIN_SERVER_ANKICHINA;
         editor.putInt(Consts.KEY_ANKI_ACCOUNT_SERVER, Consts.LOGIN_SERVER);
         editor.apply();
         HostNumFactory.getInstance(context).reset();
@@ -185,12 +193,64 @@ public class MyAccount2 extends AnkiActivity {
     }
 
 
+    public void enableEncryptPasswordContent(View view) {
+        if (!view.isSelected()) {
+            mPassword.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+        } else {
+            mPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        }
+        view.setSelected(!view.isSelected());
+    }
+
+
     private void initAllContentViews() {
         mLoginToMyAccountView = getLayoutInflater().inflate(R.layout.my_account2, null);
+
+        Button loginButton = mLoginToMyAccountView.findViewById(R.id.login_button);
         mUsername = mLoginToMyAccountView.findViewById(R.id.username);
         mPassword = mLoginToMyAccountView.findViewById(R.id.password);
-        mPasswordLayout = mLoginToMyAccountView.findViewById(R.id.password_layout);
+        mUsername.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
+            }
+
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!mPassword.getText().toString().isEmpty()) {
+                    loginButton.setEnabled(FormatCheckUtils.isEmailValid(s.toString()));
+                }
+            }
+
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        mPassword.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(FormatCheckUtils.isEmailValid(mUsername.getText().toString()))
+                    loginButton.setEnabled(!s.toString().isEmpty() );
+            }
+
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+//        mPasswordLayout = mLoginToMyAccountView.findViewById(R.id.password_layout);
         mPassword.setOnKeyListener((v, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 switch (keyCode) {
@@ -206,13 +266,13 @@ public class MyAccount2 extends AnkiActivity {
             return false;
         });
 
-        Button loginButton = mLoginToMyAccountView.findViewById(R.id.login_button);
+
         loginButton.setOnClickListener(v -> login());
 
         Button resetPWButton = mLoginToMyAccountView.findViewById(R.id.reset_password_button);
         resetPWButton.setOnClickListener(v -> resetPassword());
 
-        Button signUpButton = mLoginToMyAccountView.findViewById(R.id.sign_up_button);
+        TextView signUpButton = mLoginToMyAccountView.findViewById(R.id.sign_up_button);
         Uri url = Uri.parse(getResources().getString(R.string.register_url));
         signUpButton.setOnClickListener(v -> openUrl(url));
 
@@ -221,14 +281,19 @@ public class MyAccount2 extends AnkiActivity {
         Button logoutButton = mLoggedIntoMyAccountView.findViewById(R.id.logout_button);
         logoutButton.setOnClickListener(v -> logout(getBaseContext()));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mPassword.setAutoFillListener((value) -> {
-                //disable "show password".
-                mPasswordLayout.setEndIconVisible(false);
-                Timber.i("Attempting login from autofill");
-                attemptLogin();
-            });
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            mPassword.setAutoFillListener((value) -> {
+//                //disable "show password".
+//                mPasswordLayout.setEndIconVisible(false);
+//                Timber.i("Attempting login from autofill");
+//                attemptLogin();
+//            });
+//        }
+    }
+
+
+    public void onQuit(View view) {
+        onBackPressed();
     }
 
 

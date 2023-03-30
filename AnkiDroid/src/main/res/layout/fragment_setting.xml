@@ -388,7 +388,7 @@
                     android:layout_centerVertical="true"
                     android:layout_marginStart="14dp"
                     android:layout_toEndOf="@id/icon1"
-                    android:text="自动同步"
+                    android:text="启动时自动同步"
                     android:textSize="16sp" />
             </RelativeLayout>
 

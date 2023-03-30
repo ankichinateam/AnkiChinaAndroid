@@ -217,7 +217,7 @@ public class Sound {
             int markerStart = contentLeft.indexOf(soundMarker);
             stringBuilder.append(contentLeft.substring(0, markerStart));
             // The <span> around the button (SVG or PNG image) is needed to make the vertical alignment work.
-            stringBuilder.append("<a class='replaybutton' href=\"playsound:").append(soundPath).append("\">")
+            stringBuilder.append("<a class='replay-button' href=\"playsound:").append(soundPath).append("\">")
                     .append("<span>").append(button)
                     .append("</span></a>");
             contentLeft = contentLeft.substring(markerStart + soundMarker.length());

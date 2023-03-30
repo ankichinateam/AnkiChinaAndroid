@@ -1162,7 +1162,7 @@ public class SelfStudyActivity extends AnkiActivity implements
                 break;
             case TAB_MARK_STATE:
                 switch (index) {
-                    case 0://事实上不会来到这里，这里是弹窗里的全部
+                    case 0://全部
 //                        restrict= "(flag:1) or (flag:2) or (flag:3) or (flag:4) or (tag:marked)";
                         restrict = "";
                         break;
@@ -1170,9 +1170,10 @@ public class SelfStudyActivity extends AnkiActivity implements
                     case 2:
                     case 3:
                     case 4:
-                        restrict = "(flag:" + index + ")";
-                        break;
                     case 5:
+                        restrict = "(flag:" + (index - 1) + ")";
+                        break;
+                    case 6:
                         restrict = "(tag:marked)";
                         break;
                 }
@@ -2092,7 +2093,7 @@ public class SelfStudyActivity extends AnkiActivity implements
                 // Only new cards may be repositioned
                 long[] cardIds = getSelectedCardIds();
                 for (int i = 0; i < cardIds.length; i++) {
-                    if (getCol().getCard(cardIds[i]).getQueue() != Consts.CARD_TYPE_NEW) {
+                    if (getCol().getCard(cardIds[i]).getQueue() != Consts.QUEUE_TYPE_NEW) {
                         SimpleMessageDialog dialog = SimpleMessageDialog.newInstance(
                                 getString(R.string.vague_error),
                                 getString(R.string.reposition_card_not_new_error),

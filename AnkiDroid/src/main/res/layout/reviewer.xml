@@ -43,6 +43,19 @@
 
             <include layout="@layout/reviewer_answer_buttons" />
             <include layout="@layout/anki_progress"/>
+            <ImageButton
+                android:id="@+id/btn_remark"
+                android:layout_width="47dp"
+                android:layout_height="47dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="22dp"
+                android:elevation="10dp"
+                android:layout_marginBottom="22dp"
+                android:padding="10dp"
+                android:layout_above="@id/bottom_area_layout"
+                android:background="@drawable/btn_remark"
+                android:src="@mipmap/bnt_review_remark"/>
+
 
         </RelativeLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

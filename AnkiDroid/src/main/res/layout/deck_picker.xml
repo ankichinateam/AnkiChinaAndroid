@@ -18,12 +18,13 @@
             android:id="@+id/no_permission_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
             <TextView
                 android:id="@+id/hint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="Anki记忆卡必须获得存储读取、写入权限才能正常加载卡牌"/>
+                android:text="Anki记忆卡必须获得存储读取、写入权限才能正常加载卡牌" />
             <Button
                 android:id="@+id/hint_button"
                 android:layout_below="@id/hint"

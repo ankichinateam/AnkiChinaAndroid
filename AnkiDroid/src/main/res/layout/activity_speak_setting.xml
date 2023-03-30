@@ -157,7 +157,7 @@
                     app:rsb_mode="single"
                     app:rsb_gravity="center"
                     app:rsb_max="200"
-                    app:rsb_progress_drawable_default="@drawable/deckpicker_progress_bar"
+                    app:rsb_progress_drawable_default="@drawable/deckpicker_studied_progress_bar"
                     app:rsb_progress_drawable="@color/primary_color"
                     app:rsb_progress_height="3dp"
                     app:rsb_min_interval="10"

@@ -25,12 +25,16 @@ import com.ichi2.utils.FunctionalInterfaces.Consumer;
 import androidx.annotation.NonNull;
 import timber.log.Timber;
 
-/** Handles logic for displaying help for missing media files */
+/**
+ * Handles logic for displaying help for missing media files
+ */
 public class MissingImageHandler {
 
-    /** Specify a maximum number of times to display, as it's somewhat annoying */
+    /**
+     * Specify a maximum number of times to display, as it's somewhat annoying
+     */
     public static final int MAX_DISPLAY_TIMES = 2;
-
+    private boolean mHasShownInefficientImage = false;
     private int mNumberOfMissingImages = 0;
     private boolean mHasExecuted = false;
 
@@ -38,6 +42,7 @@ public class MissingImageHandler {
     public MissingImageHandler() {
 
     }
+
 
     public void processFailure(WebResourceRequest request, @NonNull Consumer<String> onFailure) {
         // We do not want this to trigger more than once on the same side of the card as the UI will flicker.
@@ -74,7 +79,18 @@ public class MissingImageHandler {
         }
     }
 
+
     public void onCardSideChange() {
         mHasExecuted = false;
+    }
+
+
+    public void processInefficientImage(Runnable onFailure) {
+        if (mHasShownInefficientImage) {
+            return;
+        }
+
+        mHasShownInefficientImage = true;
+        onFailure.run();
     }
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/root_layout"
+
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+    <TextView
+        android:id="@+id/area"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:layout_centerVertical="true"
+        android:textStyle="bold"
+        android:text="中国"/>
+    <TextView
+        android:id="@+id/code"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:layout_alignParentEnd="true"
+        android:text="86"/>
+</RelativeLayout>

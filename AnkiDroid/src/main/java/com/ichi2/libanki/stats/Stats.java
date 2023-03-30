@@ -1364,6 +1364,7 @@ public class Stats {
         double[] pieData;
         Cursor cur = null;
         String query = "select " +
+                "sum(case when c.flags % 8 = 0  then 1 else 0 end), -- non\n" +
                 "sum(case when c.flags % 8 = 1  then 1 else 0 end), -- red\n" +
                 "sum(case when c.flags % 8 = 2  then 1 else 0 end), -- orange\n" +
                 "sum(case when c.flags % 8 = 3  then 1 else 0 end), -- green\n" +
@@ -1377,7 +1378,7 @@ public class Stats {
                     .query(query, null);
 
             cur.moveToFirst();
-            pieData = new double[] {cur.getDouble(0), cur.getDouble(1), cur.getDouble(2), cur.getDouble(3), cur.getDouble(4)};
+            pieData = new double[] {cur.getDouble(0), cur.getDouble(1), cur.getDouble(2), cur.getDouble(3), cur.getDouble(4), cur.getDouble(5)};
         } finally {
             if (cur != null && !cur.isClosed()) {
                 cur.close();

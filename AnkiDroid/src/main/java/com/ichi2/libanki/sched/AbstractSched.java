@@ -62,7 +62,7 @@ public abstract class AbstractSched {
      * Remove the siblings for the queue for same day spacing
      * Bury siblings if required by the options
      *  */
-    public abstract void answerCard(@NonNull Card card, @Consts.BUTTON_TYPE int ease);
+    public abstract void answerCard(@NonNull Card card,  int ease);
 
     /** Number of new, rev and lrn card to review in selected deck. Sum of elements of counts.*/
     public int count() {

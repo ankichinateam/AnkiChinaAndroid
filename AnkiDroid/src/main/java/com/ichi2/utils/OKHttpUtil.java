@@ -19,6 +19,7 @@ package com.ichi2.utils;
 import android.os.Build;
 
 import com.ichi2.anki.BuildConfig;
+import com.ichi2.libanki.Utils;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,9 @@ public class OKHttpUtil {
 
 
     public static void get(String url, String token, Object arg1, MyCallBack callback) {
-        Timber.i("start fetch url:%s，has token ：%s", url, token);
+//        Timber.i("start fetch url:%s，has token ：%s", url, token);
+        Timber.i("start fetch url（get):%s， UUID:%s", url, Utils.UUID);
+
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30,TimeUnit.SECONDS)
@@ -54,6 +57,7 @@ public class OKHttpUtil {
                 .get()
                 .addHeader("Authorization", "Bearer " + token)
                 .addHeader("x-app-version", BuildConfig.VERSION_NAME)
+                .addHeader("x-device-id", Utils.UUID)
                 .addHeader("x-os", "android " + Build.VERSION.SDK_INT)
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -75,7 +79,8 @@ public class OKHttpUtil {
 
 
     public static void put(String url, String token, Object arg1, MyCallBack callback) {
-        Timber.i("start fetch url（put):%s，has token ：%s", url, token);
+//        Timber.i("start fetch url（put):%s，has token ：%s", url, token);
+        Timber.i("start fetch url（put):%s， UUID:%s", url, Utils.UUID);
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30,TimeUnit.SECONDS)
@@ -85,6 +90,7 @@ public class OKHttpUtil {
                 .put(new FormBody.Builder().build())
                 .addHeader("Authorization", "Bearer " + token)
                 .addHeader("x-app-version", BuildConfig.VERSION_NAME)
+                .addHeader("x-device-id", Utils.UUID)
                 .addHeader("x-os", "android " + Build.VERSION.SDK_INT)
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -106,7 +112,7 @@ public class OKHttpUtil {
 
 
     public static void post(String url, RequestBody body, String token, Object arg1, MyCallBack callback) {
-        Timber.i("start fetch url（post):%s，has token ：%s", url, token);
+        Timber.i("start fetch url（post):%s， UUID:%s", url, Utils.UUID);
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30,TimeUnit.SECONDS)
@@ -115,6 +121,7 @@ public class OKHttpUtil {
                 .url(url)
                 .addHeader("Authorization", "Bearer " + token)
                 .addHeader("x-app-version", BuildConfig.VERSION_NAME)
+                .addHeader("x-device-id", Utils.UUID)
                 .addHeader("x-os", "android " + Build.VERSION.SDK_INT)
                 .post(body)
                 .build();

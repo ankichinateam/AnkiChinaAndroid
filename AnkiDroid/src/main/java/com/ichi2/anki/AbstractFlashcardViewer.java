@@ -34,7 +34,9 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
@@ -56,8 +58,9 @@ import androidx.core.net.ConnectivityManagerCompat;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.appcompat.app.ActionBar;
 
+import android.text.Editable;
 import android.text.TextUtils;
-import android.util.Log;
+import android.text.TextWatcher;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.GestureDetector.SimpleOnGestureListener;
@@ -126,6 +129,7 @@ import com.ichi2.bd.MySyntherizer;
 import com.ichi2.bd.NonBlockSyntherizer;
 import com.ichi2.bd.OfflineResource;
 import com.ichi2.compat.CompatHelper;
+import com.ichi2.libanki.DB;
 import com.ichi2.libanki.Decks;
 import com.ichi2.libanki.sched.AbstractSched;
 import com.ichi2.libanki.Card;
@@ -167,6 +171,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -357,6 +362,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
     protected ImageView mPreviewPrevCard;
     protected ImageView mPreviewNextCard;
+    protected ImageButton mRemark;
     protected TextView mPreviewToggleAnswerText;
     protected RelativeLayout mTopBarLayout;
     private Chronometer mCardTimer;
@@ -514,6 +520,113 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         }
     };
 
+    RelativeLayout.LayoutParams remarkLayoutParams;
+    int remarkOriginBottomMargin;
+    Dialog mRemarkDialog;
+    EditText mEditContent;
+    TextView mRemarkCount;
+
+
+    private void showRemarkDialog() {
+        Cursor cur = null;
+
+        Map<String, Object> remark = new HashMap<>();
+        Timber.i("search remarks cid  = " + mCurrentCard.getId());
+        try {
+            cur = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).getDb()
+                    .getDatabase()
+                    .query(
+                            "SELECT id,cid,content,mod FROM remarks WHERE cid = " + mCurrentCard.getId(), null);
+            if (cur.moveToNext()) {
+                remark.put("id", cur.getLong(0));
+                remark.put("cid", cur.getLong(1));
+                remark.put("content", cur.getString(2));
+                remark.put("mod", cur.getLong(3));
+            }
+        } finally {
+            if (cur != null && !cur.isClosed()) {
+                cur.close();
+            }
+        }
+
+        if (mRemarkDialog == null) {
+            mRemarkDialog = new Dialog(this, R.style.DialogTheme2);
+
+            //2、设置布局
+            View view = View.inflate(this, R.layout.dialog_remark, null);
+            mRemarkDialog.setContentView(view);
+            mRemarkDialog.setOnDismissListener(dialogInterface -> {
+
+            });
+            Window window = mRemarkDialog.getWindow();
+//            mRemarkDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+            //设置弹出位置
+            window.setGravity(Gravity.BOTTOM);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+//            WindowManager.LayoutParams lps = window.getAttributes();
+//            lps.verticalMargin = 0.1f;
+//            window.setAttributes(lps);
+            //设置弹出动画
+//        window.setWindowAnimations(R.style.main_menu_animStyle);
+//            //设置对话框大小
+//            final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            mEditContent = mRemarkDialog.findViewById(R.id.remark_content);
+            mRemarkCount = mRemarkDialog.findViewById(R.id.txt_count);
+        }
+        mRemarkDialog.findViewById(R.id.remark_confirm).setOnClickListener(view1 -> {
+            mRemarkDialog.dismiss();
+            Timber.i("Adding Remark");
+            DB db = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).getDb();
+            db.getDatabase().beginTransaction();
+            try {
+                if (remark.isEmpty()) {
+                    remark.put("id", CollectionHelper.getInstance().getTimeSafe(AnkiDroidApp.getInstance()).intTimeMS());
+                    remark.put("cid", mCurrentCard.getId());
+                }
+                remark.put("mod", CollectionHelper.getInstance().getTimeSafe(AnkiDroidApp.getInstance()).intTime());
+                remark.put("content", mEditContent.getText().toString());
+                Timber.i("insert or replace into remarks values:%s,%s,%s,%s", remark.get("id"), remark.get("cid"), remark.get("content"), remark.get("mod"));
+                db.execute("insert or replace into remarks values (?,?,?,?)",
+                        remark.get("id"), remark.get("cid"), remark.get("content"), remark.get("mod"));
+                db.getDatabase().setTransactionSuccessful();
+                CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).save();
+                Toast.makeText(AnkiDroidApp.getInstance(), "助记保存成功", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(AnkiDroidApp.getInstance(), "助记保存失败,请重试", Toast.LENGTH_SHORT).show();
+            } finally {
+                db.getDatabase().endTransaction();
+            }
+
+        });
+        mEditContent.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int count) {
+
+            }
+
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                mRemarkCount.setText(mEditContent.getText().toString().length() + "/300");
+            }
+        });
+        mEditContent.setText((!remark.isEmpty() && remark.get("content") != null) ? (String) remark.get("content") : "");
+//        mRemarkCount.setText(mEditContent+"/300");
+        if (mRemarkDialog.isShowing()) {
+            mRemarkDialog.dismiss();
+            return;
+        }
+        mRemarkDialog.show();
+    }
+
 
     // Handler for the "show answer" button
     private View.OnClickListener mFlipCardListener = new View.OnClickListener() {
@@ -531,6 +644,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     };
 
     private View.OnClickListener mSelectEaseHandler = new View.OnClickListener() {
+        @SuppressLint("NonConstantResourceId")
         @Override
         public void onClick(View view) {
             // Ignore what is most likely an accidental double-tap.
@@ -677,7 +791,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                     }
                 });
             });
-//            addMenuBottomDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+//            mRemarkDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
             //设置弹出位置
             window.setGravity(Gravity.BOTTOM);
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -773,6 +887,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                     if (!isFromUser) {
                         return;
                     }
+                    leftValue = Math.max(leftValue,12);
                     Matcher fontSizeMatcher = Pattern.compile("font-size:(.+?)px").matcher(mCurrentCSS);
                     if (fontSizeMatcher.find()) {
                         String fld1 = fontSizeMatcher.group(0);
@@ -871,7 +986,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         String content = "";
         try {
             fontSize = currentModelSetting.getString("font_size");
-            if (!fontSize.isEmpty()) {
+            if (!fontSize.isEmpty() && Float.parseFloat(fontSize) != 0) {
                 content += String.format("font-size: %spx;\n", fontSize);
             }
             if (updateUI) {
@@ -957,7 +1072,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
             bg = bgMatcher.group(1).trim();
             Timber.i("saved bg:%s", bg);
         }
-        temp.put("font_size", fontSize.isEmpty() ? "" : String.valueOf(Math.round(Double.parseDouble(fontSize))));
+        temp.put("font_size", fontSize.isEmpty() ? "" : String.valueOf(Math.max(12, Math.round(Double.parseDouble(fontSize)))));
         temp.put("text_align", align);
         temp.put("layout", layer);
         temp.put("background_color", bg);
@@ -1556,6 +1671,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //                    .putInt("speak_count_day", calendar.get(Calendar.DAY_OF_YEAR)).apply();
 //        }
         mainHandler = new Handler();
+
     }
 
 
@@ -2130,12 +2246,55 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
     }
 
 
+    private View.OnTouchListener getRemarkTouchListener() {
+        return new View.OnTouchListener() {
+            private long time = 0;
+            private float eventDownY = 0;
+            private float maxMargin = Resources.getSystem().getDisplayMetrics().heightPixels;
+
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_UP:
+                        if (Math.abs(event.getRawY() - eventDownY) > 50) {
+                            remarkOriginBottomMargin = remarkLayoutParams.bottomMargin;
+                            Timber.i("保存 remarkOriginBottomMargin = " + remarkOriginBottomMargin);
+                            AnkiDroidApp.getSharedPrefs(getBaseContext()).edit().putFloat("btn_remark_bottom_margin", remarkOriginBottomMargin).apply();
+                        } else {
+                            if (System.currentTimeMillis() - time < 500) {
+                                showRemarkDialog();
+                            }
+                        }
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (System.currentTimeMillis() - time < 200) {
+                            break;
+                        }
+                        float moveY = event.getRawY() - eventDownY;
+                        Timber.i("moveY = " + moveY);
+                        remarkLayoutParams.bottomMargin = (int) Math.min(maxMargin * 0.7, Math.max(0, remarkOriginBottomMargin - moveY));
+                        mRemark.setLayoutParams(remarkLayoutParams);
+                        break;
+                    case MotionEvent.ACTION_DOWN:
+                        time = System.currentTimeMillis();
+                        eventDownY = event.getRawY();
+                        break;
+                }
+                return true;
+            }
+        };
+    }
+
+
     // Set the content view to the one provided and initialize accessors.
+    @SuppressLint("SuspiciousIndentation")
     @SuppressWarnings("deprecation") // Tracked separately as #5023 on github for clipboard
     protected void initLayout() {
         FrameLayout mCardContainer = (FrameLayout) findViewById(R.id.flashcard_frame);
 
         mTopBarLayout = (RelativeLayout) findViewById(R.id.top_bar);
+
         ImageView mark = mTopBarLayout.findViewById(R.id.mark_icon);
         ImageView flag = mTopBarLayout.findViewById(R.id.flag_icon);
         mCardMarker = new CardMarker(mark, flag);
@@ -2154,7 +2313,21 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         gestureDetector = new GestureDetectorCompat(this, mGestureDetectorImpl);
 
         mEaseButtonsLayout = findViewById(R.id.ease_buttons);
-
+        mRemark = findViewById(R.id.btn_remark);
+        if (mRemark != null) {
+            mRemark.setOnTouchListener(getRemarkTouchListener());
+            remarkLayoutParams = (RelativeLayout.LayoutParams) mRemark.getLayoutParams();
+            float bottomMargin = AnkiDroidApp.getSharedPrefs(getBaseContext()).getFloat("btn_remark_bottom_margin", 0);
+            Timber.i("bottomMargin = " + bottomMargin);
+            if (bottomMargin > 0) {
+                remarkLayoutParams.bottomMargin += bottomMargin;
+                mRemark.setLayoutParams(remarkLayoutParams);
+            }
+            remarkOriginBottomMargin = remarkLayoutParams.bottomMargin;
+            if (!AnkiDroidApp.getSharedPrefs(getBaseContext()).getBoolean("enable_remark", true)) {
+                mRemark.setVisibility(View.GONE);
+            }
+        }
         mEase1 = findViewById(R.id.ease1);
         mEase1Layout = findViewById(R.id.flashcard_layout_ease1);
         mEase1Layout.setOnClickListener(mSelectEaseHandler);
@@ -2276,9 +2449,12 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         webView.getSettings().setLoadWithOverviewMode(true);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebChromeClient(new AnkiDroidWebChromeClient());
+        webView.getSettings().setAllowFileAccess(true);
+
         // Problems with focus and input tags is the reason we keep the old type answer mechanism for old Androids.
         webView.setFocusableInTouchMode(mUseInputTag);
         webView.setScrollbarFadingEnabled(true);
+
         Timber.d("Focusable = %s, Focusable in touch mode = %s", webView.isFocusable(), webView.isFocusableInTouchMode());
 
         webView.setWebViewClient(new CardViewerWebClient());
@@ -2286,7 +2462,9 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         webView.setBackgroundColor(Color.argb(1, 0, 0, 0));
 
         // Javascript interface for calling AnkiDroid functions in webview, see card.js
+        webView.getSettings().setDomStorageEnabled(true);
         webView.addJavascriptInterface(javaScriptFunction(), "AnkiDroidJS");
+
 //        webView.setOnTouchListener((v, event) -> {
 //            if(event.getAction()==MotionEvent.ACTION_DOWN){
 //
@@ -2958,14 +3136,16 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
         // CSS class for card-specific styling
         String cardClass = mCardAppearance.getCardClass(mCurrentCard.getOrd() + 1, Themes.getCurrentTheme(this));
-        if (Template.textContainsMathjax(content)) {
-            cardClass += " mathjax-needs-to-render";
-        }
-
+        String script = "";
         if (isInNightMode()) {
             if (!mCardAppearance.hasUserDefinedNightMode(mCurrentCard)) {
                 content = HtmlColors.invertColors(content);
             }
+        }
+        if (Template.textContainsMathjax(content)) {
+            cardClass += " mathjax-needs-to-render";
+            script = " \n <script src=\"file:///android_asset/mathjax/conf.js\"> </script> \n" +
+                    " <script src=\"file:///android_asset/mathjax/tex-chtml.js\"> </script> \n ";
         }
 
 
@@ -3049,11 +3229,26 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 //        }
 
         mCardContent = mCardTemplate.replace("::content::", content)
-                .replace("::style::", style).replace("::class::", cardClass).replace("::style2::", mCurrentCSS).replace("::class2::", sDisplayAnswer ? "ck-back" : "ck-front");
-        Timber.d("base url = %s", mBaseUrl);
-        Timber.v("::content:: / %s", content);
-        Timber.v("::style2:: / %s", mCurrentCSS);
-//        Timber.v("::all:: / %s", mCardContent);
+                .replace("::style::", style).replace("::class::", cardClass).replace("::style2::", mCurrentCSS).replace("::script::", script).replace("::class2::", sDisplayAnswer ? "ck-back" : "ck-front");
+//        Timber.d("base url = %s", mBaseUrl);
+//        Timber.v("::content:: / %s", content);
+//        Timber.v("::style2:: / %s", mCurrentCSS);
+        if (mCardContent.contains("<!--助记-->")) {
+            try {
+                Cursor cur = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).getDb()
+                        .getDatabase()
+                        .query(
+                                "SELECT id,cid,content,mod FROM remarks WHERE cid = " + mCurrentCard.getId(), null);
+                if (cur.moveToNext()) {
+                    Timber.i("替换助记>>>>>>>");
+                    mCardContent = mCardContent.replace("<!--助记-->", cur.getString(2));
+                }
+            } finally {
+
+            }
+        } else {
+            Timber.i("没有助记");
+        }
 
 
         if (AnkiDroidApp.getSharedPrefs(this).getBoolean("html_javascript_debugging", false)) {
@@ -3530,7 +3725,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
 
 
     protected InitConfig getInitConfig(SpeechSynthesizerListener listener) {
-        Map<String, String> params = getParams();
+        Map<String, String> params = getBDParams();
         // 添加你自己的参数
         InitConfig initConfig;
         // appId appKey secretKey 网站上您申请的应用获取。注意使用离线合成功能的话，需要应用中填写您app的包名。包名在build.gradle中获取。
@@ -3551,7 +3746,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
      *
      * @return 合成参数Map
      */
-    protected Map<String, String> getParams() {
+    protected Map<String, String> getBDParams() {
         Map<String, String> params = new HashMap<>();
         // 以下参数均为选填
         // 设置在线发声音人： 0 普通女声（默认） 1 普通男声 3 情感男声<度逍遥> 4 情感儿童声<度丫丫>, 其它发音人见文档
@@ -3945,7 +4140,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         fetchRenderHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Timber.i("fetchWebViewRenderContent:" + mFinalLoadQuestion + "" + mFinalLoadAnswer);
+                Timber.i("fetchWebViewRenderContent:\n question->" + mFinalLoadQuestion + "\n answer->" + mFinalLoadAnswer);
 //                Timber.i("fetchWebViewRenderContent,with html content:" + mCacheContent);
 //                Timber.i("fetchWebViewRenderContent,del html content:" + HtmlUtils.delHTMLTag(mCacheContent));
                 if (!cardContentIsEmpty() && ((sDisplayAnswer && mFinalLoadAnswer.isEmpty()) || (!sDisplayAnswer && mFinalLoadQuestion.isEmpty()))) {
@@ -4978,6 +5173,7 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
                     webResourceResponse = new WebResourceResponse("text/html", "utf-8", new ByteArrayInputStream(response.getBytes()));
                 }
             }
+
             return webResourceResponse;
         }
 
@@ -5220,10 +5416,14 @@ public abstract class AbstractFlashcardViewer extends AnkiActivity implements Re
         // Run any post-load events in javascript that rely on the window being completely loaded.
         @Override
         public void onPageFinished(WebView view, String url) {
-            Timber.d("onPageFinished triggered");
-            drawFlag();
-            drawMark();
-            view.loadUrl("javascript:onPageFinished();");
+            Timber.d("Java onPageFinished triggered: %s", url);
+            if (Objects.equals(url, mBaseUrl + "__viewer__.html")) {
+                drawFlag();
+                drawMark();
+                Timber.d("New URL, triggering JS onPageFinished: %s", url);
+                view.loadUrl("javascript:onPageFinished();");
+            }
+
         }
 
 

@@ -6,124 +6,176 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="63dp"
-        android:layout_alignParentEnd="true"
-        android:src="@mipmap/login_right_circle" />
+        android:scaleType="centerCrop"
+        android:src="@mipmap/login_bg"
+          />
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="85dp"
-        android:layout_alignParentBottom="true"
-        android:src="@mipmap/login_left_circle" />
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="22dp"
+        android:layout_marginStart="18dp"
         android:layout_marginTop="59dp"
-        android:onClick="onQuit"
-        android:src="?attr/navBarBackRef" />
-    <LinearLayout
-        android:gravity="center"
+        android:onClick="onBackPressed"
+        android:src="@drawable/nav_bar_back_selector_dark" />
+
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-         >
+        android:layout_marginTop="214dp"
+        android:minHeight="274dp"
+        app:cardCornerRadius="17dp"
+        app:cardElevation="4dp">
 
-        <androidx.cardview.widget.CardView
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:minHeight="274dp"
-            android:layout_marginHorizontal="12dp"
-            app:cardCornerRadius="17dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="20dp">
+            <TextView
+                android:id="@+id/welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="欢迎使用Anki记忆卡"
+                android:layout_marginTop="82dp"
+                android:layout_centerHorizontal="true"
+                android:textSize="32sp"
+                android:textColor="@color/new_primary_text_forth_color"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/slogen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:gravity="center"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp">
+                android:layout_below="@id/welcome"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="6dp"
+                android:text="科学记忆一切知识"
+                android:textColor="@color/new_primary_text_forth_color"
+                android:textSize="19sp"
+                />
+            <LinearLayout
+                android:id="@+id/login_button_qq"
+                android:layout_below="@id/slogen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/login_button_ankiweb"
+                android:paddingVertical="16dp"
+                android:gravity="center"
+                android:onClick="onLoginQQButtonClick"
+                android:layout_marginTop="53dp"
+                >
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="海外服务器"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:layout_marginTop="13dp"
-                    android:text="免费、有多媒体文件时同步较慢，可与Anki电脑端同步"
-                    android:textColor="@color/new_primary_text_third_color"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-                <Button
-                    android:id="@+id/login_button_anki"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/login_button_ankiweb"
-                    android:text="AnkiWeb登录"
-                    android:textSize="17sp"
-                    android:onClick="onLoginAnkiWebButtonClick"
                     android:textColor="@color/white"
-                    android:layout_marginTop="21dp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="10dp"
-            android:minHeight="274dp"
-            android:layout_marginHorizontal="12dp"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="17dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="国内服务器"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:layout_marginTop="13dp"
-                    android:text="同步快，超容量收费，需自己承担服务器空间和流量成本。合适卡牌有较多图片、音频的用户。电脑端需下载Anki记忆卡"
-                    android:textColor="@color/new_primary_text_third_color"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-                <Button
-                    android:id="@+id/login_button_phone"
-                    android:layout_width="match_parent"
+                    android:textSize="17sp"
+                    android:drawablePadding="6dp"
+                    android:drawableStart="@mipmap/login_qq"
+                    android:text="QQ登录  "/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/login_button_wx"
+                android:layout_below="@id/login_button_qq"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/login_button_china"
+                android:paddingVertical="16dp"
+                android:gravity="center"
+                android:onClick="onLoginWXButtonClick"
+                android:layout_marginTop="32dp"
+                >
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/login_button_china"
-                    android:text="手机号登录"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:textSize="17sp"
+                    android:drawablePadding="6dp"
+                    android:drawableStart="@mipmap/login_wx"
+                    android:text="微信登录"/>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_below="@+id/login_button_wx"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:paddingBottom="64dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+                <ImageButton
+                    android:id="@+id/login_phone"
+                    android:layout_width="73dp"
+                    android:layout_height="73dp"
+
+                    android:layout_gravity="bottom|start"
                     android:onClick="onLoginAnkiChinaButtonClick"
-                    android:textSize="17sp"
-                    android:textColor="@color/white"
-                    android:layout_marginTop="21dp"
-                    android:textStyle="bold" />
+                    android:background="@drawable/btn_circle"
+                    android:src="@mipmap/login_phone"/>
+                <ImageButton
+                    android:id="@+id/login_anki_web"
+                    android:layout_width="73dp"
+                    android:layout_height="73dp"
+                    android:layout_marginStart="53dp"
+
+                    android:layout_gravity="bottom|start"
+                    android:onClick="onLoginAnkiWebButtonClick"
+                    android:background="@drawable/btn_circle"
+                    android:src="@mipmap/login_more"/>
+
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </RelativeLayout>
 
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
+<!--    <androidx.cardview.widget.CardView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:layout_marginBottom="10dp"-->
+<!--        android:minHeight="274dp"-->
+<!--        android:layout_marginHorizontal="12dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:cardCornerRadius="17dp"-->
+<!--        app:cardElevation="4dp">-->
+
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:gravity="center"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:orientation="vertical"-->
+<!--            android:paddingHorizontal="20dp">-->
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="国内服务器"-->
+<!--                android:textSize="32sp"-->
+<!--                android:textStyle="bold" />-->
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:gravity="center"-->
+<!--                android:layout_marginTop="13dp"-->
+<!--                android:text="同步快，超容量收费，需自己承担服务器空间和流量成本。合适卡牌有较多图片、音频的用户。电脑端需下载Anki记忆卡"-->
+<!--                android:textColor="@color/new_primary_text_third_color"-->
+<!--                android:textSize="15sp"-->
+<!--                android:textStyle="bold" />-->
+<!--            <Button-->
+<!--                android:id="@+id/login_button_phone"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@drawable/login_button_china"-->
+<!--                android:text="手机号登录"-->
+<!--                android:onClick="onLoginAnkiChinaButtonClick"-->
+<!--                android:textSize="17sp"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:layout_marginTop="21dp"-->
+<!--                android:textStyle="bold" />-->
+<!--        </LinearLayout>-->
+
+<!--    </androidx.cardview.widget.CardView>-->
 
 </RelativeLayout>
 

@@ -35,14 +35,21 @@
             android:key="force_full_sync"
             android:title="@string/force_full_sync_title"
             android:summary="@string/force_full_sync_summary" />
+<!--    <com.ichi2.preferences.CustomDialogPreference-->
+<!--        android:dialogIcon="@drawable/ic_dialog_alert"-->
+<!--        android:dialogMessage="@string/clear_local_data_question"-->
+<!--        android:dialogTitle="@string/clear_local_data_title"-->
+<!--        android:negativeButtonText="@string/dialog_cancel"-->
+<!--        android:positiveButtonText="@string/dialog_ok"-->
+<!--        android:title="@string/clear_local_data_title" />-->
 <!--        <Preference-->
 <!--            android:key="custom_sync_server_link"-->
 <!--            android:title="@string/custom_sync_server_title"/>-->
         <PreferenceCategory android:title="@string/pref_cat_performance" >
             <com.ichi2.ui.SeekBarPreference
-                android:defaultValue="8"
+                android:defaultValue="15"
                 android:key="backupMax"
-                android:max="10"
+                android:max="20"
                 android:summary="@string/preference_summary_literal"
                 android:text=""
                 android:title="@string/pref_backup_max"
@@ -153,8 +160,8 @@
     <Preference
         android:key="about_dialog_preference"
         android:title="@string/about_title">
-        <intent
-            android:targetPackage="com.app.ankichinas"
-            android:targetClass="com.ichi2.anki.InfoActivity"/>
+<!--        <intent-->
+<!--            android:targetPackage="com.app.ankichinas"-->
+<!--            android:targetClass="com.ichi2.anki.InfoActivity"/>-->
     </Preference>
 </PreferenceScreen>

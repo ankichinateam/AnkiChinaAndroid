@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center_horizontal"
+	android:clickable="false"
+	android:paddingHorizontal="21dp"
+	android:paddingVertical="17dp"
+	android:minHeight="433dp"
+	android:background="@drawable/dialog_layout_config_background"
+	android:orientation="vertical">
+	<RelativeLayout
+		android:layout_marginTop="21dp"
+
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_centerHorizontal="true"
+			android:text="选择国家或地区"
+			android:textColor="?attr/primaryTextColor222222"
+			android:textSize="21sp" />
+		<ImageButton
+			android:id="@+id/area_close"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			 android:layout_alignParentEnd="true"
+			android:background="@color/transparent"
+			android:src="@mipmap/login_closed_normal"/>
+	</RelativeLayout>
+	 <ListView
+		 android:id="@+id/area_list"
+		 android:layout_marginTop="17dp"
+		 android:divider="@color/transparent"
+		 android:scrollbars="none"
+		 android:layout_width="match_parent"
+		 android:layout_height="wrap_content"/>
+
+
+</LinearLayout>

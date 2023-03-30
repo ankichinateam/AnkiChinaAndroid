@@ -163,11 +163,11 @@ public class WebViewActivity extends AnkiActivity {
         webView.getSettings().setUserAgentString("User-Agent:Android");
 
         webView.getSettings().setAllowFileAccess(true);    // 可以读取文件缓存
-        webView.getSettings().setAppCacheEnabled(true);    //开启H5(APPCache)缓存功能
+//        webView.getSettings().setAppCacheEnabled(true);    //开启H5(APPCache)缓存功能
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         String appCachePath = getApplicationContext().getCacheDir().getAbsolutePath();
-        webView.getSettings().setAppCachePath(appCachePath);
+//        webView.getSettings().setAppCachePath(appCachePath);
 //        webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ONLY);
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
@@ -282,6 +282,7 @@ public class WebViewActivity extends AnkiActivity {
 
         webView.addJavascriptInterface(new JavaScriptFunction(), "AnkiDroidJS");
         map.put("Referer", "https://file.ankichinas.cn");
+//        webView.loadUrl( "https://dev-file.ankichinas.com/h5/testShare", map);
         webView.loadUrl(getIntent().getStringExtra("url"), map);
 
     }
@@ -598,7 +599,7 @@ public class WebViewActivity extends AnkiActivity {
         String thumb = root.getString("thumb");
 
 
-        if (mShareDialog == null) {
+//        if (mShareDialog == null) {
             mShareDialog = new Dialog(this, R.style.DialogTheme2);
             //2、设置布局
             View view = View.inflate(this, R.layout.dialog_share, null);
@@ -645,7 +646,7 @@ public class WebViewActivity extends AnkiActivity {
                 Toast.makeText(this, "已复制链接到剪贴板", Toast.LENGTH_SHORT).show();
             });
 
-        }
+//        }
         if (mShareDialog.isShowing()) {
             mShareDialog.dismiss();
             return;

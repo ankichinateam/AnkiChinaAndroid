@@ -3,6 +3,11 @@
     background: #F4EDB3;
     color: #F4EDB3;
     cursor: pointer;
+    padding-left:2px;
+    padding-right:2px;
+    margin-left:1px;
+    margin-right:1px;
+    border-radius: 2px;
 }
 
 .ck-content p {

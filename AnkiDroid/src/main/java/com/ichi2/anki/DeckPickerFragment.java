@@ -22,6 +22,7 @@
 package com.ichi2.anki;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -159,18 +160,54 @@ public class DeckPickerFragment extends AnkiFragment {
     }
 
 
-    View mSyncMenuItemActionView;
+    private View mSyncMenuItemActionView;
+    private TextView mSyncMediaPercent;
+
+    private Handler mSyncingMediaHandler;
+    private Handler mSyncingDataHandler;
 
 
     public void onSync(boolean syncing) {
-        Timber.i("on syncing:"+syncing+",loading view is init:"+mSyncMenuItem);
+        Timber.i("on syncing:" + syncing + ",loading view is init:" + mSyncMenuItem);
         if (mSyncMenuItem != null) {
             if (syncing) {
                 mSyncMenuItemActionView = mSyncMenuItem.getActionView();
                 mSyncMenuItem
                         .setActionView(R.layout.actionbar_indeterminate_progress);
+                mSyncMediaPercent = mSyncMenuItem.getActionView().findViewById(R.id.sync_percent);
+                mSyncMediaPercent.setText(String.format("%.0f", mCachedProgress) + "%");
+                if (mSyncingDataHandler == null) {
+                    mSyncingDataHandler = new Handler();
+                    mSyncingDataHandler.postDelayed(() -> {
+                        if (AnkiChinaSyncer.SYNCING) {
+                            Toast.makeText(getAnkiActivity(), "如果同步时间过长，请执行【检查数据】功能", Toast.LENGTH_LONG).show();
+                            mSyncingDataHandler = null;
+                        }
+                    },  60*1000);
+                }
             } else {
+                mCachedProgress=1;
                 mSyncMenuItem.setActionView(mSyncMenuItemActionView);
+            }
+        }
+
+    }
+
+
+    double mCachedProgress;
+    @SuppressLint("DefaultLocale")
+    public void updateSyncingPercent(double progress) {
+        if (mSyncMediaPercent != null) {
+            mSyncMediaPercent.setText(String.format("%.0f", progress) + "%");
+            mCachedProgress=progress;
+            if (mSyncingMediaHandler == null) {
+                mSyncingMediaHandler = new Handler();
+                mSyncingMediaHandler.postDelayed(() -> {
+                    if (AnkiChinaSyncer.SYNCING) {
+                        Toast.makeText(getAnkiActivity(), "正在同步媒体文件", Toast.LENGTH_SHORT).show();
+                        mSyncingMediaHandler = null;
+                    }
+                }, 3000);
             }
         }
 
@@ -217,9 +254,9 @@ public class DeckPickerFragment extends AnkiFragment {
         if (mTabLayout != null) {
             mTabLayout.selectTab(mTabLayout.getTabAt(0));
         }
-        if(!Permissions.hasStorageAccessPermission(getContext())){
+        if (!Permissions.hasStorageAccessPermission(getContext())) {
             return;
-        }else {
+        } else {
             mPullToSyncWrapper.setVisibility(View.VISIBLE);
             mToolbar.setVisibility(View.VISIBLE);
             mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.GONE);
@@ -477,7 +514,6 @@ public class DeckPickerFragment extends AnkiFragment {
 
         return mRoot;
     }
-
 
 
     public DeckPicker getAnkiActivity() {
@@ -1142,7 +1178,7 @@ public class DeckPickerFragment extends AnkiFragment {
         }
 
         // Check if default deck is the only available and there are no cards
-        boolean isEmpty = mDueTree.size() == 1 && mDueTree.get(0).getDid() == 1 && getCol().isEmpty();
+//        boolean isEmpty = mDueTree.size() == 1 && mDueTree.get(0).getDid() == 1 && getCol().isEmpty();
 
 //        if (getAnkiActivity().animationDisabled()) {
 //            mDeckPickerContent.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
@@ -1186,34 +1222,34 @@ public class DeckPickerFragment extends AnkiFragment {
 
         mDeckListAdapter.buildDeckList(mDueTree, getCol());
         // Set the "x due in y minutes" subtitle
-        try {
-//            Integer eta = mDeckListAdapter.getEta();
-            Integer newCard = mDeckListAdapter.getNewCard();
-            Integer needReviewCard = mDeckListAdapter.getReviewCard();
-            Resources res = getResources();
-//            if (getCol().cardCount() != -1) {
-//                String time = "-";
-//                String unit = "";
-//                if (eta != -1 && eta != null) {
-////                    time = Utils.timeQuantityTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
-//                    time = Utils.timeQuantityNumTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
-//                    unit = Utils.timeQuantityUnitTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
-//                }
-            int eta = (newCard + needReviewCard) * 10 / 60;
-            if ((newCard + needReviewCard) % 60 != 0) {
-                eta++;
-            }
-            mDeckListAdapter.updateHeaderData("" + newCard, "" + needReviewCard, String.valueOf(eta));
-//                ((TextView) mRoot.findViewById(R.id.new_card_num)).setText();
-//                ((TextView) mRoot.findViewById(R.id.review_card_num)).setText();
-//                ((TextView) mRoot.findViewById(R.id.cost_time)).setText(time);
-//                ((TextView) mRoot.findViewById(R.id.cost_time_unit)).setText("预计耗时(" + unit + ")");
+//        try {
+////            Integer eta = mDeckListAdapter.getEta();
+//            Integer newCard = mDeckListAdapter.getNewCard();
+//            Integer needReviewCard = mDeckListAdapter.getReviewCard();
+////            Resources res = getResources();
+////            if (getCol().cardCount() != -1) {
+////                String time = "-";
+////                String unit = "";
+////                if (eta != -1 && eta != null) {
+//////                    time = Utils.timeQuantityTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+////                    time = Utils.timeQuantityNumTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+////                    unit = Utils.timeQuantityUnitTopDeckPicker(AnkiDroidApp.getInstance(), eta * 60);
+////                }
+//            int eta = (newCard + needReviewCard) * 10 / 60;
+//            if ((newCard + needReviewCard) % 60 != 0) {
+//                eta++;
 //            }
-        } catch (RuntimeException e) {
-            Timber.e(e, "RuntimeException setting time remaining");
-        }
-
-        if(getCol().getDecks().current()!=null){
+//
+////                ((TextView) mRoot.findViewById(R.id.new_card_num)).setText();
+////                ((TextView) mRoot.findViewById(R.id.review_card_num)).setText();
+////                ((TextView) mRoot.findViewById(R.id.cost_time)).setText(time);
+////                ((TextView) mRoot.findViewById(R.id.cost_time_unit)).setText("预计耗时(" + unit + ")");
+////            }
+//        } catch (RuntimeException e) {
+//            Timber.e(e, "RuntimeException setting time remaining");
+//        }
+        mDeckListAdapter.updateHeaderData();
+        if (getCol().getDecks().current() != null) {
             long current = getCol().getDecks().current().optLong("id");
             if (mFocusedDeck != current) {
                 scrollDecklistToDeck(current);
@@ -1244,9 +1280,6 @@ public class DeckPickerFragment extends AnkiFragment {
         }
 
     }
-
-
-
 
 
     private void openReviewer() {

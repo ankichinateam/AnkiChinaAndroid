@@ -21,7 +21,6 @@
 
 package com.ichi2.anki;
 
-import android.app.ActionBar;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,12 +30,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.TextUtils;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,10 +43,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.ichi2.anim.ActivityTransitionAnimation;
-import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.web.HostNumFactory;
-import com.ichi2.async.Connection;
 import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.Consts;
 import com.ichi2.themes.Themes;
@@ -60,14 +53,14 @@ import com.ichi2.ui.SettingItem;
 import com.ichi2.utils.OKHttpUtil;
 import com.umeng.analytics.MobclickAgent;
 
-import org.acra.data.StringFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,7 +69,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.TaskStackBuilder;
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.Response;
 import timber.log.Timber;
 
@@ -111,7 +103,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     private TextView mRl_cloud_space;
     private TextView mTv_logout;
     private ImageView mIv_entrance;
-    private SwitchCompat mNightModeSwitch,mAutoSyncSwitch ;
+    private SwitchCompat mNightModeSwitch, mAutoSyncSwitch;
     private static final String NIGHT_MODE_PREFERENCE = "invertedColors";
     private static final int REQUEST_PATH_UPDATE = 1;
     public static final int REQUEST_PREFERENCES_UPDATE = 100;
@@ -139,7 +131,36 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             mTv_server_name = mRoot.findViewById(R.id.server_name);
             mTv_switch_server = mRoot.findViewById(R.id.tv_switch_server);
 
-            rl_login.setOnClickListener(v -> ((DeckPicker) getAnkiActivity()).loginToSyncServer());
+            rl_login.setOnClickListener(v -> getAnkiActivity().loginToSyncServer());
+            rl_login.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (Consts.savedAnkiChinaAccount(preferences)) {
+                        //只要有登录ankichina，就进账号管理
+                        getAnkiActivity().loginToSyncServer();
+                    } else if (Consts.savedAnkiWebAccount(preferences)) {
+                        //只登录了ankiweb，则直接弹窗询问是否退出
+                        new MaterialDialog.Builder(getAnkiActivity())
+                                .title("退出登录")
+                                .iconAttr(R.attr.dialogErrorIcon)
+                                .content("是否确认退出登录")
+                                .positiveText("确认")
+                                .negativeText("取消")
+                                .onPositive((dialog2, which) -> {
+                                    dialog2.dismiss();
+                                    MyAccount2 account = new MyAccount2();
+                                    account.logout(getAnkiActivity());
+                                    updateSwitchServerLayout();
+                                    new Handler().postDelayed(SettingFragment.this::checkRestServerSpace, 500);//1秒后执行
+                                })
+                                .build().show();
+                    } else {
+                        //都没登录，进入账号管理
+                        getAnkiActivity().loginToSyncServer();
+                    }
+
+                }
+            });
             mRoot.findViewById(R.id.rl_personal_setting).setOnClickListener(v -> {
                 Timber.i("Navigating to settings");
                 mOldColPath = CollectionHelper.getCurrentAnkiDroidDirectory(getAnkiActivity());
@@ -214,23 +235,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                                 Timber.i("load drawable result %s,%s ,%s  ", title, image, link);
                             }
                             getAnkiActivity().runOnUiThread(() -> {
-                                mLl_defaultLink.removeAllViews();
-                            for (int i = 0; i < dynamicItems.size(); i++) {
-                                int finalI = i;
-                                int[] attrs = new int[] {R.attr.settingItemBackgroundTop, R.attr.settingItemBackground, R.attr.settingItemBackgroundBottom, R.attr.settingItemBackgroundRound};
-                                TypedArray ta = getAnkiActivity().obtainStyledAttributes(attrs);
-                                Drawable background;
-                                background = ta.getDrawable(dynamicItems.size() == 1 ? 3 : finalI == 0 ? 0 : finalI == dynamicItems.size() - 1 ? 2 : 1);
-
-                                    DynamicItem dynamicItem = dynamicItems.get(finalI);
-                                    SettingItem item = new SettingItem(getContext(), dynamicItem.title, dynamicItem.drawable);
-                                    item.findViewById(R.id.rl_root).setBackground(background);
-                                    item.setOnClickListener(v -> {
-                                        WebViewActivity.openUrlInApp(getAnkiActivity(), dynamicItem.link, "", -1);
-                                    });
-                                    mLl_defaultLink.addView(item);
-
-                            }
+                                showMoreLinks(dynamicItems);
                             });
 
                         } catch (Exception e) {
@@ -247,13 +252,32 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
     }
 
 
+    private void showMoreLinks(List<DynamicItem> dynamicItems) {
+        mLl_defaultLink.removeAllViews();
+        for (int i = 0; i < dynamicItems.size(); i++) {
+            int finalI = i;
+            int[] attrs = new int[] {R.attr.settingItemBackgroundTop, R.attr.settingItemBackground, R.attr.settingItemBackgroundBottom, R.attr.settingItemBackgroundRound};
+            TypedArray ta = getAnkiActivity().obtainStyledAttributes(attrs);
+            Drawable background;
+            background = ta.getDrawable(dynamicItems.size() == 1 ? 3 : finalI == 0 ? 0 : finalI == dynamicItems.size() - 1 ? 2 : 1);
+
+            DynamicItem dynamicItem = dynamicItems.get(finalI);
+            SettingItem item = new SettingItem(getContext(), dynamicItem.title, dynamicItem.drawable);
+            item.findViewById(R.id.rl_root).setBackground(background);
+            item.setOnClickListener(v -> {
+                WebViewActivity.openUrlInApp(getAnkiActivity(), dynamicItem.link, "", -1);
+            });
+            mLl_defaultLink.addView(item);
+        }
+    }
+
+
     private String mVipUrl;
     private boolean mVip;
     private int mVipDay;
     private String mVipExpireAt;
     private TextView mVipText;
     private TextView mVipPower;
-
 
 
     public SpannableStringBuilder getVipString(int vipDay) {
@@ -326,7 +350,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                     OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "clouds/current", token, "nothing", checkRestServerSpaceListener);
 
 //                    Connection.sendCommonGet(checkRestServerSpaceListener, new Connection.Payload("clouds/current", "", Connection.Payload.REST_TYPE_GET, token, "nothing", HostNumFactory.getInstance(getContext())));
-                }else {
+                } else {
                     mRl_cloud_space.setVisibility(View.GONE);
                 }
 
@@ -374,20 +398,55 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             if (response.isSuccessful()) {
                 Timber.i("fetch server space successfully ");
                 try {
-                    JSONObject result = (new JSONObject(response.body().string())).getJSONObject("data");
+                    JSONObject responseData = new JSONObject(response.body().string());
+                    JSONObject result = responseData.getJSONObject("data");
+                    final JSONArray items = result.getJSONArray("links");
+                    Timber.i("initMoreDrawerMenuItem %d ", items.length());
+                    List<DynamicItem> dynamicItems = new ArrayList<>();
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject jsonObject = items.getJSONObject(i);
+                        String title = jsonObject.optString("title");
+                        String image = jsonObject.optString("image_url");
+                        String link = jsonObject.optString("target_url");
+                        Drawable drawable = null;
+                        try {
+                            drawable = Drawable.createFromStream(
+                                    new URL(image).openStream(), title + ".jpg");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        dynamicItems.add(new DynamicItem(title, link, drawable));
+                        Timber.i("load drawable result %s,%s ,%s  ", title, image, link);
+                    }
+                    getAnkiActivity().runOnUiThread(() -> {
+                        showMoreLinks(dynamicItems);
+                    });
+
+                    Timber.i("responseData.getInt(\"status_code\") = " + responseData.getInt("status_code"));
+                    if (responseData.getInt("status_code") >= 401 && responseData.getInt("status_code") <= 403) {
+                        getAnkiActivity().runOnUiThread(() -> {
+                            Toast.makeText(AnkiDroidApp.getInstance(), "登录失效，请重新登陆", Toast.LENGTH_SHORT).show();
+                            MyAccount account = new MyAccount();
+                            account.logout(getAnkiActivity());
+                            checkRestServerSpace();
+                            updateSwitchServerLayout();
+                        });
+                        return;
+                    }
+                    long vip_end_time = result.getLong("vip_end_time");
+                    DateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
+                    if (vip_end_time > 0) {
+                        getAnkiActivity().runOnUiThread(() -> {
+                            mRl_cloud_space.setText(df.format(vip_end_time) + "到期");
+                            mRl_cloud_space.setVisibility(View.VISIBLE);
+                        });
+                    }
                     long total = result.getLong("origin_size");
                     long used = result.getLong("origin_used_size");
                     String totalStr = result.getString("size");
                     String usedStr = result.getString("used_size");
-                    String hint = String.format("%s/%s", usedStr, totalStr);
                     long rest = total - used;
-                    Timber.i("fetch server space result:%d,%d,%d", total, used, rest);
-                    getAnkiActivity().runOnUiThread(() -> {
-                        mRl_cloud_space.setText(hint);
-                        mRl_cloud_space.setVisibility(View.VISIBLE);
-                    });
-
-//                    getAnkiActivity().getNavigationView().getMenu().findItem(R.id.nav_cloud_space).setTitle(hintStr);
                     getAnkiActivity().saveServerRestSpace(rest);
 
                 } catch (org.json.JSONException e) {
@@ -422,6 +481,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
         preferences.edit().putBoolean(NIGHT_MODE_PREFERENCE, setToNightMode).apply();
         restartActivityInvalidateBackstack(getAnkiActivity());
     }
+
 
     @SuppressWarnings("deprecation")
     @Override
@@ -482,7 +542,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
         } else if (id == R.id.user_private) {
             WebViewActivity.openUrlInApp(getAnkiActivity(), URL_PRIVATE, "");
         } else if (id == R.id.rl_market_like) {
-            goAppShop( getAnkiActivity(), BuildConfig.APPLICATION_ID, "");
+            goAppShop(getAnkiActivity(), BuildConfig.APPLICATION_ID, "");
         } else if (id == R.id.vip_power) {
             Timber.i("click vip button");
             getAnkiActivity().openVipUrl(mVipUrl);
@@ -544,7 +604,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
                 String account = AnkiDroidApp.getSharedPrefs(getAnkiActivity()).getString(Consts.KEY_SAVED_ANKI_CHINA_PHONE, "");
                 if (account.isEmpty()) {
                     //未登陆，跳转到登陆
-                    Intent myAccount = new Intent(getAnkiActivity(), MyAccount.class);
+                    Intent myAccount = new Intent(getAnkiActivity(), ChooseLoginServerActivity.class);
                     myAccount.putExtra("notLoggedIn", true);
                     getAnkiActivity().startActivityWithAnimation(myAccount, ActivityTransitionAnimation.FADE);
                 } else if (Consts.LOGIN_SERVER == Consts.LOGIN_SERVER_ANKIWEB) {
@@ -593,7 +653,7 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             ((TextView) dialog.findViewById(R.id.quit_china_server)).setText("登陆");
             dialog.findViewById(R.id.quit_china_server).setSelected(false);
             dialog.findViewById(R.id.quit_china_server).setOnClickListener(view -> {
-                Intent myAccount = new Intent(getAnkiActivity(), MyAccount.class);
+                Intent myAccount = new Intent(getAnkiActivity(), ChooseLoginServerActivity.class);
                 myAccount.putExtra("notLoggedIn", true);
                 getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
                 dialog.dismiss();
@@ -621,10 +681,21 @@ public class SettingFragment extends AnkiFragment implements View.OnClickListene
             ((TextView) dialog.findViewById(R.id.quit_over_sea_server)).setText("退出");
             dialog.findViewById(R.id.quit_over_sea_server).setSelected(true);
             dialog.findViewById(R.id.quit_over_sea_server).setOnClickListener(view -> {
-                Intent myAccount = new Intent(getAnkiActivity(), ChooseLoginServerActivity.class);
-                myAccount.putExtra("notLoggedIn", false);
-                getAnkiActivity().startActivityForResultWithAnimation(myAccount, CHANGE_ACCOUNT, ActivityTransitionAnimation.FADE);
-                dialog.dismiss();
+                new MaterialDialog.Builder(getAnkiActivity())
+                        .title("退出登录")
+                        .iconAttr(R.attr.dialogErrorIcon)
+                        .content("是否确认退出登录")
+                        .positiveText("确认")
+                        .negativeText("取消")
+                        .onPositive((dialog2, which) -> {
+                            dialog.dismiss();
+                            dialog2.dismiss();
+                            MyAccount2 account = new MyAccount2();
+                            account.logout(getAnkiActivity());
+                            updateSwitchServerLayout();
+                            new Handler().postDelayed(SettingFragment.this::checkRestServerSpace, 500);//1秒后执行
+                        })
+                        .build().show();
             });
         }
         ((TextView) dialog.findViewById(R.id.china_server_account)).setText(chinaAccount);

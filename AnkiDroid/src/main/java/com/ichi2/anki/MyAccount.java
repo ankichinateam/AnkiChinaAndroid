@@ -14,12 +14,14 @@
 
 package com.ichi2.anki;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.appcompat.widget.Toolbar;
@@ -27,40 +29,46 @@ import androidx.appcompat.widget.Toolbar;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.material.textfield.TextInputLayout;
 import com.ichi2.anim.ActivityTransitionAnimation;
-import com.ichi2.anki.dialogs.AsyncDialogFragment;
-import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.web.HostNumFactory;
 import com.ichi2.async.Connection;
 import com.ichi2.async.Connection.Payload;
-import com.ichi2.libanki.Collection;
+import com.ichi2.libanki.AreaCode;
 import com.ichi2.libanki.Consts;
-import com.ichi2.libanki.utils.Time;
 import com.ichi2.themes.StyledProgressDialog;
-import com.ichi2.ui.TextInputEditField;
 import com.ichi2.utils.AdaptionUtil;
+import com.ichi2.utils.JSONArray;
 import com.ichi2.utils.Permissions;
-import com.ichi2.utils.PhoneFormatCheckUtils;
+import com.ichi2.utils.FormatCheckUtils;
 import com.umeng.analytics.MobclickAgent;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import timber.log.Timber;
+
+import static com.ichi2.libanki.AreaCode.AREA_CODE_JSON;
 
 public class MyAccount extends AnkiActivity {
     private final static int STATE_LOG_IN = 1;
@@ -72,8 +80,8 @@ public class MyAccount extends AnkiActivity {
     private EditText mPhoneNum;
     private EditText mAuthCode;
 
-    private TextView mUsernameLoggedIn;
-    private Button mSendAuthCode;
+    private TextView mUsernameLoggedIn, mAreaCode;
+    private TextView mSendAuthCode;
 
     private MaterialDialog mProgressDialog;
     Toolbar mToolbar = null;
@@ -114,6 +122,9 @@ public class MyAccount extends AnkiActivity {
     }
 
 
+    String mBindKey;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,6 +143,15 @@ public class MyAccount extends AnkiActivity {
         } else {
             switchToState(STATE_LOG_IN);
         }
+        Bundle bundle=getIntent().getExtras();
+        if(bundle!=null){
+            mBindKey = bundle.getString("bind_key");
+            TextView titleText = ((TextView) findViewById(R.id.title_text));
+            if (mBindKey != null && !mBindKey.isEmpty() && titleText != null) {
+                titleText.setText("请绑定手机号");
+            }
+        }
+
     }
 
 
@@ -176,7 +196,7 @@ public class MyAccount extends AnkiActivity {
     }
 
 
-    private void saveToken(String token, String expired_at) {
+    protected void saveToken(String token, String expired_at) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getBaseContext());
         Editor editor = preferences.edit();
         cacheToken = token;
@@ -191,7 +211,7 @@ public class MyAccount extends AnkiActivity {
     String anki_password;
 
 
-    private void saveANKIUserInfo(String user_name, String password, boolean vip, String vipUrl) {
+    protected void saveANKIUserInfo(String user_name, String password, boolean vip, String vipUrl) {
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(getBaseContext());
         Editor editor = preferences.edit();
         anki_username = user_name;
@@ -250,7 +270,7 @@ public class MyAccount extends AnkiActivity {
 //            return;
 //        }
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(context);
-        if (Consts.loginAnkiWeb()) {
+        if (!Consts.savedAnkiChinaAccount(preferences)) {
             callback.onFail(NOT_LOGIN_ANKI_CHINA);
             return;
         }
@@ -301,15 +321,20 @@ public class MyAccount extends AnkiActivity {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(mPhoneNum.getWindowToken(), 0);
 
-        String phone = mPhoneNum.getText().toString().trim(); // trim spaces, issue 1586
+        String phone = mPhoneNum.getText().toString().trim();
+        String area = mAreaCode.getText().toString().replace("+","").trim();
+
         String authCode = mAuthCode.getText().toString();
 
-        if (PhoneFormatCheckUtils.isChinaPhoneLegal(phone) && !"".equalsIgnoreCase(authCode) && authCode.length() == 6) {
+        if (FormatCheckUtils.isChinaPhoneLegal(phone) && !"".equalsIgnoreCase(authCode) && authCode.length() == 6) {
             try {
                 org.json.JSONObject jo = new org.json.JSONObject();
                 jo.put("phone", phone);
+                jo.put("area", area);
                 jo.put("code", authCode);
                 jo.put("key", getAuthKey());
+                jo.put("bind_key", mBindKey);
+                Timber.d("我最后的参数是:"+jo.toString());
                 Consts.saveAndUpdateLoginServer(Consts.LOGIN_SERVER_ANKICHINA);
                 Connection.sendCommonPost(preLoginListener, new Connection.Payload("authorizations", jo.toString(), Payload.REST_TYPE_POST, HostNumFactory.getInstance(this)));
             } catch (Exception e) {
@@ -322,7 +347,7 @@ public class MyAccount extends AnkiActivity {
     }
 
 
-    private void login() {
+    protected void login() {
         // Hide soft keyboard
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(mPhoneNum.getWindowToken(), 0);
@@ -331,7 +356,7 @@ public class MyAccount extends AnkiActivity {
         String password = info[1];
         if (!"".equalsIgnoreCase(username) && !"".equalsIgnoreCase(password)) {
 //            Consts.LOGIN_SERVER = Consts.LOGIN_SERVER_ANKICHINA;
-
+            Consts.saveAndUpdateLoginServer(Consts.LOGIN_SERVER_ANKICHINA);
             Connection.login(loginListener, new Connection.Payload(new Object[] {username, password,
                     HostNumFactory.getInstance(this)}));
         } else {
@@ -363,7 +388,7 @@ public class MyAccount extends AnkiActivity {
                     mSendAuthCode.setText(String.format("%s%s", timerCount, getString(R.string.count_hint)));
                 } else if (timerCount == 0) {
                     continueTimer = false;
-                    mSendAuthCode.setText(getString(R.string.auth_hint));
+                    mSendAuthCode.setText(getString(R.string.re_get_auth_hint));
                 } else {
                     mSendAuthCode.setText(getString(R.string.auth_hint));
                 }
@@ -390,11 +415,14 @@ public class MyAccount extends AnkiActivity {
             return;
         }
         startAuthCodeTimer();
-        String phone = mPhoneNum.getText().toString().trim(); // trim spaces, issue 1586
+        String phone = mPhoneNum.getText().toString().trim();
+        String area = mAreaCode.getText().toString().replace("+","").trim();
+
         if (!"".equalsIgnoreCase(phone)) {
             try {
                 org.json.JSONObject jo = new org.json.JSONObject();
                 jo.put("phone", phone);
+                jo.put("area", area);
                 Connection.sendCommonPost(sendAuthCodeListener, new Connection.Payload("verification-codes", jo.toString(), Payload.REST_TYPE_POST, HostNumFactory.getInstance(this)));
             } catch (Exception e) {
                 UIUtils.showSimpleSnackbar(this, R.string.invalid_username_password, true);
@@ -403,6 +431,54 @@ public class MyAccount extends AnkiActivity {
         } else {
             UIUtils.showSimpleSnackbar(this, R.string.invalid_username_password, true);
         }
+    }
+
+
+    Dialog mAreaCodeDialog;
+
+
+    private void showAreaCodeList() {
+        if (mAreaCodeDialog == null) {
+            mAreaCodeDialog = new Dialog(this, R.style.DialogTheme2);
+
+            //2、设置布局
+            View view = View.inflate(this, R.layout.dialog_choose_area_code, null);
+            mAreaCodeDialog.setContentView(view);
+
+            Window window = mAreaCodeDialog.getWindow();
+            window.setGravity(Gravity.BOTTOM);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            mAreaCodeDialog.findViewById(R.id.area_close).setOnClickListener(view1 -> {
+                mAreaCodeDialog.dismiss();
+            });
+            ListView listView = mAreaCodeDialog.findViewById(R.id.area_list);
+            List<AreaCode> areaCodes = new ArrayList<>();
+            JSONArray array = new JSONArray(AREA_CODE_JSON);
+            for (int i = 0; i < array.length(); i++) {
+                AreaCode item = new AreaCode();
+                item.setAreaName(array.getJSONObject(i).getString("name"));
+                item.setAreaCode(array.getJSONObject(i).getString("code"));
+                areaCodes.add(item);
+            }
+            AreaAdapter adapter = new AreaAdapter(this, R.layout.item_area_code, areaCodes);
+
+            listView.setAdapter(adapter);
+            //5、将适配器加载到控件中
+            listView.setAdapter(adapter);
+            //6、为列表中选中的项添加单击响应事件
+            listView.setOnItemClickListener((parent, view12, i, l) -> {
+//                Toast.makeText(MyAccount.this, "您选择的地区是：" + areaCodes.get(i).getAreaName(), Toast.LENGTH_LONG).show();
+                mAreaCode.setText("+"+areaCodes.get(i).getAreaCode());
+                mAreaCodeDialog.dismiss();
+            });
+        }
+
+        if (mAreaCodeDialog.isShowing()) {
+            mAreaCodeDialog.dismiss();
+            return;
+        }
+        mAreaCodeDialog.show();
     }
 
 
@@ -482,7 +558,8 @@ public class MyAccount extends AnkiActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mSendAuthCode.setEnabled(PhoneFormatCheckUtils.isChinaPhoneLegal(s.toString()));
+                mSendAuthCode.setEnabled(mAreaCode.getText().toString().replace("+", "").trim() == "86" ?
+                        FormatCheckUtils.isChinaPhoneLegal(s.toString()) : s.toString().length() > 5);
             }
 
 
@@ -501,7 +578,7 @@ public class MyAccount extends AnkiActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mLoginButton.setEnabled(PhoneFormatCheckUtils.isChinaPhoneLegal(mPhoneNum.getText().toString()) && s.length() == 6);
+                mLoginButton.setEnabled(FormatCheckUtils.isChinaPhoneLegal(mPhoneNum.getText().toString()) && s.length() == 6);
             }
 
 
@@ -510,6 +587,8 @@ public class MyAccount extends AnkiActivity {
 
             }
         });
+        mAreaCode = mLoginToMyAccountView.findViewById(R.id.area_code);
+        mAreaCode.setOnClickListener(v -> showAreaCodeList());
         mSendAuthCode = mLoginToMyAccountView.findViewById(R.id.send_auth_code);
         mSendAuthCode.setOnClickListener(v -> sendAuthCode());
         mLoginButton = mLoginToMyAccountView.findViewById(R.id.login_button);
@@ -524,6 +603,7 @@ public class MyAccount extends AnkiActivity {
 
         mLoggedIntoMyAccountView = getLayoutInflater().inflate(R.layout.my_account_logged_in, null);
         mUsernameLoggedIn = mLoggedIntoMyAccountView.findViewById(R.id.username_logged_in);
+
         mLoggedIntoMyAccountView.findViewById(R.id.logout_button).setOnClickListener(v -> logout(this));
 
     }
@@ -720,4 +800,39 @@ public class MyAccount extends AnkiActivity {
         super.onDestroy();
         stopAuthCodeTimer();
     }
+}
+
+
+
+class AreaAdapter extends ArrayAdapter<AreaCode> {
+    public AreaAdapter(Context context, int resource, List<AreaCode> objects) {
+        super(context, resource, objects);
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        AreaCode item = getItem(position);
+        View view;
+        ViewHolder viewHolder;
+        if (convertView==null){
+            view= LayoutInflater.from(getContext()).inflate(R.layout.item_area_code,parent,false);
+            viewHolder= new ViewHolder();
+            viewHolder.area = view.findViewById(R.id.area);
+            viewHolder.code = view.findViewById(R.id.code);
+            view.setTag(viewHolder);
+        }else {
+            view=convertView;
+            viewHolder= (ViewHolder) view.getTag();
+        }
+
+        viewHolder.area.setText(item.getAreaName());
+        viewHolder.code.setText(item.getAreaCode());
+        return view;
+    }
+
+    private static class ViewHolder {
+        TextView area;
+        TextView code;
+    }
+
 }

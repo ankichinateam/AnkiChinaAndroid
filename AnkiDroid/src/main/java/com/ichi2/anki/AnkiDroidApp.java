@@ -54,6 +54,7 @@ import com.ichi2.utils.LanguageUtil;
 import com.ichi2.anki.analytics.UsageAnalytics;
 import com.ichi2.utils.Permissions;
 import com.ichi2.utils.WebViewDebugging;
+import com.umeng.commonsdk.UMConfigure;
 
 
 import org.acra.ACRA;
@@ -77,6 +78,7 @@ import java.util.regex.Pattern;
 import androidx.multidex.MultiDexApplication;
 import timber.log.Timber;
 
+import static com.ichi2.anki.DeckPicker.CONFIRM_PRIVATE_STRATEGY;
 import static timber.log.Timber.DebugTree;
 
 /**
@@ -341,7 +343,7 @@ public class AnkiDroidApp extends MultiDexApplication {
         }
 
         // analytics after ACRA, they both install UncaughtExceptionHandlers but Analytics chains while ACRA does not
-        UsageAnalytics.initialize(this);
+
         if (BuildConfig.DEBUG) {
             UsageAnalytics.setDryRun(true);
         }
@@ -361,7 +363,7 @@ public class AnkiDroidApp extends MultiDexApplication {
         NotificationChannels.setup(getApplicationContext());
 
         // Configure WebView to allow file scheme pages to access cookies.
-        CookieManager.setAcceptFileSchemeCookies(true);
+
 
         // Prepare Cookies to be synchronized between RAM and permanent storage.
         CompatHelper.getCompat().prepareWebViewCookies(this.getApplicationContext());
@@ -374,20 +376,6 @@ public class AnkiDroidApp extends MultiDexApplication {
         // Forget the last deck that was used in the CardBrowser
         CardBrowser.clearLastDeckId();
 
-        // Create the AnkiDroid directory if missing. Send exception report if inaccessible.
-        if (Permissions.hasStorageAccessPermission(this)) {
-            try {
-                String dir = CollectionHelper.getCurrentAnkiDroidDirectory(this);
-                CollectionHelper.initializeAnkiDroidDirectory(dir);
-            } catch (StorageAccessException e) {
-                Timber.e(e, "Could not initialize AnkiDroid directory");
-                String defaultDir = CollectionHelper.getDefaultAnkiDroidDirectory();
-                if (isSdCardMounted() && CollectionHelper.getCurrentAnkiDroidDirectory(this).equals(defaultDir)) {
-                    // Don't send report if the user is using a custom directory as SD cards trip up here a lot
-                    sendExceptionReport(e, "AnkiDroidApp.onCreate");
-                }
-            }
-        }
 
         Timber.i("AnkiDroidApp: Starting Services");
         new BootService().onReceive(this, new Intent(this, BootService.class));
@@ -396,6 +384,8 @@ public class AnkiDroidApp extends MultiDexApplication {
         NotificationService ns = new NotificationService();
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
         lbm.registerReceiver(ns, new IntentFilter(NotificationService.INTENT_ACTION));
+        UMConfigure.preInit(this,null,null);
+
     }
 
 

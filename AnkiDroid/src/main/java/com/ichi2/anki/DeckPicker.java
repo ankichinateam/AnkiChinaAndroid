@@ -35,6 +35,7 @@ import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -61,6 +62,7 @@ import com.ichi2.anki.dialogs.ExportDialog;
 import com.ichi2.anki.dialogs.MediaCheckDialog;
 import com.ichi2.anki.dialogs.SyncErrorDialog;
 import com.ichi2.anki.exception.ConfirmModSchemaException;
+import com.ichi2.anki.exception.StorageAccessException;
 import com.ichi2.anki.receiver.SdCardReceiver;
 import com.ichi2.anki.web.HostNumFactory;
 import com.ichi2.async.CollectionTask;
@@ -85,9 +87,9 @@ import com.ichi2.utils.Permissions;
 import com.ichi2.utils.SyncStatus;
 import com.ichi2.utils.VersionUtils;
 //import com.ichi2.widget.NoScrollViewPager;
+import com.ichi2.utils.okhttp.utils.OKHttpUtils;
 import com.ichi2.widget.WidgetStatus;
-import com.tencent.bugly.Bugly;
-import com.tencent.bugly.beta.Beta;
+
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
 import com.umeng.socialize.PlatformConfig;
@@ -117,9 +119,13 @@ import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import timber.log.Timber;
 
+import static com.ichi2.anki.AnkiDroidApp.isSdCardMounted;
+import static com.ichi2.anki.AnkiDroidApp.sendExceptionReport;
 import static com.ichi2.anki.MyAccount.NOT_LOGIN_ANKI_CHINA;
 import static com.ichi2.anki.SelfStudyActivity.ALL_DECKS_ID;
 import static com.ichi2.async.CollectionTask.TASK_TYPE.CHECK_DATABASE;
@@ -131,6 +137,7 @@ import static com.ichi2.async.CollectionTask.TASK_TYPE.REPAIR_COLLECTION;
 
 import static com.ichi2.libanki.Consts.URL_PRIVATE;
 import static com.ichi2.libanki.Consts.URL_USER_PROTOCOL;
+//import com.tencent.bugly.crashreport.common.strategy.;
 
 
 public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnItemSelectedListener ,
@@ -222,6 +229,21 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
                     .onPositive((innerDialog, innerWhich) -> {
                         preferences.edit().putBoolean(CONFIRM_PRIVATE_STRATEGY, true).apply();
                         mShowingPrivateStrategyDialog = false;
+                        UsageAnalytics.initialize(this);
+                        CookieManager.setAcceptFileSchemeCookies(true);
+                        if (Permissions.hasStorageAccessPermission(this)) {
+                            try {
+                                String dir = CollectionHelper.getCurrentAnkiDroidDirectory(this);
+                                CollectionHelper.initializeAnkiDroidDirectory(dir);
+                            } catch (StorageAccessException e) {
+                                Timber.e(e, "Could not initialize AnkiDroid directory");
+                                String defaultDir = CollectionHelper.getDefaultAnkiDroidDirectory();
+                                if (isSdCardMounted() && CollectionHelper.getCurrentAnkiDroidDirectory(this).equals(defaultDir)) {
+                                    // Don't send report if the user is using a custom directory as SD cards trip up here a lot
+                                    sendExceptionReport(e, "AnkiDroidApp.onCreate");
+                                }
+                            }
+                        }
                         continueActivity(preferences);
                     })
                     .positiveColor(ContextCompat.getColor(this, R.color.new_primary_color))
@@ -324,6 +346,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
 
 
     private void continueActivity(SharedPreferences preferences) {
+        // Create the AnkiDroid directory if missing. Send exception report if inaccessible.
+
+
         boolean colOpen = firstCollectionOpen(false);
         Timber.i("colOpen: %b", colOpen);
         if (colOpen) {
@@ -335,7 +360,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
             // Show error dialogs
             if (Permissions.hasStorageAccessPermission(this)) {
 
-                if (!AnkiDroidApp.isSdCardMounted()) {
+                if (!isSdCardMounted()) {
                     Timber.i("SD card not mounted");
                     onSdCardNotMounted();
                 } else if (!CollectionHelper.isCurrentAnkiDroidDirAccessible(this)) {
@@ -372,9 +397,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
         }
         AnkiDroidApp.getSharedPrefs(this).edit().putBoolean(Consts.KEY_IS_VIP, mVip).apply();
 
-        Bugly.init(getApplicationContext(), "8793e55d11", false);
+//        Bugly.init(getApplicationContext(), "8793e55d11", false);
         UMConfigure.setLogEnabled(BuildConfig.DEBUG);
-        UMConfigure.init(this, "5f71f96680455950e49ab67c", "channel1", UMConfigure.DEVICE_TYPE_PHONE, "ankichina");
+        UMConfigure.init(this, null, null, UMConfigure.DEVICE_TYPE_PHONE, "ankichina");
 
         String FileProvider = BuildConfig.APPLICATION_ID+".apkgfileprovider";
         PlatformConfig.setWeixin("wx577ed7c2bdb5d5ee", "4c027fb240e2cc6df88d549883f14c4f");
@@ -384,7 +409,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
 //        PlatformConfig.setSinaWeibo("3921700954", "04b48b094faeb16683c32669824ebdad", "http://sns.whalecloud.com");
 
         MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
-        Beta.checkUpgrade(false, true);
+//        Beta.checkUpgrade(false, true);
     }
 
 
@@ -610,7 +635,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
             @Override
             public void onFail(String message) {
                 Toast.makeText(DeckPicker.this, "当前未使用Anki记忆卡账号登录，无法获得超级学霸功能", Toast.LENGTH_SHORT).show();
-                Intent myAccount = new Intent(DeckPicker.this, MyAccount.class);
+                 Intent myAccount = new Intent(DeckPicker.this, ChooseLoginServerActivity.class);
                 myAccount.putExtra("notLoggedIn", true);
                 startActivityForResultWithAnimation(myAccount, REFRESH_LOGIN_STATE_AND_TURN_TO_VIP_HTML, ActivityTransitionAnimation.FADE);
                 handleGetTokenFailed(message);
@@ -937,14 +962,14 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
         getAccount().getToken(this, new MyAccount.TokenCallback() {
             @Override
             public void onSuccess(String token) {
-                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), token, BuildConfig.VERSION_NAME), token);
+                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), (token == null || token.equals("")) ? "logout": token, BuildConfig.VERSION_NAME), token);
 //                openUrl(Uri.parse(getResources().getString(R.string.shared_decks_url, token)));
             }
 
 
             @Override
             public void onFail(String message) {
-                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), "", BuildConfig.VERSION_NAME), "");
+                WebViewActivity.openUrlInApp(DeckPicker.this, String.format(getResources().getString(R.string.shared_decks_url), "logout", BuildConfig.VERSION_NAME), "");
             }
         });
 
@@ -1424,7 +1449,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
         }
         SharedPreferences preferences = AnkiDroidApp.getSharedPrefs(this);
         if (preferences.getBoolean(AUTO_TURN_TO_LOGIN, true) && !Consts.isLogin()) {
-            Intent myAccount = new Intent(this, MyAccount.class);
+            Intent myAccount = new Intent(this, ChooseLoginServerActivity.class);
             myAccount.putExtra("notLoggedIn", true);
             startActivityForResultWithAnimation(myAccount, LOG_IN_FOR_SYNC, ActivityTransitionAnimation.FADE);
             preferences.edit().putBoolean(AUTO_TURN_TO_LOGIN, false).apply();
@@ -1810,7 +1835,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
 
     // Callback method to submit error report
     public void sendErrorReport() {
-        AnkiDroidApp.sendExceptionReport(new RuntimeException(), "DeckPicker.sendErrorReport");
+        sendExceptionReport(new RuntimeException(), "DeckPicker.sendErrorReport");
     }
 
 
@@ -1893,6 +1918,19 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
 
 
     public void mediaCheck() {
+        getAccount().getToken( this, new MyAccount.TokenCallback() {
+            @Override
+            public void onSuccess(String token) {
+                OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/checkMedia", new FormBody.Builder() .build(), token, "",  null);
+
+            }
+
+
+            @Override
+            public void onFail(String message) {
+
+            }
+        });
         TaskListener listener = mediaCheckListener();
         CollectionTask.launchCollectionTask(CHECK_MEDIA, listener);
     }
@@ -1972,6 +2010,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
             }
             showSyncErrorDialog(SyncErrorDialog.DIALOG_USER_NOT_LOGGED_IN_SYNC);
         } else {
+            if(Consts.loginAnkiChina())
             getAccount().getToken(getBaseContext(), new MyAccount.TokenCallback() {
                 @Override
                 public void onSuccess(String token) {
@@ -1989,6 +2028,9 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
                     }
                 }
             });
+            else if(Consts.loginAnkiWeb()){
+                syncInternal("", syncConflictResolution);
+            }
 
         }
     }
@@ -2065,6 +2107,13 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
             notifyServerSyncCompleted();
         });
 
+    }
+
+    @Override
+    protected void onSyncingMediaPercent(double percent) {
+        if (mDeckPickerFragment != null ) {
+            mDeckPickerFragment.updateSyncingPercent(percent);
+        }
     }
 
 
@@ -2256,7 +2305,7 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
                 }
             } catch (IllegalArgumentException e) {
                 Timber.e(e, "Could not dismiss mProgressDialog. The Activity must have been destroyed while the AsyncTask was running");
-                AnkiDroidApp.sendExceptionReport(e, "DeckPicker.onPostExecute", "Could not dismiss mProgressDialog");
+                sendExceptionReport(e, "DeckPicker.onPostExecute", "Could not dismiss mProgressDialog");
             }
             syncMessage = data.message;
             boolean needRefreshServer = true;
@@ -2505,9 +2554,15 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
 
 
     public void loginToSyncServer() {
+        //未登录-登录-到主页刷新
+        //已登录-回到设置页
         Intent myAccount = new Intent(this, ChooseLoginServerActivity.class);
-        myAccount.putExtra("notLoggedIn", true);
-        startActivityForResultWithAnimation(myAccount, LOG_IN_FOR_SYNC, ActivityTransitionAnimation.FADE);
+        myAccount.putExtra("notLoggedIn", !Consts.isLogin());
+        if(Consts.isLogin()){
+            startActivityWithAnimation(myAccount,  ActivityTransitionAnimation.FADE);
+        }else {
+            startActivityForResultWithAnimation(myAccount, LOG_IN_FOR_SYNC, ActivityTransitionAnimation.FADE);
+        }
     }
 
 
@@ -2600,8 +2655,11 @@ public class DeckPicker extends AnkiActivity implements BottomNavigationView.OnI
                 finishWithAnimation(ActivityTransitionAnimation.DOWN);
             }
         } else if (requestCode == LOG_IN_FOR_SYNC) {
+            if(Consts.isLogin())
+                bottomNavigationView.setSelectedItemId(R.id.tab_one);
             mRefreshVipStateOnResume = true;
             mSyncOnResume = resultCode == RESULT_OK;
+
         } else if ((requestCode == REQUEST_REVIEW || requestCode == SHOW_STUDYOPTIONS)
                 && resultCode == Reviewer.RESULT_NO_MORE_CARDS) {
             // Show a message when reviewing has finished

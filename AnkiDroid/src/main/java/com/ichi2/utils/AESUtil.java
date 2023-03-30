@@ -64,7 +64,7 @@ public class AESUtil {
         // 使用会话密钥对文件加密。
         try {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, makeKey(""), makeIv());
+            cipher.init(Cipher.ENCRYPT_MODE, makeKey("aj1jcaoqjv6fydhei8ajvkfie8gu41o9"), makeIv());
 
             FileInputStream fis = new FileInputStream(src);
             FileOutputStream fos = new FileOutputStream(dest);

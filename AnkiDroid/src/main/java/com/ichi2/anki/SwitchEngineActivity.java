@@ -198,7 +198,7 @@ public class SwitchEngineActivity extends AnkiActivity implements View.OnClickLi
                 public void onFail(String message) {
                     Timber.e("need login while using online speak engine ");
                     Toast.makeText(SwitchEngineActivity.this, "当前未使用Anki记忆卡账号登录，无法使用在线语音引擎", Toast.LENGTH_SHORT).show();
-                    Intent myAccount = new Intent(SwitchEngineActivity.this, MyAccount.class);
+                    Intent myAccount = new Intent(SwitchEngineActivity.this, ChooseLoginServerActivity.class);
                     myAccount.putExtra("notLoggedIn", true);
                     startActivityForResultWithAnimation(myAccount, REFRESH_VOICE_INFO, ActivityTransitionAnimation.FADE);
                 }

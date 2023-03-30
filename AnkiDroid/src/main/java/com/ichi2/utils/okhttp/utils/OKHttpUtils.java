@@ -7,6 +7,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.ichi2.anki.BuildConfig;
+import com.ichi2.libanki.Utils;
 import com.ichi2.utils.OKHttpUtil;
 import com.ichi2.utils.okhttp.helper.ProgressHelper;
 import com.ichi2.utils.okhttp.listener.ProgressListener;
@@ -52,6 +53,7 @@ public class OKHttpUtils {
     public synchronized static OkHttpClient getOkHttpClientInstance() {
         if (client == null) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
+
                     //设置连接超时等属性,不设置可能会报异常
                     .connectTimeout(120, TimeUnit.SECONDS)
                     .readTimeout(120, TimeUnit.SECONDS)
@@ -111,6 +113,7 @@ public class OKHttpUtils {
                 .addHeader("Authorization", "Bearer " + token)
                 .addHeader("x-app-version", BuildConfig.VERSION_NAME)
                 .addHeader("x-os", "android " + Build.VERSION.SDK_INT)
+                .addHeader("x-device-id",  Utils.UUID)
                 .post(ProgressHelper.addProgressRequestListener(
                         sessionKey.isEmpty()?OKHttpUtils.getRequestBody(fileNames):OKHttpUtils.getRequestBody(sessionKey,fileNames),
                         uiProgressRequestListener));

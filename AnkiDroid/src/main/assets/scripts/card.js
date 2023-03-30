@@ -21,17 +21,17 @@ var resizeDone = false;
   image resizing and try again after we know the window has fully
   loaded with a method call initiated from Java (onPageFinished).
 */
-var resizeImages = function() {
+var resizeImages = function () {
     if (navigator.userAgent.indexOf("Chrome") > -1) {
         document.body.className = document.body.className + " chrome";
     } else {
         if (window.innerWidth === 0 || window.innerHeight === 0) {
             return;
         }
-        var maxWidth = window.innerWidth * 0.90;
-        var maxHeight = window.innerHeight * 0.90;
+        var maxWidth = window.innerWidth * 0.9;
+        var maxHeight = window.innerHeight * 0.9;
         var ratio = 0;
-        var images = document.getElementsByTagName('img');
+        var images = document.getElementsByTagName("img");
         for (var i = 0; i < images.length; i++) {
             var img = images[i];
             var scale = 1;
@@ -122,12 +122,24 @@ function ankiToggleFlag(flag) {
 
     if (flagVal) {
         switch (flag) {
-            case 0: window.location.href = "signal:flag_none"; break;
-            case 1: window.location.href = "signal:flag_red"; break;
-            case 2: window.location.href = "signal:flag_orange"; break;
-            case 3: window.location.href = "signal:flag_green"; break;
-            case 4: window.location.href = "signal:flag_blue"; break;
-            default: console.log('No Flag Found'); break;
+            case 0:
+                window.location.href = "signal:flag_none";
+                break;
+            case 1:
+                window.location.href = "signal:flag_red";
+                break;
+            case 2:
+                window.location.href = "signal:flag_orange";
+                break;
+            case 3:
+                window.location.href = "signal:flag_green";
+                break;
+            case 4:
+                window.location.href = "signal:flag_blue";
+                break;
+            default:
+                console.log("No Flag Found");
+                break;
         }
     } else {
         window.location.href = "signal:flag_" + flag;
@@ -168,7 +180,7 @@ function taKey(itag, e) {
     }
 }
 
-window.onload = function() {
+window.onload = function () {
     /* If the WebView loads too early on Android <= 4.3 (which happens
        on the first card or regularly with WebView switching enabled),
        the window dimensions returned to us will be default built-in
@@ -176,37 +188,91 @@ window.onload = function() {
        browser to recalculate the dimensions and give us the correct
        values, so we do this every time. This lets us resize images
        correctly. */
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
     resizeImages();
     window.location.href = "#answer";
 };
 
-var onPageFinished = function() {
+function _runHook(arr) {
+    var promises = [];
+
+    for (var i = 0; i < arr.length; i++) {
+        promises.push(arr[i]());
+    }
+
+    return Promise.all(promises);
+}
+
+var onUpdateHook = [];
+var onShownHook = [];
+
+var onPageFinished = function () {
     if (!resizeDone) {
         resizeImages();
         /* Re-anchor to answer after image resize since the point changes */
         window.location.href = "#answer";
     }
-    if (window.MathJax != null) {
-        var card = document.querySelector('.card');
-        /* Anki-Android adds mathjax-needs-to-render" as a class to the card when
-           it detects both \( and \) or \[ and \].
 
-           This does not control *loading* MathJax, but rather controls whether or not MathJax
-           renders content.  We hide all the content until MathJax renders, because otherwise
-           the content loads, and has to reflow after MathJax renders, and it's unsightly.
-           However, if we hide all the content every time, folks don't like the repainting after
-           every question or answer.  This is a middleground, where there is no repainting due to
-           MathJax on non-MathJax cards, and on MathJax cards, there is a small flicker, but there's
-           no reflowing because the content only shows after MathJax has rendered. */
+    var card = document.querySelector(".card");
 
-        if (card.classList.contains("mathjax-needs-to-render"))
-        {
-            MathJax.Hub.Queue(['Typeset', MathJax.Hub, card]);
-            MathJax.Hub.Queue(function () {
-                card.classList.remove("mathjax-needs-to-render");
-                card.classList.add("mathjax-rendered");
-            });
+    _runHook(onUpdateHook)
+        .then(() => {
+            if (window.MathJax != null) {
+                /* Anki-Android adds mathjax-needs-to-render" as a class to the card when
+                   it detects both \( and \) or \[ and \].
+
+                   This does not control *loading* MathJax, but rather controls whether or not MathJax
+                   renders content.  We hide all the content until MathJax renders, because otherwise
+                   the content loads, and has to reflow after MathJax renders, and it's unsightly.
+                   However, if we hide all the content every time, folks don't like the repainting after
+                   every question or answer.  This is a middleground, where there is no repainting due to
+                   MathJax on non-MathJax cards, and on MathJax cards, there is a small flicker, but there's
+                   no reflowing because the content only shows after MathJax has rendered. */
+
+                if (card.classList.contains("mathjax-needs-to-render")) {
+                    return MathJax.startup.promise
+                        .then(() => MathJax.typesetPromise([card]))
+                        .then(() => card.classList.remove("mathjax-needs-to-render"));
+                }
+            }
+        })
+        .then(() => card.classList.add("mathjax-rendered"))
+        .then(_runHook(onShownHook));
+};
+
+/* Add function 2 hook to function 1.
+ * Function 2 should be `(arg: Object) => void`;  `arg` will be an Object returned from `JSON.parse`
+ */
+function addHook(fn1, fn2) {
+    if (fn1 === "ankiSearchCard") {
+        searchCardHook.push(fn2);
+    }
+}
+
+let searchCardHook = [];
+function ankiSearchCard(result) {
+    if (!searchCardHook) {
+        return;
+    }
+
+    result = JSON.parse(result);
+    for (var i = 0; i < searchCardHook.length; i++) {
+        searchCardHook[i](result);
+    }
+}
+
+function showHint() {
+    var hints = document.querySelectorAll("a.hint");
+    for (var i = 0; i < hints.length; i++) {
+        if (hints[i].style.display != "none") {
+            hints[i].click();
+            break;
         }
     }
+}
+
+function showAllHints() {
+    document.querySelectorAll("a.hint").forEach(el => {
+        el.click();
+    });
 }

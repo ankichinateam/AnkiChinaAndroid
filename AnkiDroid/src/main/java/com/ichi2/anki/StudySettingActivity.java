@@ -261,6 +261,7 @@ public class StudySettingActivity extends AnkiActivity implements View.OnClickLi
 
     public static final String STUDY_SETTING = "STUDY_SETTING";
     public static String KEY_MIND_MODE = "KEY_MIND_MODE";
+    public static String KEY_LRN_AND_REV_CARD_MAX = "KEY_LRN_AND_REV_CARD_MAX";
 
     public static String KEY_STOPPED = "KEY_STOPPED";
 

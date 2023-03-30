@@ -486,7 +486,7 @@ public class Card implements Cloneable {
     }
 
 
-    public void setQueue(@Consts.CARD_QUEUE int queue) {
+    public void setQueue( int queue) {
         mQueue = queue;
     }
 

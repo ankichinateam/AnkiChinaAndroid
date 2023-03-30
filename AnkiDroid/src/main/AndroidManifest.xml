@@ -412,7 +412,10 @@
         <meta-data
             android:name="com.sec.minimode.icon.landscape.normal"
             android:resource="@drawable/anki" />
-
+        <!--友盟-->
+        <meta-data android:value="友盟的APPKEY" android:name="UMENG_APPKEY"/>
+        <meta-data android:value="${UMENG_CHANNEL_VALUE}" android:name="UMENG_CHANNEL"/>
+        <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true" />
         <provider
             android:name=".provider.CardContentProvider"
             android:authorities="${applicationId}.flashcards"
@@ -488,14 +491,14 @@
             android:name=".services.ReminderService"
             android:enabled="true"
             android:exported="false" />
-        <receiver
-            android:name=".services.BootService"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+<!--        <receiver-->
+<!--            android:name=".services.BootService"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.BOOT_COMPLETED" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
 
         <service android:name="com.ichi2.widget.AnkiDroidWidgetSmall$UpdateService" />
 

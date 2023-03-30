@@ -282,6 +282,7 @@ private static final MediaType JSON = MediaType.parse("application/json; charset
             RequestBody body = RequestBody.create(JSON, json);
             Request.Builder builder=new Request.Builder().url(url).post(body)  .addHeader("User-Agent", "AnkiDroid-" + VersionUtils.getPkgVersionNameFake())
                     .addHeader("Accept",   "application/json" )
+                    .addHeader("x-device-id",   Utils.UUID )
                     .addHeader("Content-Type",   "application/json" );
             if(token!=null){
                 builder  .addHeader("Authorization",  "Bearer "+ token );
@@ -308,7 +309,7 @@ private static final MediaType JSON = MediaType.parse("application/json; charset
             String url = ANKI_CHINA_BASE +API_VERSION  + method +param;
             Timber.d("final url: %s",
                     url);
-            Request.Builder builder=new Request.Builder().url(url)  .addHeader("User-Agent", "AnkiDroid-" + VersionUtils.getPkgVersionNameFake()) .addHeader("Accept",   "application/json" ).addHeader("Content-Type",   "application/json" ).addHeader("x-os",   "Android" );
+            Request.Builder builder=new Request.Builder().url(url)  .addHeader("User-Agent", "AnkiDroid-" + VersionUtils.getPkgVersionNameFake())  .addHeader("x-device-id",   Utils.UUID ).addHeader("Accept",   "application/json" ).addHeader("Content-Type",   "application/json" ).addHeader("x-os",   "Android" );
             if(token!=null){
                 builder  .addHeader("Authorization",   "Bearer "+token );
             }
@@ -335,7 +336,7 @@ private static final MediaType JSON = MediaType.parse("application/json; charset
             Timber.d("final url: %s",
                     url);
             RequestBody body = RequestBody.create(JSON, param);
-            Request.Builder builder=new Request.Builder().url(url).put(body) .addHeader("User-Agent", "AnkiDroid-" + VersionUtils.getPkgVersionNameFake()) .addHeader("Accept",   "application/json" ).addHeader("Content-Type",   "application/json" );
+            Request.Builder builder=new Request.Builder().url(url).put(body) .addHeader("User-Agent", "AnkiDroid-" + VersionUtils.getPkgVersionNameFake())  .addHeader("x-device-id",   Utils.UUID ).addHeader("Accept",   "application/json" ).addHeader("Content-Type",   "application/json" );
             if(token!=null){
                 builder  .addHeader("Authorization",   "Bearer "+token );
             }
@@ -368,6 +369,7 @@ private static final MediaType JSON = MediaType.parse("application/json; charset
             }
         }
     }
+
 
 
     // Could be replaced by Compat copy method if that method took listener for bytesReceived/publishProgress()

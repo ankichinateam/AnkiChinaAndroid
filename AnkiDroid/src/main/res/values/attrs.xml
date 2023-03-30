@@ -194,5 +194,4 @@
         <attr name="vertical_Space" format="dimension"></attr>
         <attr name="isFull" format="boolean"></attr>
     </declare-styleable>
-
 </resources>

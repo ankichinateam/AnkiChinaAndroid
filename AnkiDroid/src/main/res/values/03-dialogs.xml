@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?> 
- <!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
  ~ Copyright (c) 2009 Andrew <andrewdubya@gmail> 
  ~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com> 
  ~ Copyright (c) 2009 Daniel Svaerd <daniel.svard@gmail.com> 
@@ -16,8 +15,8 @@
  ~ 
  ~ You should have received a copy of the GNU General Public License along with 
  ~ this program.  If not, see <http://www.gnu.org/licenses/>. 
- --> 
- 
+ -->
+
 <!--
 ~ Copyright (c) 2009 Andrew <andrewdubya@gmail>
 ~ Copyright (c) 2009 Edu Zamora <edu.zasu@gmail.com>
@@ -38,6 +37,27 @@
 ~ this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <resources>
+    <plurals name="delete_deck_message">
+        <item quantity="other">删除%1$s的所有卡片吗？它包含%2$d张卡片。</item>
+    </plurals>
+    <plurals name="reposition_card_dialog_acknowledge">
+        <item quantity="other">%d 张卡牌已更改位置</item>
+    </plurals>
+    <plurals name="reset_cards_dialog_acknowledge">
+        <item quantity="other">%d 张卡牌已重置</item>
+    </plurals>
+    <plurals name="reschedule_cards_dialog_title">
+        <item quantity="other">重设卡牌学习进度</item>
+    </plurals>
+    <plurals name="reschedule_card_dialog_interval">
+        <item quantity="other">当前间隔：%d 天</item>
+    </plurals>
+    <plurals name="reschedule_cards_dialog_acknowledge">
+        <item quantity="other">%d 张卡牌已重新安排</item>
+    </plurals>
+    <plurals name="sync_automatic_sync_needs_more_time">
+        <item quantity="other">可能在 %d 秒后触发自动同步</item>
+    </plurals>
     <string name="check_db_title">是否检查数据库？</string>
     <string name="check_db_warning">这可能需要很长时间</string>
     <string name="check_db_acknowledge">已检查数据库</string>
@@ -45,44 +65,19 @@
     <string name="contextmenu_deckpicker_delete_deck">删除记忆库</string>
     <string name="delete_deck_default_deck">不能删除默认记忆库</string>
     <string name="delete_deck_title">删除该记忆库？</string>
-    <plurals name="delete_deck_message">
-        <item quantity="other">删除%1$s的所有卡片吗？它包含%2$d张卡片。</item>
-    </plurals>
     <string name="delete_cram_deck_message">你确定要把%s内的所有卡片发送回它们原来的记忆库吗？</string>
     <string name="no_tts_available_message">没有可用的文字转语音（TTS）语言</string>
     <string name="initializing_tts">正在初始化TTS引擎...</string>
     <string name="tts_no_tts">不要朗读</string>
-    <string-array name="about_content">
-        <item><![CDATA[<h2>%1$s:<br/>Android上的卡片记忆应用</h2>Anki记忆卡是一个与<a href=\"%2$s\">Anki桌面客户端</a>完全兼容的卡片记忆应用。你可以在Anki桌面客户端或者Anki记忆卡添加和下载学习资料，它们可以很方便的通过AnkiWeb进行同步。]]></item>
-        <item><![CDATA[为了帮助改进Anki记忆卡，请把Bugs发送到<a href=\"%1$s\">问题跟踪系统</a>；也欢迎提出新功能建议。\n在<a href=\"%2$s\">Anki记忆卡的Wiki页面</a>上您可以找到一些问题的答案，也可以加入<a href=\"%3$s\">论坛</a>参与讨论。]]></item>
-        <item><![CDATA[Anki记忆卡 是一个<a href=\"%1$s\">开源软件<a/>，鼓励每个人都<a href=\"%2$s\">成为它的贡献者</a>。:-)]]></item>
-        <item><![CDATA[非开发者亦可帮助。例如，你可以<a href=\"%1$s\">帮助翻译</a>Anki记忆卡、更新wiki、提供屏幕截图，或写关于Anki记忆卡的博客。]]></item>
-        <item><![CDATA[Anki记忆卡 在<a href=\"%1$s\"> GNU GPL v3 许可证</a>下发布。源代码在<a href=\"%2$s\">GitHub</a>上提供。]]></item>
-    </string-array>
     <string name="preview_title">预览</string>
     <string name="reposition_card_dialog_title">更改新卡位置</string>
     <string name="reposition_card_dialog_message">起始位置</string>
+    <!-- Reschedule Card Dialog -->
     <string name="reposition_card_not_new_error">只有新卡牌可被更改位置</string>
-    <plurals name="reposition_card_dialog_acknowledge">
-        <item quantity="other">%d 张卡牌已更改位置</item>
-    </plurals>
     <string name="reset_card_dialog_title">重设卡片进度</string>
     <string name="reset_card_dialog_message">这张卡片将被置于新卡片队列的末尾。</string>
-    <plurals name="reset_cards_dialog_acknowledge">
-        <item quantity="other">%d 张卡牌已重置</item>
-    </plurals>
-    <!-- Reschedule Card Dialog -->
     <string name="reschedule_card_dialog_title">重设卡牌学习进度</string>
-    <plurals name="reschedule_cards_dialog_title">
-        <item quantity="other">重设卡牌学习进度</item>
-    </plurals>
-    <plurals name="reschedule_card_dialog_interval">
-        <item quantity="other">当前间隔：%d 天</item>
-    </plurals>
     <string name="reschedule_card_dialog_message">重新安排在x天后复习</string>
-    <plurals name="reschedule_cards_dialog_acknowledge">
-        <item quantity="other">%d 张卡牌已重新安排</item>
-    </plurals>
     <string name="reschedule_card_dialog_new_card_warning">正在重新安排新卡片。重新安排也会将新卡片转为复习卡片。请使用“更改卡片位置”选项来更改新卡片在新队列中的位置</string>
     <string name="reschedule_card_dialog_warning_ease_reset">重新安排计划还将重置调度器将来如何处理卡片（难度系数将设置为 %d%%）</string>
     <string name="firefox_workaround_launched_reviewer_opening_deck">在您的文件管理器中选择记忆库，或访问关于：下载页面以便导入</string>
@@ -112,8 +107,8 @@
     <string name="import_complete_count">卡牌已导入：%d</string>
     <string name="sd_card_full_title">SD 卡已满</string>
     <string name="sd_card_almost_full_title">SD 卡几乎已满</string>
-    <string name="restore_backup_title">恢复备份？</string>
-    <string name="restore_backup">你的记忆库集合将会被替换成一个旧的副本，任何未保存的进程都将丢失。</string>
+    <string name="restore_backup_title">数据备份</string>
+    <string name="restore_backup">你可以创建或者恢复之前的备份</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_ok">确定</string>
     <string name="dialog_agree">同意</string>
@@ -161,7 +156,7 @@
     <!-- Multimedia - Audio View -->
     <string name="multimedia_editor_audio_permission_denied">音频录制权限被拒绝</string>
     <!-- Initial collection load -->
-<!--    <string name="collection_load_welcome_request_permissions_title">欢迎来到 Anki记忆卡！</string>-->
+    <!--    <string name="collection_load_welcome_request_permissions_title">欢迎来到 Anki记忆卡！</string>-->
     <string name="collection_load_welcome_request_permissions_title">用户协议和隐私政策</string>
     <string name="collection_load_welcome_request_permissions_details">为了遵守国家法律规定及监督规定，也为了向你提供服务及提升服务质量，我们需要向你说明以下政策内容。请你阅读完整版的用户协议和隐私政策
 \n1、 本《anki记忆卡隐私政策》适用范围、相关词语涵义
@@ -214,7 +209,11 @@
     <string name="locale_selection_dialog_title">键盘提示选择</string>
     <string name="locale_selection_dialog_summary">某些多语言键盘，如 GBoard，支持编辑文本时更改语言\n\n如果您的键盘不会更改语言，请向您的键盘发布方请求“设置输入法编辑器本地化语言提示”特性。</string>
     <!--Sync-->
-    <plurals name="sync_automatic_sync_needs_more_time">
-        <item quantity="other">可能在 %d 秒后触发自动同步</item>
-    </plurals>
+    <string-array name="about_content">
+        <item><![CDATA[<h2>%1$s:<br/>Android上的卡片记忆应用</h2>Anki记忆卡是一个与<a href=\"%2$s\">Anki桌面客户端</a>完全兼容的卡片记忆应用。你可以在Anki桌面客户端或者Anki记忆卡添加和下载学习资料，它们可以很方便的通过AnkiWeb进行同步。]]></item>
+        <item><![CDATA[为了帮助改进Anki记忆卡，请把Bugs发送到<a href=\"%1$s\">问题跟踪系统</a>；也欢迎提出新功能建议。\n在<a href=\"%2$s\">Anki记忆卡的Wiki页面</a>上您可以找到一些问题的答案，也可以加入<a href=\"%3$s\">论坛</a>参与讨论。]]></item>
+        <item><![CDATA[Anki记忆卡 是一个<a href=\"%1$s\">开源软件<a/>，鼓励每个人都<a href=\"%2$s\">成为它的贡献者</a>。:-)]]></item>
+        <item><![CDATA[非开发者亦可帮助。例如，你可以<a href=\"%1$s\">帮助翻译</a>Anki记忆卡、更新wiki、提供屏幕截图，或写关于Anki记忆卡的博客。]]></item>
+        <item><![CDATA[Anki记忆卡 在<a href=\"%1$s\"> GNU GPL v3 许可证</a>下发布。源代码在<a href=\"%2$s\">GitHub</a>上提供。]]></item>
+    </string-array>
 </resources>

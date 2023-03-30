@@ -86,6 +86,7 @@ import static com.ichi2.anki.DeckPicker.REQUEST_BROWSE_CARDS;
 import static com.ichi2.anki.DeckPicker.SHOW_STUDYOPTIONS;
 import static com.ichi2.anki.DeckPicker.fadeIn;
 import static com.ichi2.anki.DeckPicker.fadeOut;
+import static com.ichi2.anki.StudySettingActivity.KEY_LRN_AND_REV_CARD_MAX;
 import static com.ichi2.anki.StudySettingActivity.KEY_MIND_MODE;
 import static com.ichi2.anki.StudySettingActivity.KEY_STOPPED;
 import static com.ichi2.anki.StudySettingActivity.STUDY_SETTING;
@@ -153,7 +154,9 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
      * deck.
      */
     private long mFocusedDeck;
-    private boolean firstLoadDeck=true;
+    private boolean firstLoadDeck = true;
+
+
     @Override
     public void onResume() {
         super.onResume();
@@ -170,10 +173,10 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             mCacheID = getCol().getDecks().selected();
         }
         new Handler().postDelayed(() -> {
-            firstLoadDeck=false;
+            firstLoadDeck = false;
             refreshInterface(true);
 
-        },firstLoadDeck?0:500);
+        }, firstLoadDeck ? 0 : 500);
 //        updateDeckList();
         /** Complete task and enqueue fetching nonessential data for
          * startup. */
@@ -261,6 +264,8 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
     private DeckConfig mOptions;
 
     private TabLayout mTabLayout;
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -298,10 +303,12 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     }
                 }
 
+
                 @Override
                 public void onTabUnselected(TabLayout.Tab tab) {
 
                 }
+
 
                 @Override
                 public void onTabReselected(TabLayout.Tab tab) {
@@ -623,13 +630,14 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         processNames();
         TaskListener listener = updateDeckListListener();
         CollectionTask.TASK_TYPE taskType = quick ? LOAD_DECK_QUICK : LOAD_SPECIFIC_DECK_COUNTS;
-        CollectionTask.launchCollectionTask(taskType, listener,new TaskData(mCacheID));
+        CollectionTask.launchCollectionTask(taskType, listener, new TaskData(mCacheID));
     }
 
 
     private boolean mHasSubDecks = false;
 
-    private boolean isInitStruct(){
+
+    private boolean isInitStruct() {
         StringBuilder initIds = new StringBuilder(AnkiDroidApp.getSharedPrefs(getAnkiActivity()).getString(KEY_STRUCT_INIT, ""));
         if (initIds.length() > 0) {
             String[] ids = initIds.toString().split(",");
@@ -652,6 +660,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
         return false;
     }
 
+
     private void processNames() {
         Deck deck = getCol().getDecks().current();
         long id = deck.optLong("id");
@@ -660,7 +669,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //            parent.put("collapsed", false);//祖先节点全部打开
 //            getCol().getDecks().save(parent);
 //        }
-        mHasSubDecks=children.size() > 0;
+        mHasSubDecks = children.size() > 0;
         mNoSubDeckHint.setText(mHasSubDecks ? "" : "暂无子记忆库");
         mInitCollapsedStatus = true;
     }
@@ -741,7 +750,6 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //            window.setFormat(PixelFormat.RGBA_8888);
 //        }
 //    }
-
 
 
     /**
@@ -966,6 +974,8 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
     public static String KEY_CONFIG_INIT = "KEY_CONFIG_INIT";//首次学习配置
     public static String KEY_STRUCT_INIT = "KEY_STRUCT_INIT";//首次进入详情页查看结构
+
+
     private void openReviewer() {
         if (mShouldConfigBeforeStudy && mOptions != null) {
             SharedPreferences sharedPreferences = getAnkiActivity().getSharedPreferences(STUDY_SETTING, 0);
@@ -1091,13 +1101,12 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             for (Deck d : col.getDecks().all()) {
                 ids.add(d.getLong("id"));
             }
-            return ids;
         } else {
             // The given deck id and its children
             ids.add(deckId);
             ids.addAll(col.getDecks().children(deckId).values());
-            return ids;
         }
+        return ids;
     }
 
 
@@ -1116,6 +1125,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             refreshInterface(true);
         }
     }
+
 
     @SuppressWarnings("deprecation")
     private void openReviewerInternal() {
@@ -1252,6 +1262,25 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     if (maxNewCard >= 0 && maxNewCard <= 9999 && maxRevCard >= 0 && maxRevCard <= 9999) {
                         mOptions.getJSONObject("new").put("perDay", maxNewCard);
                         mOptions.getJSONObject("rev").put("perDay", maxRevCard);
+                        SharedPreferences sharedPreferences = getAnkiActivity().getSharedPreferences(STUDY_SETTING, 0);
+                        String oldValue = sharedPreferences.getString(KEY_LRN_AND_REV_CARD_MAX, "");
+                        Map<String, String> oldMap = null;
+                        Gson gson = new Gson();
+                        try {
+                            oldMap = gson.fromJson(oldValue, new TypeToken<Map<String, String>>() {
+                            }.getType());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        if (oldMap == null) {
+                            oldMap = new HashMap<>();
+                        }
+                        for (long id : getDeckIds(getCol().getDecks().current().getLong("id"), getCol())) {
+                            oldMap.put(String.valueOf(id), maxNewCard + "," + maxRevCard);
+                        }
+                        String newValue = gson.toJson(oldMap);
+                        sharedPreferences.edit().putString(KEY_LRN_AND_REV_CARD_MAX, newValue).apply();
+
                         Timber.i("edit new and rev max:" + maxNewCard + "," + maxRevCard);
                         try {
                             getCol().getDecks().save(mOptions);
@@ -1326,6 +1355,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             openReviewer();
         }
     };
+
 
     @SuppressWarnings("deprecation")
     @Override
@@ -1473,6 +1503,24 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
 
     private void stopDeckStudy() {
+        int maxNewCard = mOptions.getJSONObject("new").getInt("perDay");
+        int maxRevCard = mOptions.getJSONObject("rev").getInt("perDay");
+        SharedPreferences sharedPreferences = getAnkiActivity().getSharedPreferences(STUDY_SETTING, 0);
+        String oldValue = sharedPreferences.getString(KEY_LRN_AND_REV_CARD_MAX, "");
+        Map<String, String> oldMap = null;
+        Gson gson = new Gson();
+        try {
+            oldMap = gson.fromJson(oldValue, new TypeToken<Map<String, String>>() {
+            }.getType());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (oldMap == null) {
+            oldMap = new HashMap<>();
+        }
+        oldMap.put(String.valueOf(getCol().getDecks().current().getLong("id")), maxNewCard + "," + maxRevCard);
+        String newValue = gson.toJson(oldMap);
+        sharedPreferences.edit().putString(KEY_LRN_AND_REV_CARD_MAX, newValue).apply();
         mOptions.getJSONObject("new").put("perDay", 0);
         mOptions.getJSONObject("rev").put("perDay", 0);
         try {
@@ -1486,8 +1534,29 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 
 
     private void resumeDeckStudy() {
-        mOptions.getJSONObject("new").put("perDay", 30);
-        mOptions.getJSONObject("rev").put("perDay", 200);
+        SharedPreferences sharedPreferences = getAnkiActivity().getSharedPreferences(STUDY_SETTING, 0);
+        String oldValue = sharedPreferences.getString(KEY_LRN_AND_REV_CARD_MAX, "");
+        Map<String, String> oldMap = null;
+        Gson gson = new Gson();
+        try {
+            oldMap = gson.fromJson(oldValue, new TypeToken<Map<String, String>>() {
+            }.getType());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        mOptions =  getCol().getDecks().confForDid(getCol().getDecks().current().getLong("id"));
+        if (oldMap == null) {
+            mOptions.getJSONObject("new").put("perDay", 30);
+            mOptions.getJSONObject("rev").put("perDay", 200);
+        }else {
+            String data=oldMap.get(String.valueOf(getCol().getDecks().current().getLong("id")));
+            String newCardMax=data.split(",")[0];
+            String revCardMax=data.split(",")[1];
+            mOptions.getJSONObject("new").put("perDay", Integer.valueOf(newCardMax));
+            mOptions.getJSONObject("rev").put("perDay", Integer.valueOf(revCardMax));
+        }
+
         try {
             getCol().getDecks().save(mOptions);
         } catch (RuntimeException e) {
@@ -1600,6 +1669,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
             }
         }
     }
+
 
     @SuppressWarnings("deprecation")
     @Override
@@ -1748,7 +1818,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
                     int revCards = (Integer) obj[1] + (Integer) obj[2];
                     int totalNew = (Integer) obj[3];
                     int totalCards = (Integer) obj[4];
-                    Timber.i("start refresh list data:"+newCards+","+lrnCards+","+revCards+","+totalNew+","+totalCards);
+                    Timber.i("start refresh list data:" + newCards + "," + lrnCards + "," + revCards + "," + totalNew + "," + totalCards);
 //                    int eta = (Integer) obj[5];
 
                     // Don't do anything if the fragment is no longer attached to it's Activity or col has been closed
@@ -1899,7 +1969,7 @@ public class StudyOptionsFragment extends Fragment implements Toolbar.OnMenuItem
 //                        holder.handled_percent.setText((String.format(Locale.CHINA, "已掌握 %.1f", percent)) + "%");
                     } else {
                         percent = (data[0] + data[1] + data[2] <= 0) ? 0 : ((data[0] + data[1]) / (data[0] + data[1] + data[2]) * 100);
-                        mDeckListAdapter.mTextHandledNum = String.format(Locale.CHINA, "%.0f/%.0f", data[0]+ data[1],  data[0] + data[1] + data[2] );
+                        mDeckListAdapter.mTextHandledNum = String.format(Locale.CHINA, "%.0f/%.0f", data[0] + data[1], data[0] + data[1] + data[2]);
 //                        holder.handled_percent.setText((String.format(Locale.CHINA, "已学 %.1f", percent)) + "%");
                     }
 

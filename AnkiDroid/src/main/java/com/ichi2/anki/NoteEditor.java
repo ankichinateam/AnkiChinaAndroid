@@ -97,6 +97,7 @@ import com.ichi2.libanki.Models;
 import com.ichi2.libanki.Model;
 import com.ichi2.libanki.Note;
 import com.ichi2.libanki.Note.ClozeUtils;
+import com.ichi2.libanki.Sound;
 import com.ichi2.libanki.Utils;
 import com.ichi2.libanki.Deck;
 import com.ichi2.themes.StyledProgressDialog;
@@ -951,10 +952,15 @@ public class NoteEditor extends AnkiActivity {
             // Check whether note type has been changed
             final Model newModel = getCurrentlySelectedModel();
             final Model oldModel = (mCurrentEditedCard == null) ? null : mCurrentEditedCard.model();
-            File target =new File(FileUtil.createTmpDir(this),mCurrentEditedCard.getId()+".wav");
-            if(target.exists()){
-                Timber.i("editing card audio is exists,delete it");
-                target.delete();
+            File questionCacheAudio  =new File(FileUtil.createTmpDir(this),mCurrentEditedCard.getId()+"-"+ Sound.SoundSide.QUESTION+".wav");
+            if(questionCacheAudio.exists()){
+                Timber.i("editing card question audio is exists,delete it");
+                questionCacheAudio.delete();
+            }
+            File answerCacheAudio  =new File(FileUtil.createTmpDir(this),mCurrentEditedCard.getId()+"-"+ Sound.SoundSide.ANSWER+".wav");
+            if(answerCacheAudio.exists()){
+                Timber.i("editing card answer audio is exists,delete it");
+                answerCacheAudio.delete();
             }
             if (!newModel.equals(oldModel)) {
                 mReloadRequired = true;
@@ -1616,7 +1622,7 @@ public class NoteEditor extends AnkiActivity {
     private void setMMButtonListener(ImageButton mediaButton, final int index) {
         mediaButton.setOnClickListener(v -> {
             Timber.i("NoteEditor:: Multimedia button pressed for field %d", index);
-            if (mEditorNote.items()[index][1].length() > 0) {
+            if (mEditorNote.items()[index][1].length() > 0 && !mEditorNote.items()[index][1].contains("<img")) {
                 final Collection col = CollectionHelper.getInstance().getCol(NoteEditor.this);
                 // If the field already exists then we start the field editor, which figures out the type
                 // automatically
@@ -2276,12 +2282,19 @@ public class NoteEditor extends AnkiActivity {
             int initialSize = menu.size();
 
             if (isClozeType()) {
-                menu.add(Menu.NONE, mClozeMenuId, 0, R.string.multimedia_editor_popup_cloze);
+//                menu.add(Menu.NONE, mClozeMenuId, 0, R.string.multimedia_editor_popup_cloze);
+                menu.add(
+                        Menu.NONE,
+                        mClozeMenuId,
+                        0,
+                        getString(R.string.multimedia_editor_popup_cloze)
+                );
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 // This should be after "Paste as Plain Text"
-                menu.add(Menu.NONE, mSetLanguageId, 99, R.string.note_editor_set_field_language);
+//                menu.add(Menu.NONE, mSetLanguageId, 99, R.string.note_editor_set_field_language);
+                menu.add(Menu.NONE, mSetLanguageId, 99,  getString(R.string.note_editor_set_field_language));
             }
 
 

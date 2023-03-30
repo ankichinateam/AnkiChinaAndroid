@@ -958,7 +958,7 @@ public class Media {
 
 
     public Pair<File, List<String>> mediaNeedUploadZip2AnkiChina(Map<String, Boolean> needUploadFileRecord) {
-        File f = new File(mCol.getPath().replaceFirst("collection\\.anki2$", "tmpSyncToServer.zip"));
+        File f = new File(mCol.getPath().replaceFirst("collection\\.anki2$", "tmpSyncToServer"+ mCol.getTime().intTimeMS()+".zip"));
         try (ZipOutputStream z = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(f)))) {
             z.setMethod(ZipOutputStream.DEFLATED);
 
@@ -986,7 +986,7 @@ public class Media {
                 String fname = entry.getKey();
                 fnames.add(fname);
                 try {
-                    mCol.log("+media zip " + fname);
+//                    mCol.log("+media zip " + fname);
                     File file = new File(dir(), fname);
                     BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file), 2048);
                     z.putNextEntry(new ZipEntry(fname));

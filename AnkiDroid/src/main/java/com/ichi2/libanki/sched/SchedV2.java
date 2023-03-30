@@ -250,7 +250,7 @@ public class SchedV2 extends AbstractSched {
      * Bury siblings if required by the options
      * Overriden
      *  */
-    public void answerCard(@NonNull Card card, @Consts.BUTTON_TYPE int ease) {
+    public void answerCard(@NonNull Card card, int ease) {
         mCol.log();
         discardCurrentCard();
         mCol.markReview(card);
@@ -917,7 +917,7 @@ public class SchedV2 extends AbstractSched {
                     // fill the queue with the current did
                     String idName = (allowSibling) ? "id": "nid";
                     long id = (allowSibling) ? currentCardId(): currentCardNid();
-                    cur = mCol.getDb().query("SELECT id FROM cards WHERE did = ? AND queue = " + Consts.QUEUE_TYPE_NEW + " AND " + idName + "!= ? ORDER BY due, ord LIMIT ?", did, id, lim);
+                    cur = mCol.getDb().query("SELECT id FROM cards WHERE did = ? AND queue = " + Consts.QUEUE_TYPE_NEW + " AND " + idName + "!= ? ORDER BY due, ord, id LIMIT ?", did, id, lim);
                     while (cur.moveToNext()) {
                         mNewQueue.add(cur.getLong(0));
                     }
@@ -1515,7 +1515,7 @@ public class SchedV2 extends AbstractSched {
     }
 
 
-    protected void _logLrn(@NonNull Card card, @Consts.BUTTON_TYPE int ease, @NonNull JSONObject conf, boolean leaving, @Consts.REVLOG_TYPE int type, int lastLeft) {
+    protected void _logLrn(@NonNull Card card,  int ease, @NonNull JSONObject conf, boolean leaving, int type, int lastLeft) {
         int lastIvl = -(_delayForGrade(conf, lastLeft));
         int ivl = leaving ? card.getIvl() : -(_delayForGrade(conf, card.getLeft()));
         log(card.getId(), mCol.usn(), ease, ivl, lastIvl, card.getFactor(), card.timeTaken(), type);
@@ -2326,6 +2326,7 @@ public class SchedV2 extends AbstractSched {
 
     public void _checkDay() {
         // check if the day has rolled over
+        _updateCutoff();//完全同步后需要重新计算日期
         if (getTime().intTime() > mDayCutoff) {
             reset();
         }

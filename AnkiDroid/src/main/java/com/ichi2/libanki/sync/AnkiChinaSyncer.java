@@ -3,6 +3,7 @@ package com.ichi2.libanki.sync;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
@@ -13,9 +14,12 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.ichi2.anki.AnkiDroidApp;
 import com.ichi2.anki.BackupManager;
+import com.ichi2.anki.ChooseLoginServerActivity;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.R;
 import com.ichi2.async.CollectionTask;
@@ -52,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -87,16 +92,18 @@ public class AnkiChinaSyncer {
 
     CustomStyleDialog mSyncChinaDialog;
     TextView mDialogTitle, mDialogProgress/*, mDialogButton*/;
-    Button mDialogConfirm;
+    Button mDialogConfirm, mDialogUpload, mDialogMerge;
     boolean mCancel = false;
 
-    private void showSyncChinaDialog(Activity context) {
 
+    private void showSyncChinaDialog(Activity context) {
         mSyncChinaDialog = new CustomStyleDialog(context, R.style.CommonDialogTheme);
         mSyncChinaDialog.setContentView(R.layout.dialog_sync_china);
         mDialogTitle = mSyncChinaDialog.findViewById(R.id.title);
         mDialogProgress = mSyncChinaDialog.findViewById(R.id.progress);
         mDialogConfirm = mSyncChinaDialog.findViewById(R.id.confirm);
+        mDialogUpload = mSyncChinaDialog.findViewById(R.id.upload);
+        mDialogMerge = mSyncChinaDialog.findViewById(R.id.merge);
         mSyncChinaDialog.setCancelable(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             if (!context.isFinishing() && !context.isDestroyed()) {
@@ -116,6 +123,13 @@ public class AnkiChinaSyncer {
     private String mCurrentState = "";
 
 
+    private void dismissDialog() {
+        if (mSyncChinaDialog != null && mSyncChinaDialog.isShowing() && !mContext.isFinishing() && !mContext.isDestroyed()) {
+            mSyncChinaDialog.dismiss();
+        }
+    }
+
+
     @SuppressLint("DefaultLocale")
     private void updateDialogProgress(String title, String secondTitle, double progress) {
         if (!mCurrentState.equals(secondTitle)) {
@@ -125,16 +139,15 @@ public class AnkiChinaSyncer {
         mCurrentProgress = progress;
         mHandler.post(() -> {
             mDialogTitle.setText(secondTitle);
-            mDialogProgress.setText(String.format("%.2f", progress).concat("%"));
+            mDialogProgress.setText(String.format("%.0f", progress).concat("%"));
+//            Timber.i("update dialog progress2 " + title.equals(SYNCING_COMPLETED) + "," + title.equals(SYNCING_MEDIA) );
             if (title.equals(SYNCING_COMPLETED)) {
-                if (mSyncChinaDialog.isShowing()&&!mContext.isFinishing()&&!mContext.isDestroyed()) {
-                    mSyncChinaDialog.dismiss();
-                }
+                dismissDialog();
                 SYNCING = false;
                 mCallback.onCompletedAll();
-            }
-            if (title.equals(SYNCING_MEDIA) && mSyncChinaDialog.isShowing()&&!mContext.isFinishing()&&!mContext.isDestroyed()) {
-                mSyncChinaDialog.dismiss();
+            } else if (title.equals(SYNCING_MEDIA)) {
+                mCallback.onSyncingMedia(progress);
+                dismissDialog();
             }
 
         });
@@ -142,12 +155,16 @@ public class AnkiChinaSyncer {
 
 
     private void updateDialogMessage(String title, String message) {
+        updateDialogMessage(title, message, null);
+    }
+
+
+    private void updateDialogMessage(String title, String message, JSONObject data) {
         Timber.i("update dialog message " + title + "," + message);
         mHandler.post(() -> {
             mDialogTitle.setText(title);
             mDialogProgress.setText(message);
-
-            if (title.equals(SYNCING_ERROR)) {
+            if (title.equals(SYNCING_ERROR) || data == null) {
                 SYNCING = false;
                 mCancel = true;
                 mCallback.onError(100, message);
@@ -156,13 +173,87 @@ public class AnkiChinaSyncer {
                     mDialogConfirm.setVisibility(View.VISIBLE);
                     mSyncChinaDialog.findViewById(R.id.loading_view).setVisibility(View.GONE);
                     mDialogConfirm.setOnClickListener(v -> {
-                        if (mSyncChinaDialog.isShowing()) {
-                            mSyncChinaDialog.dismiss();
-                        }
+                        dismissDialog();
                     });
                 }
+            } else if (title.equals(SYNCING_ERROR_NEXT_STEP)) {
+                //{"status_code":1501,"message":"云端与本地卡片数据不一致，请选择您的操作","data":{"upload":true,"download":true,"merge":true}}
+                Timber.i("update dialog message " + data);
+                if (mSyncChinaDialog.isShowing()) {
+                    mSyncChinaDialog.setCancelable(false);
+                    mDialogConfirm.setVisibility(data.getBoolean("download") ? View.VISIBLE : View.GONE);
+                    mDialogUpload.setVisibility(data.getBoolean("upload") ? View.VISIBLE : View.GONE);
+                    mDialogMerge.setVisibility(data.getBoolean("merge") ? View.VISIBLE : View.GONE);
+                    mSyncChinaDialog.findViewById(R.id.loading_view).setVisibility(View.GONE);
+                    mSyncChinaDialog.findViewById(R.id.cancel).setVisibility(View.VISIBLE);
+                    mSyncChinaDialog.findViewById(R.id.cancel).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            SYNCING = false;
+                            mCancel = true;
+                            mCallback.onError(100, message);
+                            dismissDialog();
+                        }
+                    });
+                    mDialogConfirm.setText("下载云端");
+                    mDialogConfirm.setOnClickListener(v -> {
 
+                        new MaterialDialog.Builder(mContext)
+                                .title("下载云端")
+                                .content("将删除此设备上的数据并下载云端数据，是否继续?")
+                                .positiveText("确定")
+                                .negativeText("取消")
+                                .onPositive((dialog2, which) -> {
+                                    dismissDialog();
+                                    File anki = new File(CollectionHelper.getCollectionPath(mContext));
+                                    if (anki.exists()) {
+//                            String backupName = CollectionHelper.getCollectionPath(mContext) + "_backup_" + CollectionHelper.getInstance().getTimeSafe(mContext).intTime();
+                                        mCol.close();
+                                        boolean result = anki.delete();
+//                            boolean result = anki.renameTo(new File(backupName));
+                                        if (!result) {
+                                            Toast.makeText(mContext, "操作失败,请稍后再试", Toast.LENGTH_SHORT).show();
+                                            mCallback.onError(100, message);
+                                            return;
+                                        }
+                                    }
+                                    mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+                                    Timber.d("目前本地的crt是：" + mCol.getCrt());
+                                    sync("download");
 
+                                })
+                                .build().show();
+
+                    });
+                    mDialogUpload.setOnClickListener(v -> {
+
+                        new MaterialDialog.Builder(mContext)
+                                .title("上传本地")
+                                .content("将删除云端数据并上传此设备数据到云端，是否继续?")
+                                .positiveText("确定")
+                                .negativeText("取消")
+                                .onPositive((dialog2, which) -> {
+                                    dismissDialog();
+                                    sync("upload");
+                                })
+                                .build().show();
+
+                    });
+                    mDialogMerge.setOnClickListener(v -> {
+
+                        new MaterialDialog.Builder(mContext)
+                                .title("合并数据")
+                                .content("尝试将本地数据与云端数据去重后合并,是否继续?")
+                                .positiveText("确定")
+                                .negativeText("取消")
+                                .onPositive((dialog2, which) -> {
+                                    dismissDialog();
+                                    sync("merge");
+                                })
+                                .build().show();
+
+                    });
+                }
             }
         });
     }
@@ -172,6 +263,7 @@ public class AnkiChinaSyncer {
     private final String SYNCING_MEDIA = "多媒体同步中";
     private final String SYNCING_COMPLETED = "同步完成";
     private final String SYNCING_ERROR = "同步失败";
+    private final String SYNCING_ERROR_NEXT_STEP = "提示";
 
     private final String ERROR_NETWORK = "网络异常，请稍候再试";
     private final String ERROR_DATA = "数据异常";
@@ -185,6 +277,9 @@ public class AnkiChinaSyncer {
         void onCompletedAll();
 
         void onCompletedData();
+
+        void onSyncingMedia(double percent);
+
     }
 
 
@@ -194,8 +289,8 @@ public class AnkiChinaSyncer {
     //4、如果本地有synclog，则将synclog和数据库对比，得出变化的数据，上报数据库
     //5、获得本地需要改动的返回内容，修改数据库
     //6、将修改后的数据库的内容保存到synclog里，供下次同步对比
-    public void sync() {
-        if (SYNCING) {
+    public void sync(String action) {
+        if (SYNCING && (action == null || action.isEmpty())) {
 //            showSyncChinaDialog(mContext);
 //            updateDialogMessage(SYNCING_ERROR, "同步状态异常，请重启APP");
             return;
@@ -203,7 +298,9 @@ public class AnkiChinaSyncer {
         SYNCING = true;
         Timber.i("start sync china");
         showSyncChinaDialog(mContext);
-        BackupManager.performBackupInBackground(mCol.getPath(), true, CollectionHelper.getInstance().getTimeSafe(mContext));
+        if (action == null || !action.equals("upload")) {
+            BackupManager.performBackupInBackground(mCol.getPath(), true, CollectionHelper.getInstance().getTimeSafe(mContext));
+        }
         mCol.getDb().execute("create table if not exists synclog (" + "    id             integer not null,"
                 + "    type             integer not null," + "    mod             integer not null" + ")");
         mCol.getDb().execute("create index if not exists ix_synclog on synclog (id,type);)");
@@ -214,15 +311,32 @@ public class AnkiChinaSyncer {
 
         mCurrentSession = mPreferences.getString(Consts.KEY_SYNC_CHINA_SESSION, "");
         mPreferences.edit().putLong(Consts.KEY_LAST_STOP_TIME, System.currentTimeMillis()).apply();
-        String url = Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/getKey";
-        url += "?terminal_time=" + System.currentTimeMillis() / 1000 + "&terminal_crt=" + mCol.getCrt();
+        String url = Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/getKey";
+//        url += "?terminal_time=" + System.currentTimeMillis() / 1000 + "&terminal_crt=" + mCol.getCrt();
+
+        HashMap<Long, Deck> decks = mCol.getDecks().getDecks();
+        Set<Map.Entry<Long, Deck>> en = decks.entrySet();
+        JSONObject deckObject = new JSONObject();
+        for (Map.Entry<Long, Deck> entry : en) {
+            Long key = entry.getKey();
+            Deck value = entry.getValue();
+            value.put("card_count", mCol.cardCountInOneDeck(key));
+            deckObject.put(String.valueOf(key), value);
+        }
+        FormBody.Builder builder = new FormBody.Builder()
+                .add("terminal_time", System.currentTimeMillis() / 1000 + "")
+                .add("terminal_crt", "" + mCol.getCrt())
+                .add("terminal_decks", deckObject.toString());
+        if (action != null && !action.isEmpty()) {
+            builder.add("action", action);
+        }
         if (!mCurrentSession.isEmpty()) {
-            url += "&last_session_key=" + mCurrentSession;
+            builder.add("last_session_key", mCurrentSession);
         } else {
             //全量同步直接上传本地数据
             try {
                 mCol.getDb().execute("delete from synclog");
-            }catch (Exception e){
+            } catch (Exception e) {
 //                mCol=CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
 //                mCol.getDb().execute("drop table synclog");
 //                mCol.getDb().execute("create table if not exists synclog (" + "    id             integer not null,"
@@ -231,12 +345,12 @@ public class AnkiChinaSyncer {
 
             }
         }
-
         updateDialogProgress(SYNCING_DATA, "整理数据中", 2);
         if (mCancel) {
             return;
         }
-        OKHttpUtil.get(url, mToken, "", new OKHttpUtil.MyCallBack() {
+        RequestBody formBody = builder.build();
+        OKHttpUtil.post(url, formBody, mToken, "", new OKHttpUtil.MyCallBack() {
             @Override
             public void onFailure(Call call, IOException e) {
                 updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -251,17 +365,17 @@ public class AnkiChinaSyncer {
                 if (response.isSuccessful()) {
                     try {
                         final JSONObject object = new JSONObject(response.body().string());
-                        if (object.getInt("status_code") != 0) {
-                            updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+                        if (hasError(object)) {
                             return;
                         }
                         final JSONObject item = object.getJSONObject("data");
                         Timber.i("get session key successfully!:%s", object.toString());
                         mPostPageSize = item.getInt("page_size");
-                        if (!mCurrentSession.isEmpty()) {
+                        if (!mCurrentSession.isEmpty() && (action == null || (!action.equals("upload") && !action.equals("merge")))) {//action是upload或merge时，需直接强制全量上传本地文件
+                            Timber.i("对比同步");
                             mCurrentSession = item.getString("session_key");
                             JSONObject localChangedData = compareSyncTable();
-//                        Timber.i("ready to push local sync data:%s", localChangedData.toString());
+                            Timber.i("ready to push local sync data:%s", localChangedData.toString());
                             RequestBody formBody = new FormBody.Builder()
                                     .add("data", localChangedData.toString())
                                     .add("session_key", mCurrentSession)
@@ -269,15 +383,16 @@ public class AnkiChinaSyncer {
 
                             updateDialogProgress(SYNCING_DATA, "上传数据中", 10);
                             mPostDataPerPercent = 20.0 / (mRestNoteList.size() + 1);
-                            OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/postData", formBody, token, "", mPostLocalDataCallback);
+                            OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/postData", formBody, token, "", mPostLocalDataCallback);
                         } else {
                             //全量同步
+                            Timber.i("全量同步");
                             mCurrentSession = item.getString("session_key");
                             updateDialogProgress(SYNCING_DATA, "上传数据中", 10);
                             File zip = zipAllCollection();
                             List<String> zipPath = new ArrayList<>();
                             zipPath.add(zip.getAbsolutePath());
-                            OKHttpUtils.doPostRequest(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/postData", mCurrentSession, zipPath, uploadProgress, zip.getAbsolutePath(), token, new OKHttpUtils.MyCallBack() {
+                            OKHttpUtils.doPostRequest(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/postData", mCurrentSession, zipPath, uploadProgress, zip.getAbsolutePath(), token, new OKHttpUtils.MyCallBack() {
                                 @Override
                                 public void onFailure(Call call, final IOException e) {
                                     Timber.i("upload error------>%s %s", zip.getAbsolutePath(), e.getMessage());
@@ -308,6 +423,25 @@ public class AnkiChinaSyncer {
     }
 
 
+    public void sync() {
+        sync("");
+    }
+
+
+    private boolean hasError(JSONObject object) {
+        if (object.getInt("status_code") == 0) {
+            return false;
+        }
+        if (object.getInt("status_code") == 1501) {
+            updateDialogMessage(SYNCING_ERROR_NEXT_STEP, object.getString("message"), object.getJSONObject("data"));
+
+        } else {
+            updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+        }
+        return true;
+    }
+
+
     double mPostDataPerPercent = 20.0;
     double mPullNotesPerPercent = 35.0;
     private final OKHttpUtil.MyCallBack mPostLocalDataCallback = new OKHttpUtil.MyCallBack() {
@@ -323,8 +457,8 @@ public class AnkiChinaSyncer {
                 try {
                     final JSONObject object = new JSONObject(response.body().string());
 //                    Timber.i("object:%s", object.toString());
-                    if (object.getInt("status_code") != 0) {
-                        updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+
+                    if (hasError(object)) {
                         return;
                     }
                     updateDialogProgress(SYNCING_DATA, "上传数据中", mCurrentProgress + mPostDataPerPercent);//上传数据一共占用20，至此一共占用30%
@@ -335,12 +469,12 @@ public class AnkiChinaSyncer {
                                 .add("session_key", mCurrentSession)
                                 .build();
                         Timber.i("ready to push local sync data:%s", restNotes.length());
-                        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/postData", formBody, token, "", mPostLocalDataCallback);
+                        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/postData", formBody, token, "", mPostLocalDataCallback);
                         return;
                     }
                     updateDialogProgress(SYNCING_DATA, "获取同步数据中", 30);
 
-                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/pullData?session_key=" + mCurrentSession, mToken, "", new OKHttpUtil.MyCallBack() {
+                    OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/pullData?session_key=" + mCurrentSession, mToken, "", new OKHttpUtil.MyCallBack() {
                         @Override
                         public void onFailure(Call call, IOException e) {
                             updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -353,28 +487,26 @@ public class AnkiChinaSyncer {
                                 try {
                                     updateDialogProgress(SYNCING_DATA, "获取同步数据中", 30);
                                     final JSONObject object = new JSONObject(response.body().string());
-                                    if (object.getInt("status_code") != 0) {
-                                        updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+                                    Timber.e("main object:%s", object.toString());
+                                    if (hasError(object)) {
                                         return;
                                     }
-                                    Timber.e("main object:%s", object.toString());
-                                    if (object.get("data") != null) {
-                                        final JSONObject item = object.getJSONObject("data");
-                                        int pageCount = item.getJSONObject("notes").getInt("page");
-                                        mPullNotesPerPercent = 35.0 / pageCount;
-                                        Timber.e("need download notes page count :%d", pageCount);
-                                        handleServerData(item);//处理数据,notes占用35%，其他占用25%，整个过程结束一共占用90%
 
-                                        try {
-                                            String lastID = item.getJSONObject("notes").getString("last_id");
-                                            if (lastID != null && !lastID.equals("null")) {
-                                                fetchRestNotesFromServer(lastID);//还有多余数据就继续递归处理
-                                                return;
-                                            }
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
+                                    final JSONObject item = object.getJSONObject("data");
+
+                                    int pageCount = item.getJSONObject("notes").getInt("page");
+                                    mPullNotesPerPercent = 35.0 / pageCount;
+                                    Timber.e("need download notes page count :%d", pageCount);
+                                    try {
+                                        String lastID = item.getJSONObject("notes").getString("last_id");
+                                        if (!lastID.equals("null")) {
+                                            fetchRestNotesFromServer(item, lastID);
+                                            return;
                                         }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
                                     }
+                                    handleServerData(item);//处理数据,notes占用35%，其他占用25%，整个过程结束一共占用90%
                                     completeDataSync(token);//完成本次同步
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -398,8 +530,30 @@ public class AnkiChinaSyncer {
     };
 
 
-    private void fetchRestNotesFromServer(String lastID) {
-        OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/pullData?session_key=" + mCurrentSession + "&last_id=" + lastID, mToken, "", new OKHttpUtil.MyCallBack() {
+    private void handleNotesReplace(JSONObject data) {
+        DB db = mCol.getDb();
+        try {
+            JSONArray replace = data.getJSONArray("replace");
+            if (replace.length() > 0) {
+                db.getDatabase().beginTransaction();
+                for (int i = 0; i < replace.length(); i++) {
+                    db.execute("insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
+                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10));
+                }
+                db.getDatabase().setTransactionSuccessful();
+                mCol.save();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.getDatabase().endTransaction();
+        }
+
+    }
+
+
+    private void fetchRestNotesFromServer(JSONObject item, String lastID) {
+        OKHttpUtil.get(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/pullData?session_key=" + mCurrentSession + "&last_id=" + lastID, mToken, "", new OKHttpUtil.MyCallBack() {
             @Override
             public void onFailure(Call call, IOException e) {
                 updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -413,41 +567,22 @@ public class AnkiChinaSyncer {
                         updateDialogProgress(SYNCING_DATA, "同步更多笔记中", mCurrentProgress + mPullNotesPerPercent);
                         final JSONObject object = new JSONObject(response.body().string());
 //                        Timber.i("object:%s", object.toString());
-                        if (object.getInt("status_code") != 0) {
-                            updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+                        if (hasError(object)) {
                             return;
                         }
-                        if (object.get("data") != null) {
-                            final JSONObject item = object.getJSONObject("data");
-                            DB db = mCol.getDb();
-                            try {
-                                JSONArray replace = item.getJSONArray("replace");
-                                if (replace.length() > 0) {
-                                    db.getDatabase().beginTransaction();
-                                    for (int i = 0; i < replace.length(); i++) {
-                                        db.execute("insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
-                                                replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10));
-                                    }
-                                    db.getDatabase().setTransactionSuccessful();
-                                    mCol.save();
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            } finally {
-                                db.getDatabase().endTransaction();
+                        final JSONObject data = object.getJSONObject("data");
+                        handleNotesReplace(data);
+                        try {
+                            String lastID = data.getString("last_id");
+                            if (!lastID.equals("null")) {
+                                fetchRestNotesFromServer(item, lastID);//还有多余数据就继续递归处理
+                                return;
                             }
-                            try {
-                                String lastID = item.getString("last_id");
-                                if (lastID != null && !lastID.equals("null")) {
-                                    fetchRestNotesFromServer(lastID);//还有多余数据就继续递归处理
-                                    return;
-                                }
 
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-
+                        handleServerData(item);//处理数据,notes占用35%，其他占用25%，整个过程结束一共占用90%
                         completeDataSync(token);//完成本次同步
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -462,7 +597,7 @@ public class AnkiChinaSyncer {
 
 
     private JSONObject compareSyncTable() {
-        mCol=CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
         CollectionHelper.getInstance().lockCollection();
         DB db = mCol.getDb();
         db.execute("create index if not exists ix_synclog_id on synclog (id);)");
@@ -489,6 +624,7 @@ public class AnkiChinaSyncer {
         colJsonReplace.put("tags", mCol.getTagsJson());
         colJson.put("replace", colJsonReplace);
         root.put("col", colJson);
+        root.put("remarks", getChangedRemarks(SYNC_LOG_TYPE_REMARKS, mCol.getRemarks()));
         root.put("decks", getChangedColJson(SYNC_LOG_TYPE_DECKS, mCol.getDecks().all()));
         root.put("dconf", getChangedColJson(SYNC_LOG_TYPE_DCONF, mCol.getDecks().allConf()));
         root.put("models", getChangedColJson(SYNC_LOG_TYPE_MODELS, mCol.getModels().all()));
@@ -508,19 +644,76 @@ public class AnkiChinaSyncer {
     private final int SYNC_LOG_TYPE_CARD = 3;
     private final int SYNC_LOG_TYPE_NOTE = 4;
     private final int SYNC_LOG_TYPE_REVLOG = 5;
+    private final int SYNC_LOG_TYPE_REMARKS = 6;
 
 
-    private <T extends JSONObject> JSONObject getChangedColJson(int type, List<T> newModels) {
+    private <T extends JSONObject> JSONObject getChangedColJson(int type, List<T> curModels) {
         List<T> changedModel = new ArrayList<>();
         boolean deleted;
         Cursor cur = null;
         Map<Long, Long> oldModel = new HashMap<>();
         JSONObject modelsJson = new JSONObject();
         try {
-            cur = CollectionHelper.getInstance() .getColSafe(AnkiDroidApp.getInstance()).getDb()
+            cur = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).getDb()
                     .getDatabase()
-                    .query(
-                            "SELECT id,mod FROM synclog WHERE type = " + type, null);
+                    .query("SELECT id,mod FROM synclog WHERE type = " + type, null);
+            while (cur.moveToNext()) {
+                oldModel.put(cur.getLong(0), cur.getLong(1));
+            }
+        } finally {
+            if (cur != null && !cur.isClosed()) {
+                cur.close();
+            }
+        }
+        if (oldModel.isEmpty()) {
+            changedModel.addAll(curModels);
+        } else {
+            StringBuilder deletedModelSb = new StringBuilder();
+            for (Map.Entry<Long, Long> entry : oldModel.entrySet()) {
+//                System.out.println("key= " + entry.getKey() + " and value= " + entry.getValue());
+                deleted = true;
+                for (T model : curModels) {
+                    if (!changedModel.contains(model) && (oldModel.get(model.getLong("id")) == null || oldModel.get(model.getLong("id")) < model.getLong("mod"))) {
+                        //新增或修改过的
+                        changedModel.add(model);
+                        deleted = false;
+                    } else if (model.getLong("id") == entry.getKey()) {
+                        //未被删除的
+                        deleted = false;
+                    }
+                }
+                if (deleted) {
+                    if (deletedModelSb.length() != 0) {
+                        deletedModelSb.append(",");
+                    }
+                    deletedModelSb.append(entry.getKey());
+                }
+            }
+            if (deletedModelSb.length() > 0) {
+                modelsJson.put("delete", new JSONArray(deletedModelSb.toString().split(",")));
+            }
+        }
+
+        JSONArray changedModelJson = new JSONArray();
+        for (T item : changedModel) {
+            changedModelJson.put(item);
+        }
+        modelsJson.put("replace", changedModelJson);
+        Timber.e("最后更新的cols：" + modelsJson.toString());
+        return modelsJson;
+    }
+
+
+    private <T extends JSONObject> JSONObject getChangedRemarks(int type, List<T> curModels) {
+        List<T> changedModel = new ArrayList<>();
+        boolean deleted;
+        Cursor cur = null;
+        Map<Long, Long> oldModel = new HashMap<>();
+        JSONObject modelsJson = new JSONObject();
+        try {
+            cur = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance()).getDb()
+                    .getDatabase()
+                    .query("SELECT id,mod FROM synclog WHERE type = " + type, null);
             while (cur.moveToNext()) {
                 oldModel.put(cur.getLong(0), cur.getLong(1));
             }
@@ -531,18 +724,19 @@ public class AnkiChinaSyncer {
         }
 
         if (oldModel.isEmpty()) {
-            changedModel.addAll(newModels);
+            changedModel.addAll(curModels);
         } else {
             StringBuilder deletedModelSb = new StringBuilder();
             for (Map.Entry<Long, Long> entry : oldModel.entrySet()) {
 //                System.out.println("key= " + entry.getKey() + " and value= " + entry.getValue());
                 deleted = true;
-                for (T model : newModels) {
+                for (T model : curModels) {
                     if (!changedModel.contains(model) && (oldModel.get(model.getLong("id")) == null || oldModel.get(model.getLong("id")) < model.getLong("mod"))) {
-                        //新增或修改过的deck
+                        //新增或修改过的
                         changedModel.add(model);
+                        deleted = false;
                     } else if (model.getLong("id") == entry.getKey()) {
-                        //未被删除的deck
+                        //未被删除的
                         deleted = false;
                     }
 
@@ -556,16 +750,21 @@ public class AnkiChinaSyncer {
             }
             if (deletedModelSb.length() > 0) {
                 modelsJson.put("delete", new JSONArray(deletedModelSb.toString().split(",")));
-
-//                modelsJson.put("delete", strArray2jsonArray(deletedModelSb.toString().split(",")));
             }
         }
 
         JSONArray changedModelJson = new JSONArray();
         for (T item : changedModel) {
-            changedModelJson.put(item);
+            List<Object> needReplace = new ArrayList<>();
+            Iterator<String> sIterator = item.keys();
+            while (sIterator.hasNext()) {
+                needReplace.add(item.getString(sIterator.next()));
+            }
+            changedModelJson.put(new JSONArray(needReplace));
         }
         modelsJson.put("replace", changedModelJson);
+        Timber.e("最后更新的remarks：" + modelsJson.toString());
+
         return modelsJson;
     }
 
@@ -584,7 +783,7 @@ public class AnkiChinaSyncer {
         StringBuilder needDelete = new StringBuilder();
         int page = 0;
         int curCount = 1000;
-        mCol=CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
         CollectionHelper.getInstance().lockCollection();
         while (curCount == 1000) {
             String sql = type == SYNC_LOG_TYPE_CARD ?
@@ -622,9 +821,7 @@ public class AnkiChinaSyncer {
                         List<Object> needReplace = new ArrayList<>();
 
                         for (int i = 0; i < cur.getColumnCount() - 2; i++) {
-//                        if(cur.getType(i) == Cursor.FIELD_TYPE_STRING)
                             needReplace.add(cur.getType(i) != Cursor.FIELD_TYPE_STRING ? cur.getLong(i) : cur.getString(i));
-
                         }
                         if (type == SYNC_LOG_TYPE_NOTE) {
                             if (changedData.length() < mPostPageSize) {
@@ -637,14 +834,12 @@ public class AnkiChinaSyncer {
                                     newArray.put(new JSONArray(needReplace));
                                     mRestNoteList.addLast(newArray);
                                 }
-
                             }
                         } else {
                             changedData.put(new JSONArray(needReplace));
                         }
                     }
                 }
-
             } finally {
                 if (cur != null && !cur.isClosed()) {
                     cur.close();
@@ -657,6 +852,7 @@ public class AnkiChinaSyncer {
         if (needDelete.length() != 0) {
             result.put("delete", new JSONArray(needDelete.toString().split(",")));
         }
+        Timber.e("最后更新的cards/notes：" + result.toString());
         return result;
     }
 
@@ -707,9 +903,9 @@ public class AnkiChinaSyncer {
 
     //35%+25%
     private void handleServerData(JSONObject item) {
-        mCol =  CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
         CollectionHelper.getInstance().lockCollection();
-        updateDialogProgress(SYNCING_DATA, "更新全局配置中", mCurrentProgress + 1);
+        updateDialogProgress(SYNCING_DATA, "更新全局配置中", mCurrentProgress + 3);
         DB db = mCol.getDb();
         try {
             JSONObject remoteCol = item.getJSONObject("col").getJSONObject("replace");
@@ -725,7 +921,7 @@ public class AnkiChinaSyncer {
 //            db.execute("update col set tags ="+remoteCol.getString("tags"));
 //            db.execute("update col set tags ="+remoteCol.getString("tags"));
 //            db.execute("update col set id = %d,");
-        Timber.i("remote col config:%s", remoteCol.toString());
+            Timber.i("remote col config:%s", remoteCol.toString());
             @SuppressLint("DefaultLocale") String sql = String.format("update col set id = %d,crt = %d,mod=%d,scm=%d,ver=%d,dty=%d,usn=%d,ls=%d,conf='%s',tags='%s'", remoteCol.getInt("id"), remoteCol.getLong("crt")
                     , remoteCol.getLong("mod"), remoteCol.getLong("scm"), remoteCol.getInt("ver"), remoteCol.getInt("dty"), remoteCol.getInt("usn"), remoteCol.getLong("ls"), remoteCol.getString("conf"), remoteCol.getString("tags") == null || !remoteCol.getString("tags").startsWith("{") ? "{}" : remoteCol.getString("tags"));
             db.execute(sql);
@@ -734,6 +930,42 @@ public class AnkiChinaSyncer {
             e.printStackTrace();
 
         }
+        updateDialogProgress(SYNCING_DATA, "删除多余助记中", mCurrentProgress + 2);
+        try {
+            JSONArray deletedRemarks = item.getJSONObject("remarks").getJSONArray("delete");
+            List<Long> sids = ids2longList(deletedRemarks);
+            Timber.e("need delete remarks num:%s", sids.size());
+            db.execute("DELETE FROM remarks WHERE id IN " + sids);
+//            mCol.remCards(sids,false);
+            mCol.save();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        updateDialogProgress(SYNCING_DATA, "整理笔记中", mCurrentProgress + 2);
+        try {
+            JSONArray deletedNotes = item.getJSONObject("notes").getJSONArray("delete");
+            List<Long> sids = ids2longList(deletedNotes);
+//            db.execute("DELETE FROM notes WHERE id IN " + sids);
+            Timber.e("need delete notes num:%s", sids.size());
+            mCol._remNotes(sids);
+            mCol.save();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        updateDialogProgress(SYNCING_DATA, "删除多余卡牌中", mCurrentProgress + 2);//会同时删除助记
+        try {
+            JSONArray deletedCards = item.getJSONObject("cards").getJSONArray("delete");
+            List<Long> sids = ids2longList(deletedCards);
+            Timber.e("need delete cards num:%s", sids.size());
+//            db.execute("DELETE FROM cards WHERE id IN " + sids);
+            mCol.remCards(sids, false);
+            mCol.save();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
         Decks currentDecks = mCol.getDecks();
 
         //删除多余的内容
@@ -743,7 +975,7 @@ public class AnkiChinaSyncer {
                 double percent = 2.0 / deletedDecks.length();
                 for (int i = 0; i < deletedDecks.length(); i++) {
                     String deckID = deletedDecks.getString(i);
-                    currentDecks.rem(Long.parseLong(deckID));
+                    currentDecks.rem(Long.parseLong(deckID), false);
                     updateDialogProgress(SYNCING_DATA, "删除多余牌组中", mCurrentProgress + percent);
                 }
                 mCol.save();
@@ -785,27 +1017,27 @@ public class AnkiChinaSyncer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        updateDialogProgress(SYNCING_DATA, "删除多余卡牌中", mCurrentProgress + 2);
+        db.getDatabase().beginTransaction();
         try {
-            JSONArray deletedCards = item.getJSONObject("cards").getJSONArray("delete");
-            List<Long> sids = ids2longList(deletedCards);
-            Timber.e("need delete cards num:%s", sids.size());
-//            db.execute("DELETE FROM cards WHERE id IN " + sids);
-            mCol.remCards(sids);
-            mCol.save();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            JSONArray replace = item.getJSONObject("notes").getJSONArray("replace");
+            if (replace.length() > 0) {
+                double percent = mPullNotesPerPercent / replace.length();
+                for (int i = 0; i < replace.length(); i++) {
+//                String values = replace.getJSONArray(i).toString().replace("[", "").replace("]", "").replaceAll("\"","'").replaceAll("\u001f","\u001f");
+//                String sql = "replace into notes(id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values ( " + values + ")";
+                    Timber.i("insert or replace into notes values:%s", replace.getJSONArray(i).toString());
+                    db.execute("insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
+                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10));
+                    updateDialogProgress(SYNCING_DATA, "同步笔记数据中", mCurrentProgress + percent);
+                }
+                db.getDatabase().setTransactionSuccessful();
+                mCol.save();
+            }
 
-        updateDialogProgress(SYNCING_DATA, "删除多余笔记中", mCurrentProgress + 2);
-        try {
-            JSONArray deletedNotes = item.getJSONObject("notes").getJSONArray("delete");
-            long[] sids = ids2longArray(deletedNotes);
-//            db.execute("DELETE FROM notes WHERE id IN " + sids);
-            mCol.remNotes(sids);
-            mCol.save();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            db.getDatabase().endTransaction();
         }
         try {
             JSONObject replaceDecks = item.getJSONObject("decks").getJSONObject("replace");
@@ -887,18 +1119,20 @@ public class AnkiChinaSyncer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         db.getDatabase().beginTransaction();
         try {
-            JSONArray replace = item.getJSONObject("notes").getJSONArray("replace");
+            JSONArray replace = item.getJSONObject("cards").getJSONArray("replace");
             if (replace.length() > 0) {
-                double percent = mPullNotesPerPercent / replace.length();
+                double percent = 3.0 / replace.length();
                 for (int i = 0; i < replace.length(); i++) {
 //                String values = replace.getJSONArray(i).toString().replace("[", "").replace("]", "").replaceAll("\"","'").replaceAll("\u001f","\u001f");
-//                String sql = "replace into notes(id,guid,mid,mod,usn,tags,flds,sfld,csum,flags,data) values ( " + values + ")";
-//
-                    db.execute("insert or replace into notes values (?,?,?,?,?,?,?,?,?,?,?)",
-                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10));
-                    updateDialogProgress(SYNCING_DATA, "同步笔记数据中", mCurrentProgress + percent);
+//                String sql = "replace into cards(id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values ( " + values + ")";
+                    Timber.i("insert or replace into cards values:%s", replace.getJSONArray(i).toString());//[1670960611467,1670960611461,1670781086043,0,1670960690,119,0,0,0,0,0,0,0,0,0,0,0,""]
+                    db.execute("insert or replace into cards values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10), replace.getJSONArray(i).get(11), replace.getJSONArray(i).get(12), replace.getJSONArray(i).get(13), replace.getJSONArray(i).get(14), replace.getJSONArray(i).get(15), replace.getJSONArray(i).get(16), replace.getJSONArray(i).get(17));
+
+                    updateDialogProgress(SYNCING_DATA, "同步卡牌数据中", mCurrentProgress + percent);
                 }
                 db.getDatabase().setTransactionSuccessful();
                 mCol.save();
@@ -911,17 +1145,15 @@ public class AnkiChinaSyncer {
         }
         db.getDatabase().beginTransaction();
         try {
-            JSONArray replace = item.getJSONObject("cards").getJSONArray("replace");
+            JSONArray replace = item.getJSONObject("remarks").getJSONArray("replace");
             if (replace.length() > 0) {
-                double percent = 5.0 / replace.length();
+                double percent = 2.0 / replace.length();
                 for (int i = 0; i < replace.length(); i++) {
-//                String values = replace.getJSONArray(i).toString().replace("[", "").replace("]", "").replaceAll("\"","'").replaceAll("\u001f","\u001f");
-//                String sql = "replace into cards(id,nid,did,ord,mod,usn,type,queue,due,ivl,factor,reps,lapses,left,odue,odid,flags,data) values ( " + values + ")";
-//                Timber.i("update dialog progress:%d", percent);
-                    db.execute("insert or replace into cards values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3), replace.getJSONArray(i).get(4), replace.getJSONArray(i).get(5), replace.getJSONArray(i).get(6), replace.getJSONArray(i).get(7), replace.getJSONArray(i).get(8), replace.getJSONArray(i).get(9), replace.getJSONArray(i).get(10), replace.getJSONArray(i).get(11), replace.getJSONArray(i).get(12), replace.getJSONArray(i).get(13), replace.getJSONArray(i).get(14), replace.getJSONArray(i).get(15), replace.getJSONArray(i).get(16), replace.getJSONArray(i).get(17));
+                    Timber.i("insert or replace into remarks values:%s", replace.getJSONArray(i).toString());
+                    db.execute("insert or replace into remarks values (?,?,?,?)",
+                            replace.getJSONArray(i).get(0), replace.getJSONArray(i).get(1), replace.getJSONArray(i).get(2), replace.getJSONArray(i).get(3));
 
-                    updateDialogProgress(SYNCING_DATA, "同步卡牌数据中", mCurrentProgress + percent);
+                    updateDialogProgress(SYNCING_DATA, "同步助记中", mCurrentProgress + percent);
                 }
                 db.getDatabase().setTransactionSuccessful();
                 mCol.save();
@@ -957,7 +1189,7 @@ public class AnkiChinaSyncer {
                 .add("session_key", mCurrentSession)
                 .build();
         updateDialogProgress(SYNCING_DATA, "同步完成中", 90);
-        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/commit", formBody, token, "", new OKHttpUtil.MyCallBack() {
+        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/commit", formBody, token, "", new OKHttpUtil.MyCallBack() {
             @Override
             public void onFailure(Call call, IOException e) {
                 updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -969,18 +1201,61 @@ public class AnkiChinaSyncer {
                 if (response.isSuccessful()) {
                     Timber.e("complete sync succeed!");
                     try {
-                        final JSONObject object = new JSONObject(response.body().string());
-                        Timber.i("object:%s", object);
-                        if (object.getInt("status_code") != 0) {
-                            updateDialogMessage(SYNCING_ERROR, object.getString("message"));
-                            return;
-                        }
                         updateDialogProgress(SYNCING_DATA, "保存同步数据中", 92);
                         saveLatestData();
                         mPreferences.edit().putString(Consts.KEY_SYNC_CHINA_SESSION, mCurrentSession).apply();
-                        updateDialogProgress(SYNCING_DATA, "同步完成", 100);
-                        uploadLocalMediaFileInfo(token);
-                        mCallback.onCompletedData();
+                        mCol.reopen();
+                        Timber.d("最后本地的crt是：" + mCol.getCrt());
+//                        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+                        HashMap<Long, Deck> decks = mCol.getDecks().getDecks();
+                        Set<Map.Entry<Long, Deck>> en = decks.entrySet();
+                        JSONObject deckObject = new JSONObject();
+                        for (Map.Entry<Long, Deck> entry : en) {
+                            Long key = entry.getKey();
+                            Deck value = entry.getValue();
+                            value.put("card_count", mCol.cardCountInOneDeck(key));
+                            deckObject.put(String.valueOf(key), value);
+                        }
+                        FormBody.Builder builder = new FormBody.Builder()
+                                .add("terminal_time", System.currentTimeMillis() / 1000 + "")
+                                .add("terminal_crt", "" + mCol.getCrt())
+                                .add("terminal_note_count", "" + mCol.notesCount())
+                                .add("terminal_remarks_count", "" + mCol.remarksCount())
+                                .add("terminal_decks", deckObject.toString());
+                        RequestBody formBody = builder.build();
+                        updateDialogProgress(SYNCING_DATA, "数据校验中", 98);
+                        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/verification", formBody, mToken, "", new OKHttpUtil.MyCallBack() {
+                            @Override
+                            public void onFailure(Call call, IOException e) {
+                                updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
+                            }
+
+
+                            @Override
+                            public void onResponse(Call call, String token, Object arg1, Response response) {
+                                if (mCancel) {
+                                    return;
+                                }
+                                if (response.isSuccessful()) {
+                                    try {
+                                        final JSONObject object = new JSONObject(response.body().string());
+                                        Timber.i("object:%s", object);
+                                        if (hasError(object)) {
+                                            return;
+                                        }
+                                        updateDialogProgress(SYNCING_DATA, "同步完成", 100);
+                                        uploadLocalMediaFileInfo(token);
+                                        mCallback.onCompletedData();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        updateDialogMessage(SYNCING_ERROR, ERROR_DATA);
+                                    }
+                                } else {
+                                    Timber.e("get session key error, code %d", response.code());
+                                    updateDialogMessage(SYNCING_ERROR, ERROR_DATA);
+                                }
+                            }
+                        });
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -1001,13 +1276,13 @@ public class AnkiChinaSyncer {
      */
     @SuppressLint("DefaultLocale")
     private void saveLatestData() {
-        mCol =  CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
         CollectionHelper.getInstance().lockCollection();
 
         mCol.getDb().getDatabase().beginTransaction();
         try {
             mCol.getDb().execute("delete from synclog");
-        }catch (Exception e){
+        } catch (Exception e) {
 //            mCol=CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
 //            mCol.getDb().execute("drop table synclog");
 //            mCol.getDb().execute("create table if not exists synclog (" + "    id             integer not null,"
@@ -1042,7 +1317,7 @@ public class AnkiChinaSyncer {
             }
             values.append("(").append(item.getLong("id")).append(",").append(SYNC_LOG_TYPE_DCONF).append(",").append(item.getLong("mod")).append(")");
         }
-        String sql = String.format("insert into synclog values %s", values.toString());
+        String sql = String.format("insert into synclog values %s", values);
         Timber.i("sync to local synclog:%s", sql);
         mCol.getDb().execute(sql);
 
@@ -1052,6 +1327,7 @@ public class AnkiChinaSyncer {
 //            values.append("(").append(item.getLong("id")).append(",").append(SYNC_LOG_TYPE_DCONF).append(",").append(item.getLong("mod")).append(")");
 //        }
         mCol.getDb().execute(String.format("insert into synclog select cards.id,%d,cards.mod from cards", SYNC_LOG_TYPE_CARD));
+        mCol.getDb().execute(String.format("insert into synclog select remarks.id,%d,remarks.mod from remarks", SYNC_LOG_TYPE_REMARKS));
         mCol.getDb().execute(String.format("insert into synclog select notes.id,%d,notes.mod from notes", SYNC_LOG_TYPE_NOTE));
         mCol.getDb().execute(String.format("insert into synclog select revlog.id,%d,revlog.id from revlog", SYNC_LOG_TYPE_REVLOG));
         mCol.getDb().getDatabase().setTransactionSuccessful();
@@ -1093,7 +1369,7 @@ public class AnkiChinaSyncer {
         if (mCancel) {
             return;
         }
-        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/postFileInfo", formBody, token, "", new OKHttpUtil.MyCallBack() {
+        OKHttpUtil.post(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/postFileInfo", formBody, token, "", new OKHttpUtil.MyCallBack() {
             @Override
             public void onFailure(Call call, IOException e) {
                 updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -1107,8 +1383,7 @@ public class AnkiChinaSyncer {
                     try {
                         final JSONObject object = new JSONObject(response.body().string());
                         Timber.e("fetch media sync info from server:%s", object.toString());
-                        if (object.getInt("status_code") != 0) {
-                            updateDialogMessage(SYNCING_ERROR, object.getString("message"));
+                        if (hasError(object)) {
                             return;
                         }
                         final JSONObject item = object.getJSONObject("data");
@@ -1130,7 +1405,7 @@ public class AnkiChinaSyncer {
         if (mCancel) {
             return;
         }
-        mCol =  CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
+        mCol = CollectionHelper.getInstance().getColSafe(AnkiDroidApp.getInstance());
         CollectionHelper.getInstance().lockCollection();
         try {
             JSONArray needDelete = item.getJSONArray("delete");
@@ -1146,6 +1421,7 @@ public class AnkiChinaSyncer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        updateDialogProgress(SYNCING_MEDIA, "", 25);
         if (mCancel) {
             return;
         }
@@ -1155,22 +1431,34 @@ public class AnkiChinaSyncer {
             if (needUpload.length() > 0) {
                 mTotalNeedUploadCount = needUpload.length();
                 mUploadResultEndCount = 0;
-                Map<String, Boolean> needUploadFileRecord = new HashMap<>();
+                Map<String, Boolean> needUploadFileRecord1 = new HashMap<>();
+                Map<String, Boolean> needUploadFileRecord2 = new HashMap<>();
+                Map<String, Boolean> needUploadFileRecord3 = new HashMap<>();
                 double percent = 45.0 / needUpload.length();
-                for (int i = 0; i < needUpload.length(); i++) {
+                int perThreadNum = needUpload.length() / 3;
+                for (int i = 0; i < perThreadNum; i++) {
 //                    Timber.i("this file need to upload: %s", needUpload.getString(i));
                     //上传文件
-                    needUploadFileRecord.put(needUpload.getString(i), false);
+                    needUploadFileRecord1.put(needUpload.getString(i), false);
                 }
-
-                uploadFileAsync(needUploadFileRecord, token, percent);
+                uploadFileAsync(needUploadFileRecord1, token, percent);
+                for (int i = perThreadNum; i < perThreadNum * 2; i++) {
+                    needUploadFileRecord2.put(needUpload.getString(i), false);
+                }
+                uploadFileAsync(needUploadFileRecord2, token, percent);
+                for (int i = perThreadNum * 2; i < needUpload.length(); i++) {
+                    needUploadFileRecord3.put(needUpload.getString(i), false);
+                }
+                uploadFileAsync(needUploadFileRecord3, token, percent);
             } else {
                 mTotalNeedUploadCount = mUploadResultEndCount = 0;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        if (mCancel) {
+            return;
+        }
         try {
             JSONArray needDownload = item.getJSONArray("download_url");
             if (needDownload.length() > 0) {
@@ -1184,7 +1472,7 @@ public class AnkiChinaSyncer {
                 double percent = 30.0 / paths.length;
                 for (String path : paths) {
                     String savePath = Media.getCollectionMediaPath(CollectionHelper.getCollectionPath(mContext)) + path.substring(path.lastIndexOf("/"));
-                    OKHttpUtils.downloadAndSaveFile(path, savePath, path, new DownloadProgress(  savePath, percent), new OKHttpUtils.MyCallBack() {
+                    OKHttpUtils.downloadAndSaveFile(path, savePath, path, new DownloadProgress(savePath, percent), new OKHttpUtils.MyCallBack() {
                         @Override
                         public void onFailure(Call call, final IOException e) {
                             updateDialogMessage(SYNCING_ERROR, ERROR_NETWORK);
@@ -1203,7 +1491,6 @@ public class AnkiChinaSyncer {
                 mTotalNeedDownloadCount = mDownloadResultEndCount = 0;
                 maybeCompleted();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1255,7 +1542,7 @@ public class AnkiChinaSyncer {
         if (fnames.size() != 0) {
             List<String> zipPath = new ArrayList<>();
             zipPath.add(zip.getAbsolutePath());
-            OKHttpUtils.doPostRequest(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync/uploadFile", mCurrentSession, zipPath, uploadProgress, zip.getAbsolutePath(), token, new OKHttpUtils.MyCallBack() {
+            OKHttpUtils.doPostRequest(Consts.ANKI_CHINA_BASE + Consts.API_VERSION + "napi/sync2/uploadFile", mCurrentSession, zipPath, uploadProgress, zip.getAbsolutePath(), token, new OKHttpUtils.MyCallBack() {
                 @Override
                 public void onFailure(Call call, final IOException e) {
                     Timber.i("upload error------>%s %s", zip.getAbsolutePath(), e.getMessage());
@@ -1316,7 +1603,7 @@ public class AnkiChinaSyncer {
         private double percent;
 
 
-        DownloadProgress(  String fileName, double percent) {
+        DownloadProgress(String fileName, double percent) {
 
             this.fileName = fileName;
             this.percent = percent;

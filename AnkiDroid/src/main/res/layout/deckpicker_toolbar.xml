@@ -25,11 +25,12 @@
                 app:tabPaddingEnd="19dp"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"/>
+
             <ImageView
                 android:id="@+id/vip_logo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@mipmap/super_heroes_normal"
                 />

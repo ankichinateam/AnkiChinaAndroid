@@ -59,11 +59,11 @@ public class InfoActivity extends AnkiActivity {
 //        webView.getSettings().setAppCacheMaxSize(1024*1024*8);
 
         webView.getSettings().setAllowFileAccess(true);    // 可以读取文件缓存
-        webView.getSettings().setAppCacheEnabled(true);    //开启H5(APPCache)缓存功能
+//        webView.getSettings().setAppCacheEnabled(true);    //开启H5(APPCache)缓存功能
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         String appCachePath = getApplicationContext().getCacheDir().getAbsolutePath();
-        webView.getSettings().setAppCachePath(appCachePath);
+//        webView.getSettings().setAppCachePath(appCachePath);
 
         webView.setWebChromeClient(
                 new WebChromeClient() {

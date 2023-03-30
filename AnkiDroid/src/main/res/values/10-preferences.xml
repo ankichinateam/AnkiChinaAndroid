@@ -78,6 +78,7 @@
     <string name="reset_languages">重设语言</string>
     <string name="reset_languages_summ">重置指定记忆库语言(TTS和字典)</string>
     <string name="reset_languages_question">要重置所有记忆库指定的语言吗？</string>
+    <string name="clear_local_data_question">清除数据前将会保存最新数据，请放心操作</string>
     <string name="reset_confirmation">重置所有状态</string>
     <string name="card_zoom">卡片缩放</string>
     <string name="image_zoom">图片缩放</string>

@@ -20,11 +20,11 @@
         android:layout_height="wrap_content"
         android:background="@drawable/btn_selector"
         android:layout_below="@id/ll_auth_code"
-        android:layout_marginTop="77dp"
+        android:layout_marginTop="32dp"
         android:enabled="false"
         android:singleLine="true"
         android:text="@string/log_in"
-        android:textSize="@dimen/md_title_textsize"
+        android:textSize="17sp"
         android:textColor="@drawable/login_button_text_color_selector"
         />
     <TextView
@@ -33,6 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:text="Anki Web账号登录"
+        android:visibility="gone"
         android:layout_below="@id/login_button"
         android:layout_centerHorizontal="true"
         android:textColor="@color/new_primary_color"
@@ -40,21 +41,58 @@
         android:textSize="13sp"
         android:gravity="center_vertical"
         app:drawableEndCompat="?attr/expandRef" />
-
-    <EditText
-        android:layout_marginHorizontal="22dp"
-        android:id="@+id/username"
+    <RelativeLayout
+        android:id="@+id/phone_area"
         android:layout_width="match_parent"
-        android:layout_height="59dp"
-        android:layout_below="@id/hint"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:orientation="horizontal"
+        android:background="@drawable/login_item_background_round"
+        android:layout_marginHorizontal="22dp"
+        android:layout_below="@id/title"
         android:layout_marginTop="68dp"
-        android:theme="@style/MyEditText"
-        android:textColor="?attr/primaryTextColor222222"
-        android:textColorHint="?attr/primaryTextSecondaryColor"
-        android:textCursorDrawable="@drawable/bg_edittext"
-        android:hint="@string/phone"
-        android:inputType="number"
-        android:maxLength="11" />
+        android:paddingHorizontal="26dp"
+        >
+        <TextView
+            android:id="@+id/area_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="+86"
+            android:drawableRight="@mipmap/bnt_grey_down_normal"
+            />
+        <TextView
+            android:id="@+id/send_auth_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@null"
+            android:textSize="17sp"
+            android:textColor="#28BEA0"
+            android:enabled="false"
+            android:text="@string/auth_hint" />
+        <EditText
+            android:id="@+id/username"
+            android:layout_toEndOf="@id/area_code"
+            android:layout_toStartOf="@id/send_auth_code"
+            android:layout_width="187dp"
+            android:layout_height="53dp"
+            android:gravity="center_vertical"
+            android:theme="@style/MyEditText"
+            android:textColor="?attr/primaryTextColor222222"
+            android:textColorHint="#b3b3b3"
+            android:textCursorDrawable="@drawable/bg_edittext"
+            android:layout_centerVertical="true"
+            android:background="@android:color/transparent"
+            android:paddingBottom="3dp"
+            android:hint="@string/phone"
+            android:textSize="17sp"
+            android:inputType="number"
+            android:maxLength="11" />
+
+    </RelativeLayout>
+
 
 
     <RelativeLayout
@@ -62,32 +100,26 @@
         android:id="@+id/ll_auth_code"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/username"
+        android:layout_below="@id/phone_area"
         android:layout_marginTop="31dp"
         android:orientation="horizontal"
         android:weightSum="5">
         <EditText
             android:layout_marginHorizontal="22dp"
             android:id="@+id/auth_code"
+            android:background="@drawable/login_item_background_round"
             android:layout_width="match_parent"
-            android:layout_height="59dp"
+            android:layout_height="53dp"
+            android:paddingHorizontal="26dp"
+            android:paddingBottom="3dp"
             android:hint="@string/auth_code"
             android:textColor="?attr/primaryTextColor222222"
-            android:textColorHint="?attr/primaryTextSecondaryColor"
+            android:textColorHint="#b3b3b3"
             android:textCursorDrawable="@drawable/bg_edittext"
             android:theme="@style/MyEditText"
             android:inputType="number" />
 
-        <Button
-            android:layout_marginEnd="22dp"
-            android:id="@+id/send_auth_code"
-            android:layout_width="116dp"
-            android:layout_height="44dp"
-            android:layout_alignParentEnd="true"
-            android:background="@drawable/btn_selector"
-            android:textColor="@drawable/login_button_text_color_selector"
-            android:enabled="false"
-            android:text="@string/auth_hint" />
+
     </RelativeLayout>
 
     <LinearLayout
@@ -100,12 +132,12 @@
         android:orientation="horizontal">
 
         <TextView
-
+            android:id="@+id/title_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="注册/登录"
+            android:text="手机号登录"
             android:textColor="?attr/primaryTextColor222222"
-            android:textSize="26sp" />
+            android:textSize="30sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -123,11 +155,11 @@
         android:id="@+id/hint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/title"
-        android:layout_marginHorizontal="22dp"
-        android:layout_marginTop="7dp"
-        android:text="国内服务器，同步ANKI资料更加稳定、快速"
-        android:textColor="@color/new_primary_text_secondary_color"
+        android:layout_below="@id/login_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:text="登录即代表同意注册"
+        android:textColor="#B3B3B3"
         android:textSize="13sp" />
 
 </RelativeLayout>

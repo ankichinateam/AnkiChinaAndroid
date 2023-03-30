@@ -46,9 +46,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import kotlin.Suppress;
+
 /**
  * API which can be used to add and query notes,cards,decks, and models to AnkiDroid
- *
+ * <p>
  * On Android M (and higher) the #READ_WRITE_PERMISSION is required for all read/write operations.
  * On earlier SDK levels, the #READ_WRITE_PERMISSION is currently only required for update/delete operations but
  * this may be extended to all operations at a later date.
@@ -64,18 +66,21 @@ public final class AddContentApi {
     private static final int DEFAULT_PROVIDER_SPEC_VALUE = 1; // for when meta-data key does not exist
     private static final String[] PROJECTION = {Note._ID, Note.FLDS, Note.TAGS};
 
+
     public AddContentApi(Context context) {
         mContext = context.getApplicationContext();
         mResolver = mContext.getContentResolver();
     }
 
+
     /**
      * Create a new note with specified fields, tags, and model and place it in the specified deck.
      * No duplicate checking is performed - so the note should be checked beforehand using #findNotesByKeys
+     *
      * @param modelId ID for the model used to add the notes
-     * @param deckId ID for the deck the cards should be stored in (use #DEFAULT_DECK_ID for default deck)
-     * @param fields fields to add to the note. Length should be the same as number of fields in model
-     * @param tags tags to include in the new note
+     * @param deckId  ID for the deck the cards should be stored in (use #DEFAULT_DECK_ID for default deck)
+     * @param fields  fields to add to the note. Length should be the same as number of fields in model
+     * @param tags    tags to include in the new note
      * @return note id or null if the note could not be added
      */
     public Long addNote(long modelId, long deckId, String[] fields, Set<String> tags) {
@@ -86,6 +91,7 @@ public final class AddContentApi {
         return Long.parseLong(noteUri.getLastPathSegment());
     }
 
+
     private Uri addNoteInternal(long modelId, long deckId, String[] fields, Set<String> tags) {
         ContentValues values = new ContentValues();
         values.put(Note.MID, modelId);
@@ -95,6 +101,7 @@ public final class AddContentApi {
         }
         return addNoteForContentValues(deckId, values);
     }
+
 
     private Uri addNoteForContentValues(long deckId, ContentValues values) {
         Uri newNoteUri = mResolver.insert(Note.CONTENT_URI, values);
@@ -121,13 +128,15 @@ public final class AddContentApi {
         return newNoteUri;
     }
 
+
     /**
      * Create new notes with specified fields, tags and model and place them in the specified deck.
      * No duplicate checking is performed - so all notes should be checked beforehand using #findNotesByKeys
-     * @param modelId id for the model used to add the notes
-     * @param deckId id for the deck the cards should be stored in (use #DEFAULT_DECK_ID for default deck)
+     *
+     * @param modelId    id for the model used to add the notes
+     * @param deckId     id for the deck the cards should be stored in (use #DEFAULT_DECK_ID for default deck)
      * @param fieldsList List of fields arrays (one per note). Array lengths should be same as number of fields in model
-     * @param tagsList List of tags (one per note) (may be null)
+     * @param tagsList   List of tags (one per note) (may be null)
      * @return The number of notes added (&lt;0 means there was a problem)
      */
     public int addNotes(long modelId, long deckId, List<String[]> fieldsList, List<Set<String>> tagsList) {
@@ -154,6 +163,7 @@ public final class AddContentApi {
 
     /**
      * Find all existing notes in the collection which have mid and a duplicate key
+     *
      * @param mid model id
      * @param key the first field of a note
      * @return a list of duplicate notes
@@ -166,10 +176,12 @@ public final class AddContentApi {
         return notes.valueAt(0);
     }
 
+
     /**
      * Find all notes in the collection which have mid and a first field that matches key
      * Much faster than calling findDuplicateNotes(long, String) when the list of keys is large
-     * @param mid model id
+     *
+     * @param mid  model id
      * @param keys list of keys
      * @return a SparseArray with a list of duplicate notes for each key
      */
@@ -177,8 +189,10 @@ public final class AddContentApi {
         return getCompat().findDuplicateNotes(mid, keys);
     }
 
+
     /**
      * Get the number of notes that exist for the specified model ID
+     *
      * @param mid id of the model to be used
      * @return number of notes that exist with that model ID or -1 if there was a problem
      */
@@ -194,10 +208,12 @@ public final class AddContentApi {
         }
     }
 
+
     /**
      * Set the tags for a given note
+     *
      * @param noteId the ID of the note to update
-     * @param tags set of tags
+     * @param tags   set of tags
      * @return true if noteId was found, otherwise false
      * @throws SecurityException if READ_WRITE_PERMISSION not granted (e.g. due to install order bug)
      */
@@ -205,8 +221,10 @@ public final class AddContentApi {
         return updateNote(noteId, null, tags);
     }
 
+
     /**
      * Set the fields for a given note
+     *
      * @param noteId the ID of the note to update
      * @param fields array of fields
      * @return true if noteId was found, otherwise false
@@ -216,8 +234,10 @@ public final class AddContentApi {
         return updateNote(noteId, fields, null);
     }
 
+
     /**
      * Get the contents of a note with known ID
+     *
      * @param noteId the ID of the note to find
      * @return object containing the contents of note with noteID or null if there was a problem
      */
@@ -237,6 +257,7 @@ public final class AddContentApi {
         }
     }
 
+
     private boolean updateNote(long noteId, String[] fields, Set<String> tags) {
         Uri.Builder builder = Note.CONTENT_URI.buildUpon();
         Uri contentUri = builder.appendPath(Long.toString(noteId)).build();
@@ -252,10 +273,12 @@ public final class AddContentApi {
         return numRowsUpdated > 0;
     }
 
+
     /**
      * Get the html that would be generated for the specified note type and field list
+     *
      * @param flds array of field values for the note. Length must be the same as num. fields in mid.
-     * @param mid id for the note type to be used
+     * @param mid  id for the note type to be used
      * @return list of front &amp; back pairs for each card which contain the card HTML, or null if there was a problem
      * @throws SecurityException if READ_WRITE_PERMISSION not granted (e.g. due to install order bug)
      */
@@ -291,8 +314,10 @@ public final class AddContentApi {
         return cards;
     }
 
+
     /**
      * Insert a new basic front/back model with two fields and one card
+     *
      * @param name name of the model
      * @return the mid of the model which was created, or null if it could not be created
      */
@@ -305,6 +330,7 @@ public final class AddContentApi {
     /**
      * Insert a new basic front/back model with two fields and TWO cards
      * The first card goes from front-&gt;back, and the second goes from back-&gt;pront
+     *
      * @param name name of the model
      * @return the mid of the model which was created, or null if it could not be created
      */
@@ -313,17 +339,19 @@ public final class AddContentApi {
                 Basic2Model.AFMT, null, null, null);
     }
 
+
     /**
      * Insert a new model into AnkiDroid.
      * See the <a href="http://ankisrs.net/docs/manual.html#cards-and-templates">Anki Desktop Manual</a> for more help
-     * @param name: name of model
+     *
+     * @param name:   name of model
      * @param fields: array of field names
-     * @param cards: array of names for the card templates
-     * @param qfmt: array of formatting strings for the question side of each template in cards
-     * @param afmt: array of formatting strings for the answer side of each template in cards
-     * @param css: css styling information to be shared across all of the templates. Use null for default CSS.
-     * @param did: default deck to add cards to when using this model. Use null or #DEFAULT_DECK_ID for default deck.
-     * @param sortf: index of field to be used for sorting. Use null for unspecified (unsupported in provider spec v1)
+     * @param cards:  array of names for the card templates
+     * @param qfmt:   array of formatting strings for the question side of each template in cards
+     * @param afmt:   array of formatting strings for the answer side of each template in cards
+     * @param css:    css styling information to be shared across all of the templates. Use null for default CSS.
+     * @param did:    default deck to add cards to when using this model. Use null or #DEFAULT_DECK_ID for default deck.
+     * @param sortf:  index of field to be used for sorting. Use null for unspecified (unsupported in provider spec v1)
      * @return the mid of the model which was created, or null if it could not be created
      */
     public Long addNewCustomModel(String name, String[] fields, String[] cards, String[] qfmt,
@@ -358,8 +386,10 @@ public final class AddContentApi {
         return Long.parseLong(modelUri.getLastPathSegment());
     }
 
+
     /**
      * Get the ID for the note type / model which is currently in use
+     *
      * @return id for current model, or &lt;0 if there was a problem
      */
     public long getCurrentModelId() {
@@ -382,6 +412,7 @@ public final class AddContentApi {
 
     /**
      * Get the field names belonging to specified model
+     *
      * @param modelId the ID of the model to use
      * @return the names of all the fields, or null if the model doesn't exist or there was some other problem
      */
@@ -404,16 +435,20 @@ public final class AddContentApi {
         return splitFlds;
     }
 
+
     /**
      * Get a map of all model ids and names
+     *
      * @return map of (id, name) pairs
      */
     public Map<Long, String> getModelList() {
         return getModelList(1);
     }
 
+
     /**
      * Get a map of all model ids and names with number of fields larger than minNumFields
+     *
      * @param minNumFields minimum number of fields to consider the model for inclusion
      * @return map of (id, name) pairs or null if there was a problem
      */
@@ -441,8 +476,10 @@ public final class AddContentApi {
         return models;
     }
 
+
     /**
      * Get the name of the model which has given ID
+     *
      * @param mid id of model
      * @return the name of the model, or null if no model was found
      */
@@ -458,8 +495,10 @@ public final class AddContentApi {
         return null;
     }
 
+
     /**
      * Create a new deck with specified name and save the reference to SharedPreferences for later
+     *
      * @param deckName name of the deck to add
      * @return id of the added deck, or null if the deck was not added
      */
@@ -475,8 +514,10 @@ public final class AddContentApi {
         }
     }
 
+
     /**
      * Get the name of the selected deck
+     *
      * @return deck name or null if there was a problem
      */
     public String getSelectedDeckName() {
@@ -487,7 +528,7 @@ public final class AddContentApi {
         String name = null;
         try {
             if (selectedDeckCursor.moveToNext()) {
-                name=selectedDeckCursor.getString(selectedDeckCursor.getColumnIndex(Deck.DECK_NAME));
+                name = selectedDeckCursor.getString(selectedDeckCursor.getColumnIndex(Deck.DECK_NAME));
             }
         } finally {
             selectedDeckCursor.close();
@@ -495,8 +536,10 @@ public final class AddContentApi {
         return name;
     }
 
+
     /**
      * Get a list of all the deck id / name pairs
+     *
      * @return Map of (id, name) pairs, or null if there was a problem
      */
     public Map<Long, String> getDeckList() {
@@ -509,7 +552,7 @@ public final class AddContentApi {
         try {
             while (allDecksCursor.moveToNext()) {
                 long deckId = allDecksCursor.getLong(allDecksCursor.getColumnIndex(Deck.DECK_ID));
-                String name =allDecksCursor.getString(allDecksCursor.getColumnIndex(Deck.DECK_NAME));
+                String name = allDecksCursor.getString(allDecksCursor.getColumnIndex(Deck.DECK_NAME));
                 decks.put(deckId, name);
             }
         } finally {
@@ -521,6 +564,7 @@ public final class AddContentApi {
 
     /**
      * Get the name of the deck which has given ID
+     *
      * @param did ID of deck
      * @return the name of the deck, or null if no deck was found
      */
@@ -544,34 +588,43 @@ public final class AddContentApi {
      * @param context a Context that can be used to get the PackageManager
      * @return packageId of AnkiDroid if a supported version is not installed, otherwise null
      */
-    public static String getAnkiDroidPackageName(Context context) {
-        PackageManager manager = context.getPackageManager();
-        ProviderInfo pi = manager.resolveContentProvider(FlashCardsContract.AUTHORITY, 0);
-        if (pi != null) {
-            return pi.packageName;
-        } else {
-            return null;
-        }
-    }
+//    public static String getAnkiDroidPackageName(Context context) {
+//        PackageManager manager = context.getPackageManager();
+//        ProviderInfo pi = manager.resolveContentProvider(FlashCardsContract.AUTHORITY, 0);
+//        if (pi != null) {
+//            return pi.packageName;
+//        } else {
+//            return null;
+//        }
+//    }
 
 
     /**
      * The API spec version of the installed AnkiDroid app. This is not the same as the AnkiDroid app version code.
-     *
+     * <p>
      * SPEC VERSION 1: (AnkiDroid 2.5)
      * #addNotes is very slow for large numbers of notes
      * #findDuplicateNotes is very slow for large numbers of keys
      * #addNewCustomModel is not persisted properly
      * #addNewCustomModel does not support #sortf argument
-     *
+     * <p>
      * SPEC VERSION 2: (AnkiDroid 2.6)
      *
      * @return the spec version number or -1 if AnkiDroid is not installed.
      */
+    @Suppress(names = "deprecation")
     public int getApiHostSpecVersion() {
         // PackageManager#resolveContentProvider docs suggest flags should be 0 (but that gives null metadata)
         // GET_META_DATA seems to work anyway
-        ProviderInfo info = mContext.getPackageManager().resolveContentProvider(FlashCardsContract.AUTHORITY, PackageManager.GET_META_DATA);
+        ProviderInfo info = null;
+        if (Build.VERSION.SDK_INT >= 33) {
+
+            info = mContext.getPackageManager().resolveContentProvider(FlashCardsContract.AUTHORITY, PackageManager.ComponentInfoFlags.of(
+                    Integer.toUnsignedLong(PackageManager.GET_META_DATA)
+            ));
+        } else {
+            mContext.getPackageManager().resolveContentProvider(FlashCardsContract.AUTHORITY, PackageManager.GET_META_DATA);
+        }
         if (info == null) {
             return -1;
         }
@@ -582,10 +635,12 @@ public final class AddContentApi {
         }
     }
 
+
     private boolean hasReadWritePermission() {
         return mContext.checkPermission(READ_WRITE_PERMISSION, Process.myPid(), Process.myUid())
                 == PackageManager.PERMISSION_GRANTED;
     }
+
 
     /**
      * Best not to store this in case the user updates AnkiDroid app while client app is staying alive
@@ -594,9 +649,11 @@ public final class AddContentApi {
         return getApiHostSpecVersion() < 2 ? new CompatV1() : new CompatV2();
     }
 
+
     private interface Compat {
         /**
          * Query all notes for a given model
+         *
          * @param modelId the model ID to limit query to
          * @return a cursor with all notes matching modelId
          */
@@ -604,7 +661,8 @@ public final class AddContentApi {
 
         /**
          * Add new notes to the AnkiDroid content provider in bulk.
-         * @param deckId the deck ID to put the cards in
+         *
+         * @param deckId    the deck ID to put the cards in
          * @param valuesArr the content values ready for bulk insertion into the content provider
          * @return the number of successful entries
          */
@@ -612,12 +670,15 @@ public final class AddContentApi {
 
         /**
          * For each key, look for an existing note that has matching first field
+         *
          * @param modelId the model ID to limit the search to
-         * @param keys  list of keys for each note
+         * @param keys    list of keys for each note
          * @return array with a list of NoteInfo objects for each key if duplicates exist
          */
         SparseArray<List<NoteInfo>> findDuplicateNotes(long modelId, List<String> keys);
     }
+
+
 
     private class CompatV1 implements Compat {
         @Override
@@ -630,6 +691,7 @@ public final class AddContentApi {
             return mResolver.query(Note.CONTENT_URI, PROJECTION, queryFormat, null, null);
         }
 
+
         @Override
         public int insertNotes(long deckId, ContentValues[] valuesArr) {
             int result = 0;
@@ -641,6 +703,7 @@ public final class AddContentApi {
             }
             return result;
         }
+
 
         @Override
         public SparseArray<List<NoteInfo>> findDuplicateNotes(long modelId, List<String> keys) {
@@ -670,7 +733,10 @@ public final class AddContentApi {
             return duplicates;
         }
 
-        /** Add a NoteInfo object to the given duplicates SparseArray at the specified position */
+
+        /**
+         * Add a NoteInfo object to the given duplicates SparseArray at the specified position
+         */
         protected void addNoteToDuplicatesArray(NoteInfo note, SparseArray<List<NoteInfo>> duplicates, int position) {
             int sparseArrayIndex = duplicates.indexOfKey(position);
             if (sparseArrayIndex < 0) {
@@ -684,6 +750,8 @@ public final class AddContentApi {
         }
     }
 
+
+
     private class CompatV2 extends CompatV1 {
         @Override
         public Cursor queryNotes(long modelId) {
@@ -691,12 +759,14 @@ public final class AddContentApi {
                     String.format(Locale.US, "%s=%d", Note.MID, modelId), null, null);
         }
 
+
         @Override
         public int insertNotes(long deckId, ContentValues[] valuesArr) {
             Uri.Builder builder = Note.CONTENT_URI.buildUpon();
             builder.appendQueryParameter(Note.DECK_ID_QUERY_PARAM, String.valueOf(deckId));
             return mResolver.bulkInsert(builder.build(), valuesArr);
         }
+
 
         @Override
         public SparseArray<List<NoteInfo>> findDuplicateNotes(long modelId, List<String> keys) {

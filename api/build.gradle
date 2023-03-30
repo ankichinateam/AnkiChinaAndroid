@@ -1,24 +1,23 @@
+
 plugins {
     id 'maven-publish'
     id 'com.android.library'
 }
 
 group = "com.ichi2.anki"
-version = "1.1.0"
+version = "2.0.0"
 
 repositories {
     google()
     mavenCentral()
 }
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 16
         //noinspection OldTargetApi
         targetSdkVersion 29
-        versionCode 11030   // 4th digit: 1=alpha, 2=beta, 3=official
-        versionName version
     }
     buildTypes {
         release {
@@ -26,36 +25,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    testOptions {
-        unitTests {
-            includeAndroidResources = true
-        }
-    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    testOptions.unitTests.all {
-        testLogging {
-            events "failed", "skipped"
-            showStackTraces = true
-            exceptionFormat = "full"
-        }
 
-        maxParallelForks = gradleTestMaxParallelForks
-        systemProperties['junit.jupiter.execution.parallel.enabled'] = true
-        systemProperties['junit.jupiter.execution.parallel.mode.default'] = "concurrent"
-    }
 }
 
 apply from: "../lint.gradle"
 
 dependencies {
-    implementation 'androidx.annotation:annotation:1.2.0'
+    implementation 'androidx.annotation:annotation:1.5.0'
     testImplementation 'org.junit.vintage:junit-vintage-engine:5.7.1'
     testImplementation 'org.robolectric:robolectric:4.5.1'
-
-    lintPublish project(":lint-rules")
+    lintChecks project(":lint-rules")
 }
 
 task androidSourcesJar(type: Jar) {
@@ -103,11 +86,11 @@ publishing {
             pom {
                 name = 'AnkiDroid API'
                 description = 'A programmatic API exported by AnkiDroid'
-                url = 'https://github.com/ankidroid/Anki-Android/tree/master/api'
+                url = 'https://github.com/ankidroid/Anki-Android/tree/main/api'
                 licenses {
                     license {
                         name = 'GNU LESSER GENERAL PUBLIC LICENSE, v3'
-                        url = 'https://github.com/ankidroid/Anki-Android/blob/master/api/COPYING.LESSER'
+                        url = 'https://github.com/ankidroid/Anki-Android/blob/main/api/COPYING.LESSER'
                     }
                 }
                 scm {
@@ -129,8 +112,8 @@ publishing {
 
 task zipRelease(type: Zip) {
     from layout.buildDirectory.dir('repos/releases')
-    destinationDir buildDir
-    archiveName "${buildDir}/release-${archiveVersion.get()}.zip"
+    destinationDirectory = buildDir
+    archiveFileName = "${buildDir}/release-${archiveVersion.get()}.zip"
 }
 
 // Use this task to make a release you can send to someone
@@ -146,14 +129,3 @@ publishMavenJavaPublicationToMavenRepository.dependsOn(assemble)
 publish.dependsOn(assemble)
 generateRelease.dependsOn(publish)
 generateRelease.dependsOn(zipRelease)
-
-// Deprecation is an error. Use @SuppressWarnings("deprecation") and justify in the PR if you must
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:deprecation" << "-Xmaxwarns" << "1000" << "-Werror"
-
-    // https://guides.gradle.org/performance/#compiling_java
-    // 1- fork improves things over time with repeated builds, doesn't harm CI single builds
-    options.fork = true
-    // 2- incremental will be the default in the future and can help now
-    options.incremental = true
-}

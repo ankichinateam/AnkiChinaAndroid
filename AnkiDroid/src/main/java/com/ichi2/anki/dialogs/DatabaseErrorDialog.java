@@ -5,7 +5,9 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Message;
 import android.view.KeyEvent;
+import android.view.View;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import com.ichi2.anki.AnkiActivity;
@@ -13,12 +15,14 @@ import com.ichi2.anki.BackupManager;
 import com.ichi2.anki.CollectionHelper;
 import com.ichi2.anki.DeckPicker;
 import com.ichi2.anki.R;
+import com.ichi2.libanki.Collection;
 import com.ichi2.libanki.utils.Time;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
 import timber.log.Timber;
 
 public class DatabaseErrorDialog extends AsyncDialogFragment {
@@ -34,7 +38,9 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
     public static final int DIALOG_CONFIRM_DATABASE_CHECK = 6;
     public static final int DIALOG_CONFIRM_RESTORE_BACKUP = 7;
     public static final int DIALOG_FULL_SYNC_FROM_SERVER = 8;
-    /** If the database is locked, all we can do is reset the app */
+    /**
+     * If the database is locked, all we can do is reset the app
+     */
     public static final int DIALOG_DB_LOCKED = 9;
 
     // public flag which lets us distinguish between inaccessible and corrupt database
@@ -43,7 +49,7 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
 
     /**
      * A set of dialogs which deal with problems with the database when it can't load
-     * 
+     *
      * @param dialogType An integer which specifies which of the sub-dialogs to show
      */
     public static DatabaseErrorDialog newInstance(int dialogType) {
@@ -203,30 +209,40 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
                     String[] dates = new String[mBackups.length];
                     for (int i = 0; i < mBackups.length; i++) {
                         dates[i] = mBackups[i].getName().replaceAll(
-                                ".*-(\\d{4}-\\d{2}-\\d{2})-(\\d{2})-(\\d{2}).apkg", "$1 ($2:$3 h)");
+                                ".*-(\\d{4}-\\d{2}-\\d{2})-(\\d{2})-(\\d{2}).apkg", "$1 ($2:$3 h)").replaceAll("collection-", "");
                     }
                     builder.title(res.getString(R.string.backup_restore_select_title))
+                            .neutralText("创建新的备份")
+                            .onNeutral((inner_dialog, which) -> {
+                                dismissAllDialogFragments();
+                                createNewDbBack();
+                            })
                             .negativeText(res.getString(R.string.dialog_cancel))
-                            .onNegative((inner_dialog, which) -> dismissAllDialogFragments())
+                            .onPositive((inner_dialog, which) -> dismissAllDialogFragments())
                             .items(dates)
-                            .itemsCallbackSingleChoice(dates.length,
-                                    (materialDialog, view, which, charSequence) -> {
-                                        if (mBackups[which].length() > 0) {
-                                            // restore the backup if it's valid
-                                            ((DeckPicker) getActivity())
-                                                    .restoreFromBackup(mBackups[which]
-                                                            .getPath());
-                                            dismissAllDialogFragments();
-                                        } else {
-                                            // otherwise show an error dialog
-                                            new MaterialDialog.Builder(getActivity())
-                                                    .title(R.string.backup_error)
-                                                    .content(R.string.backup_invalid_file_error)
-                                                    .positiveText(R.string.dialog_ok)
-                                                    .build().show();
-                                        }
-                                        return true;
-                                    });
+                            .itemsCallback((materialDialog, view, which, charSequence) -> {
+                                if (mBackups[which].length() > 0) {
+                                    DeckPicker activity = ((DeckPicker) getActivity());
+                                    dismissAllDialogFragments();
+                                    new MaterialDialog.Builder(getActivity())
+                                            .title("恢复备份")
+                                            .content("是否要恢复" + mBackups[which].getName() + "?")
+                                            .negativeText(R.string.dialog_cancel)
+                                            .positiveText(R.string.dialog_ok)
+                                            .onPositive((inner_dialog, inner_which) -> {
+                                                activity.restoreFromBackup(mBackups[which].getPath());
+                                            }).build().show();
+
+
+                                } else {
+                                    // otherwise show an error dialog
+                                    new MaterialDialog.Builder(getActivity())
+                                            .title(R.string.backup_error)
+                                            .content(R.string.backup_invalid_file_error)
+                                            .positiveText(R.string.dialog_ok)
+                                            .build().show();
+                                }
+                            });
                 }
                 MaterialDialog materialDialog = builder.build();
                 materialDialog.setOnKeyListener((dialog, keyCode, event) -> {
@@ -302,6 +318,19 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
     }
 
 
+    private void createNewDbBack() {
+        new MaterialDialog.Builder(getActivity())
+                .title("创建备份")
+                .content("是否要为当前数据创建一份备份？")
+                .negativeText(R.string.dialog_cancel)
+                .positiveText(R.string.dialog_ok)
+                .onPositive((inner_dialog, inner_which) -> {
+                    Collection mCol = CollectionHelper.getInstance().getCol(getActivity());
+                    BackupManager.performBackupInBackground(mCol.getPath(), true, CollectionHelper.getInstance().getTimeSafe(getActivity()));
+                }).build().show();
+    }
+
+
     private void exit() {
         ((DeckPicker) getActivity()).exit();
     }
@@ -340,6 +369,7 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
         }
     }
 
+
     private String getTitle() {
         switch (getArguments().getInt("dialogType")) {
             case DIALOG_LOAD_FAILED:
@@ -364,7 +394,7 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
                 return res().getString(R.string.database_locked_title);
             default:
                 return res().getString(R.string.answering_error_title);
-        }        
+        }
     }
 
 
@@ -395,8 +425,8 @@ public class DatabaseErrorDialog extends AsyncDialogFragment {
         msg.setData(b);
         return msg;
     }
-    
-    
+
+
     public void dismissAllDialogFragments() {
         ((DeckPicker) getActivity()).dismissAllDialogFragments();
     }

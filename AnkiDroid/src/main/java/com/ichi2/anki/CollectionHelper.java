@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.os.Environment;
 
 import android.text.format.Formatter;
@@ -40,6 +41,8 @@ import java.io.IOException;
 
 import androidx.annotation.VisibleForTesting;
 import timber.log.Timber;
+
+import static com.ichi2.anki.DeckPicker.CONFIRM_PRIVATE_STRATEGY;
 
 /**
  * Singleton which opens, stores, and closes the reference to the Collection.
@@ -131,9 +134,15 @@ public class CollectionHelper {
                 return null;
             }
             // Open the database
-            Timber.i("Begin openCollection: %s", path);
-            mCollection = Storage.Collection(context, path, false, true, time);
-            Timber.i("End openCollection: %s", path);
+            try {
+                Timber.i("Begin openCollection: %s", path);
+                mCollection = Storage.Collection(context, path, false, true, time);
+                Timber.i("End openCollection: %s", path);
+            } catch (SQLiteDatabaseLockedException e) {
+                Timber.e(e, "SQLiteDatabaseLockedException,return pre collection");
+                return mCollection;
+            }
+
         }
         return mCollection;
     }
@@ -284,7 +293,7 @@ public class CollectionHelper {
                 preferences,
                 "deckPath",
                 CollectionHelper::getDefaultAnkiDroidDirectory);
-        boolean installedAnki = checkAppInstalled(context, "com.ichi2.anki");
+        boolean installedAnki =  preferences.contains(CONFIRM_PRIVATE_STRATEGY)&&checkAppInstalled(context, "com.ichi2.anki");
         Timber.i("anki is installed:%s,current path:%s", installedAnki, path);
         if (path.endsWith("AnkiDroid") && !installedAnki) {
             File file = new File(path);

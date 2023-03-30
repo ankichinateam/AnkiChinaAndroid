@@ -22,4 +22,10 @@
         android:icon="@drawable/ic_mode_edit_white_24dp"
         android:title="@string/cardeditor_title_edit_card"
         ankidroid:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_toggle_remark"
+        android:title="禁用助记" />
+    <item
+        android:id="@+id/action_delete"
+        android:title="删除笔记" />
 </menu>

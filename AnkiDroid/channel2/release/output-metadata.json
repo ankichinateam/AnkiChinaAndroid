@@ -1,0 +1,64 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.app.ankichinas",
+  "variantName": "channel2Release",
+  "elements": [
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "x86_64"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 430101001,
+      "versionName": "3.1.1",
+      "outputFile": "AnkiDroid-channel2-x86_64-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 330101001,
+      "versionName": "3.1.1",
+      "outputFile": "AnkiDroid-channel2-arm64-v8a-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "armeabi-v7a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 130101001,
+      "versionName": "3.1.1",
+      "outputFile": "AnkiDroid-channel2-armeabi-v7a-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "x86"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 230101001,
+      "versionName": "3.1.1",
+      "outputFile": "AnkiDroid-channel2-x86-release.apk"
+    }
+  ],
+  "elementType": "File"
+}

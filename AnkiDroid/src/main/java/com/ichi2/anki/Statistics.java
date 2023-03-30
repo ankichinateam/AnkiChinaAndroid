@@ -32,6 +32,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -254,12 +255,12 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     public void onResume() {
         Timber.d("onResume()");
         super.onResume();
-        if(!Permissions.hasStorageAccessPermission(getContext())){
+        if (!Permissions.hasStorageAccessPermission(getContext())) {
             return;
-        }else {
-                mRoot.findViewById(R.id.main_page).setVisibility(View.VISIBLE);
-                mToolbar.setVisibility(View.VISIBLE);
-                mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.GONE);
+        } else {
+            mRoot.findViewById(R.id.main_page).setVisibility(View.VISIBLE);
+            mToolbar.setVisibility(View.VISIBLE);
+            mRoot.findViewById(R.id.no_permission_layout).setVisibility(View.GONE);
 
         }
 
@@ -367,15 +368,14 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
     }
 
 
-    public ViewPager2 getViewPager(){
+    public ViewPager2 getViewPager() {
         return mViewPager;
     }
+
 
     public TabLayout getSlidingTabLayout() {
         return mSlidingTabLayout;
     }
-
-
 
 
     private long getDeckId() {
@@ -404,6 +404,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             return 9;
         }
     }
+
 
 
     public static abstract class StatisticFragment extends AnkiFragment {
@@ -461,11 +462,13 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             return fragment;
         }
 
+
         @Override
         public void onResume() {
             checkAndUpdate();
             super.onResume();
         }
+
 
         @Override
         public void onDestroy() {
@@ -475,6 +478,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             }
             super.onDestroy();
         }
+
 
         protected void cancelTasks() {
             Timber.w("canceling tasks");
@@ -509,6 +513,7 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             return "";
         }
 
+
         @Override
         public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
             mActivityPager = ((Statistics) getParentFragment()).getViewPager();
@@ -516,14 +521,14 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
                 mActivityPager.getAdapter().registerAdapterDataObserver(mDataObserver);
             }
             mSlidingTabLayout = ((Statistics) getParentFragment()).getSlidingTabLayout();
-
+            initTabLayoutMediator();
         }
 
 
         @Override
         public void onStart() {
             super.onStart();
-            initTabLayoutMediator();
+
         }
 
 
@@ -531,14 +536,31 @@ public class Statistics extends AnkiFragment implements DeckDropDownAdapter.Subt
             if (mTabLayoutMediator != null) {
                 mTabLayoutMediator.detach();
             }
-            if(mTabLayoutMediator==null||!mTabLayoutMediator.isAttached()){
+            if (mTabLayoutMediator == null || !mTabLayoutMediator.isAttached()) {
                 mTabLayoutMediator = new TabLayoutMediator(mSlidingTabLayout, mActivityPager,
                         (tab, position) -> tab.setText(getTabTitle(position))
                 );
-                mTabLayoutMediator.attach();
+                if (mActivityPager.getAdapter() != null) {
+                    mTabLayoutMediator.attach();
+                } else {
+                    new Handler().postDelayed(runnable, 50);
+                }
             }
 
         }
+
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mActivityPager.getAdapter() != null) {
+                    mTabLayoutMediator.attach();
+                } else {
+                    new Handler().postDelayed(this, 50);
+                }
+            }
+        };
+
 
         public abstract void checkAndUpdate();
     }
